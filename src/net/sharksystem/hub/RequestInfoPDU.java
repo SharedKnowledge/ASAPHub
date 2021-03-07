@@ -1,4 +1,4 @@
-package hub;
+package net.sharksystem.hub;
 
 import net.sharksystem.asap.utils.ASAPSerialization;
 
@@ -15,6 +15,6 @@ class RequestInfoPDU extends HubPDU {
 
     @Override
     void sendPDU(OutputStream os) throws IOException {
-        ASAPSerialization.writeByteParameter(HubPDU.REQUEST_INFOS_PDU, os);
+        ASAPSerialization.writeByteParameter(REQUEST_INFOS_PDU, os);
     }
 }

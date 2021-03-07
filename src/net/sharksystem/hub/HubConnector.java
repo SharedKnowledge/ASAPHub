@@ -1,4 +1,4 @@
-package hub;
+package net.sharksystem.hub;
 
 import java.io.IOException;
 import java.util.Collection;

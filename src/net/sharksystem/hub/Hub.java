@@ -1,4 +1,4 @@
-package hub;
+package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPPeer;
 

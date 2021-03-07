@@ -1,4 +1,4 @@
-package hub;
+package net.sharksystem.hub;
 
 /**
  * Peer can establish a connected mediated by a hub. This listener interface is used whenever a new connection

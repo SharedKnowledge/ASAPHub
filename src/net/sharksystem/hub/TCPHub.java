@@ -1,4 +1,4 @@
-package hub;
+package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPPeer;
@@ -23,7 +23,7 @@ public class TCPHub extends Thread implements Hub {
     private Map<CharSequence, PeerConnection> connectors = new HashMap<>();
 
     public TCPHub() throws IOException {
-        this(Hub.DEFAULT_PORT);
+        this(DEFAULT_PORT);
     }
 
     public TCPHub(int port) throws IOException {
