@@ -7,7 +7,7 @@ package net.sharksystem.hub;
 public interface NewConnectionListener {
     /**
      * A new connection was established
-     * @param peerConnection i/o streams and further information of the newly established communication
+     * @param hubSessionConnection i/o streams and further information of the newly established communication
      */
-    void notifyPeerConnected(PeerConnection peerConnection);
+    void notifyPeerConnected(HubSessionConnection hubSessionConnection);
 }

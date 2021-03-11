@@ -7,20 +7,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class ConnectPDU extends HubPDU {
+public class HubPDUConnectPeerNewTCPSocketRQ extends HubPDU {
     public CharSequence peerID;
 
-    public ConnectPDU(CharSequence peerID) {
+    public HubPDUConnectPeerNewTCPSocketRQ(CharSequence peerID) {
+        super(CONNECT_PEER_NEW_TCP_SOCKET_REQUEST);
         this.peerID = peerID;
     }
 
-    public ConnectPDU(InputStream is) throws IOException, ASAPException {
+    public HubPDUConnectPeerNewTCPSocketRQ(InputStream is) throws IOException, ASAPException {
+        super(CONNECT_PEER_NEW_TCP_SOCKET_REQUEST);
         this.peerID = ASAPSerialization.readCharSequenceParameter(is);
     }
 
     @Override
     void sendPDU(OutputStream os) throws IOException {
-        ASAPSerialization.writeByteParameter(CONNECT_PDU, os);
+        super.sendPDUNumber(os);
         ASAPSerialization.writeCharSequenceParameter(this.peerID, os);
     }
+
 }

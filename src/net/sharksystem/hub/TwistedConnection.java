@@ -3,8 +3,6 @@ package net.sharksystem.hub;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -50,10 +48,23 @@ class TwistedConnection extends Thread {
             );
         } else {
             // both side connected
-            Thread twistThread1 = new TwistSocketsThread(wait4AcceptThread1.socket, wait4AcceptThread2.socket);
-            Thread twistThread2 = new TwistSocketsThread(wait4AcceptThread2.socket, wait4AcceptThread1.socket);
-            twistThread1.start();
-            twistThread2.start();
+            Thread twistThread1 = null;
+            try {
+                twistThread1 = new StreamLink(
+                        wait4AcceptThread1.socket.getInputStream(),
+                        wait4AcceptThread2.socket.getOutputStream(),
+                        this.maxIdleInMillis, true);
+
+                Thread twistThread2 = new StreamLink(
+                        wait4AcceptThread2.socket.getInputStream(),
+                        wait4AcceptThread1.socket.getOutputStream(),
+                        this.maxIdleInMillis, true);
+
+                twistThread1.start();
+                twistThread2.start();
+            } catch (IOException e) {
+                Log.writeLog(this, "problems starting data transfer: " + e.getLocalizedMessage());
+            }
         }
     }
 
@@ -68,7 +79,8 @@ class TwistedConnection extends Thread {
 
         public void run() {
             if(maxIdleInMillis > 0) {
-                new Thread() {
+                Thread timeOutThread = new Thread(new Runnable() {
+                    @Override
                     public void run() {
                         try {
                             // kill server socket after a while
@@ -78,7 +90,8 @@ class TwistedConnection extends Thread {
                             // ignore
                         }
                     }
-                }.start();
+                });
+               timeOutThread.start();
             }
 
             try {
@@ -94,71 +107,4 @@ class TwistedConnection extends Thread {
         }
     }
 
-    class TwistSocketsThread extends Thread {
-        private Socket sourceSocket;
-        private Socket targetSocket;
-
-        TwistSocketsThread(Socket sourceSocket, Socket targetSocket) {
-            this.sourceSocket = sourceSocket;
-            this.targetSocket = targetSocket;
-        }
-
-        class KillerThread extends Thread {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(maxIdleInMillis);
-                    if(sourceSocket != null) sourceSocket.close();
-                    if(targetSocket != null) targetSocket.close();
-                } catch (InterruptedException | IOException e) {
-                    // ok
-                }
-            }
-        }
-
-        public void run() {
-            //Log.writeLog(this, "start read/write loop");
-            try {
-                Thread killerThread = null;
-                int read = -1;
-                boolean again;
-                InputStream is = this.sourceSocket.getInputStream();
-                OutputStream os = this.targetSocket.getOutputStream();
-                do {
-                    again = false;
-                    int available = is.available();
-                    if(available > 0) {
-                        byte[] buffer = new byte[available];
-                        is.read(buffer); os.write(buffer);
-                        again = true;
-                    } else {
-                        // set alarm clock
-                        if(maxIdleInMillis > 0) {
-                            killerThread = new KillerThread();
-                            killerThread.start();
-                        }
-
-                        // block
-                        read = is.read();
-                        // back from read
-                        if(killerThread != null) {
-                            killerThread.interrupt(); killerThread = null;
-                        }
-
-                        os.write(read);
-                        again = read != -1;
-                    }
-                } while (again);
-            } catch (IOException e) {
-                try {
-                    targetSocket.close();
-                } catch (IOException ioException) {
-                }
-            }
-            finally {
-                sourceSocket = null; targetSocket = null;
-            }
-            Log.writeLog(this, "end connection: " + port1 + " | " + port2);
-        }
-    }
 }

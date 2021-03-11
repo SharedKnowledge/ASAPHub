@@ -8,20 +8,22 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
 
-class ProvideHubInfoPDU extends HubPDU {
+class HubPDUHubStatusRPLY extends HubPDU {
     Set<CharSequence> connectedPeers;
 
-    public ProvideHubInfoPDU(Set<CharSequence> connectedPeers) {
+    public HubPDUHubStatusRPLY(Set<CharSequence> connectedPeers) {
+        super(HUB_STATUS_REPLY);
         this.connectedPeers = connectedPeers;
     }
 
-    public ProvideHubInfoPDU(InputStream is) throws IOException, ASAPException {
+    public HubPDUHubStatusRPLY(InputStream is) throws IOException, ASAPException {
+        super(HUB_STATUS_REPLY);
         this.connectedPeers = ASAPSerialization.readCharSequenceSetParameter(is);
     }
 
     @Override
     void sendPDU(OutputStream os) throws IOException {
-        ASAPSerialization.writeByteParameter(PROVIDE_INFOS_PDU, os);
+        super.sendPDUNumber(os);
         ASAPSerialization.writeCharSequenceSetParameter(this.connectedPeers, os);
     }
 }

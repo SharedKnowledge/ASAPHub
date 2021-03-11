@@ -6,15 +6,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class RequestInfoPDU extends HubPDU {
-    public RequestInfoPDU(InputStream is) {
+class HubPDUHubStatusRQ extends HubPDU {
+    public HubPDUHubStatusRQ(InputStream is) {
+        super(HUB_STATUS_REQUEST);
     }
 
-    public RequestInfoPDU() {
+    public HubPDUHubStatusRQ() {
+        super(HUB_STATUS_REQUEST);
     }
 
     @Override
     void sendPDU(OutputStream os) throws IOException {
-        ASAPSerialization.writeByteParameter(REQUEST_INFOS_PDU, os);
+        super.sendPDUNumber(os);
     }
 }

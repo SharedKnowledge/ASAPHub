@@ -16,37 +16,47 @@ public class HubUsageTests {
     @Test
     public void usage() throws IOException, InterruptedException, ASAPException {
         int specificPort = 6907;
-        TCPHub hub = new TCPHub(specificPort);
+        CharSequence host = "localhost";
+        TCPHubEntity hub = new TCPHubEntity(specificPort);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
         hub.start();
 
-        HubConnector aliceHubConnector = new TCPHubConnector(specificPort);
+        HubConnector aliceHubConnector = TCPHubConnector.createTCPHubConnector(host, specificPort);
         HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
         aliceHubConnector.setListener(aliceListener);
 
         aliceHubConnector.connectHub(ALICE_ID);
+        Thread.sleep(100);
         Collection<CharSequence> peerNames = aliceHubConnector.getPeerIDs();
         Assert.assertEquals(0, peerNames.size());
 
         HubConnectorTester bobListener = new HubConnectorTester(BOB_ID);
-        HubConnector bobHubConnector = new TCPHubConnector(specificPort);
+        HubConnector bobHubConnector = TCPHubConnector.createTCPHubConnector(host, specificPort);
         bobHubConnector.setListener(bobListener);
         bobHubConnector.connectHub(BOB_ID);
-
         Thread.sleep(100);
 
         peerNames = bobHubConnector.getPeerIDs();
         Assert.assertEquals(1, peerNames.size());
+
+        aliceHubConnector.syncHubInformation();
+        Thread.sleep(100);
+        peerNames = aliceHubConnector.getPeerIDs();
+        Assert.assertEquals(1, peerNames.size());
+
+        bobHubConnector.syncHubInformation();
+
+        System.out.println("************************ your leaving the stable sector ****************************");
 
         /// Alice meets Bob
         aliceHubConnector.connectPeer(BOB_ID);
 
         Thread.sleep(1000);
         //Thread.sleep(Long.MAX_VALUE);
-        Assert.assertEquals(1, aliceListener.numberNofications());
-        Assert.assertEquals(1, bobListener.numberNofications());
+        Assert.assertEquals(1, aliceListener.numberNotifications());
+        Assert.assertEquals(1, bobListener.numberNotifications());
 
-        aliceHubConnector.disconnect();
+        aliceHubConnector.disconnectHub();
         Thread.sleep(100);
 
         bobHubConnector.syncHubInformation();
@@ -65,32 +75,32 @@ public class HubUsageTests {
         }
 
         @Override
-        public void notifyPeerConnected(PeerConnection peerConnection) {
-            System.out.println("listener of " + peerID + " got notified about connection from " + peerConnection.peerID);
+        public void notifyPeerConnected(HubSessionConnection hubSessionConnection) {
+            System.out.println("listener of " + peerID + " got notified about connection from "
+                    + hubSessionConnection.getPeerID());
             this.numberNofications++;
 
             try {
                 //Thread.sleep(1500);
                 String message = this.peerID;
-                ASAPSerialization.writeCharSequenceParameter(message, peerConnection.os);
+                ASAPSerialization.writeCharSequenceParameter(message, hubSessionConnection.getOutputStream());
                 // read
-                String receivedMessage = ASAPSerialization.readCharSequenceParameter(peerConnection.is);
+                String receivedMessage = ASAPSerialization.readCharSequenceParameter(hubSessionConnection.getInputStream());
                 System.out.println(this.peerID + " received: " + receivedMessage);
 
                 Thread.sleep(100);
                 message = "Hi: " + receivedMessage;
-                ASAPSerialization.writeCharSequenceParameter(message, peerConnection.os);
-                receivedMessage = ASAPSerialization.readCharSequenceParameter(peerConnection.is);
+                ASAPSerialization.writeCharSequenceParameter(message, hubSessionConnection.getOutputStream());
+                receivedMessage = ASAPSerialization.readCharSequenceParameter(hubSessionConnection.getInputStream());
                 // read
                 System.out.println(this.peerID + " received#2: " + receivedMessage);
-                peerConnection.is.close();
-                peerConnection.os.close();
+                hubSessionConnection.close();
             } catch (IOException | ASAPException | InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
-        public int numberNofications() {
+        public int numberNotifications() {
             return this.numberNofications;
         }
     }

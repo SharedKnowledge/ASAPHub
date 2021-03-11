@@ -8,10 +8,18 @@ import java.util.Collection;
  * runs between this connector and the hub. This project provides an implementation. Use it. Spares you time
  * from implementing a trivial protocol.
  *
+ * A hub is set up with a I/O stream pair. In most cases, this stream pair will multiplexed and peer connections request
+ * have to wait until previous connection is finished.
+ *
+ * Other implementation (especially TCP) might establish a new connection
+ * for each peer connection. This situation is also hidden from connector users.
+ *
  * @author Thomas Schwotzer
- * @see Hub
+ * @see HubEntity
  */
 public interface HubConnector {
+    long DEFAULT_TIMEOUT_IN_MILLIS = 1000;
+
     /**
      * A hub can asked to provide a list of peer names which are connected right now.
      * @return peer name list - can be empty but not null.
@@ -48,7 +56,7 @@ public interface HubConnector {
      * Disconnect from hub.
      * @throws IOException communication problem, cannot connect to hub
      */
-    void disconnect() throws IOException;
+    void disconnectHub() throws IOException;
 
     /**
      * Set an object that deals with newly established connections.

@@ -7,23 +7,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class NewConnectionPDU extends HubPDU {
+class HubPDUConnectPeerNewConnectionRPLY extends HubPDU {
     CharSequence peerID;
     int port;
 
-    public NewConnectionPDU(InputStream is) throws IOException, ASAPException {
+    public HubPDUConnectPeerNewConnectionRPLY(InputStream is) throws IOException, ASAPException {
+        super(CONNECT_PEER_REPLY);
         this.port = ASAPSerialization.readIntegerParameter(is);
         this.peerID = ASAPSerialization.readCharSequenceParameter(is);
     }
 
-    public NewConnectionPDU(int port, CharSequence peerID) {
+    public HubPDUConnectPeerNewConnectionRPLY(int port, CharSequence peerID) {
+        super(CONNECT_PEER_REPLY);
         this.port = port;
         this.peerID = peerID;
     }
 
     @Override
     void sendPDU(OutputStream os) throws IOException {
-        ASAPSerialization.writeByteParameter(NEW_CONNECTION_PDU, os);
+        super.sendPDUNumber(os);
         ASAPSerialization.writeIntegerParameter(this.port, os);
         ASAPSerialization.writeCharSequenceParameter(this.peerID, os);
     }
