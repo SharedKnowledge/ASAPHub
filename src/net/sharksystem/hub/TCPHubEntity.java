@@ -120,6 +120,28 @@ public class TCPHubEntity extends Thread implements HubEntity, Hub {
 
     Map<CharSequence, Set<CharSequence>> connectionRequests = new HashMap<>();
 
+    private String connectionRequestsToString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("connection requests: ");
+
+        Set<CharSequence> peerIDs = this.connectionRequests.keySet();
+        if(peerIDs == null || peerIDs.isEmpty()) {
+            sb.append("empty");
+        } else {
+            for(CharSequence peerID : peerIDs) {
+                sb.append("\n"); sb.append(peerID); sb.append(": ");
+                Set<CharSequence> otherPeerIDs = this.connectionRequests.get(peerID);
+                boolean first = true;
+                for(CharSequence otherPeerID : otherPeerIDs) {
+                    if(first) { first = false; } else {sb.append(", ");}
+                    sb.append(otherPeerID);
+                }
+            }
+        }
+
+        return sb.toString();
+    }
+
     /**
      * Remember that peerA wants to connect to peerB
      * @param peerA
@@ -159,19 +181,13 @@ public class TCPHubEntity extends Thread implements HubEntity, Hub {
         sourceHubSession.silentRQ(REMAIN_SILENT_IN_MILLIS);
         targetHubSession.silentRQ(REMAIN_SILENT_IN_MILLIS);
     }
- /*
-    private class CallSilentRQ extends Thread {
-        CallSilentRQ(long duration) {
-            this.duration = duration;
-        }
-
-    }
-  */
 
     public void notifySilent(HubSession hubSession) {
         CharSequence silentPeerID = hubSession.getPeerID();
         Log.writeLog(this, "notified silent from: " + silentPeerID);
         HubSession otherSilentSession = null;
+
+        //Log.writeLog(this, this.connectionRequestsToString());
 
         synchronized (this.connectionRequests) {
             Set<CharSequence> otherPeers = this.connectionRequests.get(silentPeerID);

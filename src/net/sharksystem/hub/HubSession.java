@@ -253,7 +253,7 @@ public class HubSession implements HubSessionConnection {
             try {
                 Thread.sleep(duration);
                 // woke up - restart hub protocol engine
-                Log.writeLog(this, "silence ended - restart hub session protocol engine");
+                Log.writeLog(this, "silence ended - restart hub session protocol engine: " + peerID);
                 HubSession.this.startHubProtocolEngine();
             } catch (InterruptedException e) {
                 Log.writeLog(this, "remain silent thread interrupted in session " + HubSession.this.peerID);
@@ -262,6 +262,7 @@ public class HubSession implements HubSessionConnection {
     }
 
     private void startHubProtocolEngine() {
+        Log.writeLog(this, "restart hub session protocol engine: " + peerID);
         (new Thread(new HubSessionProtocolEngine())).start();
     }
 
