@@ -119,18 +119,20 @@ public class HubConnectorImpl implements HubConnector {
     private class DataChannelEstablishmentThread implements Runnable {
         private final InputStream hubIS;
         private final OutputStream hubOS;
+        private final long remainSilentInMillis;
 
-        public DataChannelEstablishmentThread(InputStream hubIS, OutputStream hubOS) {
+        public DataChannelEstablishmentThread(InputStream hubIS, OutputStream hubOS, long remainSilentInMillis) {
             this.hubIS = hubIS;
             this.hubOS = hubOS;
+            this.remainSilentInMillis = remainSilentInMillis;
         }
 
         public void run() {
             if (HubConnectorImpl.this.silentUntil >= System.currentTimeMillis()) {
                 // still valid - tell hub we are ready here
-                Log.writeLog(this, "silent reply: ");
+                Log.writeLog(this, "send silent reply - remain silent in ms " + this.remainSilentInMillis);
 
-                HubPDUSilentRPLY silentRPLY = new HubPDUSilentRPLY(HubConnector.DEFAULT_TIMEOUT_IN_MILLIS);
+                HubPDUSilentRPLY silentRPLY = new HubPDUSilentRPLY(this.remainSilentInMillis);
                 try {
                     silentRPLY.sendPDU(this.hubOS);
                     // no wait to launch - TODO: introduce an alarm clock to kick us back to hub protocol
@@ -140,6 +142,8 @@ public class HubConnectorImpl implements HubConnector {
                     // got a channel clear pdu
                     if (hubPDU instanceof HubPDUChannelClear) {
                         HubPDUChannelClear channelClear = (HubPDUChannelClear) hubPDU;
+                        Log.writeLog(this, "channel is clear - maxIdleInMillis == "
+                                + channelClear.maxIdleInMillis);
 
                         // link
                         /* separate app side from open streams. An app might close a stream and we
@@ -152,13 +156,13 @@ public class HubConnectorImpl implements HubConnector {
                         PipedOutputStream thisSideOS = new PipedOutputStream();
                         PipedInputStream appSideIS = new PipedInputStream(thisSideOS);
                         StreamLink streamLink2App = new StreamLink(this.hubIS, thisSideOS,
-                                HubConnector.DEFAULT_TIMEOUT_IN_MILLIS, false);
+                                channelClear.maxIdleInMillis, false);
 
                         // other way around
                         PipedInputStream thisSideIS = new PipedInputStream();
                         PipedOutputStream appSideOS = new PipedOutputStream(thisSideIS);
                         StreamLink streamLinkFromApp = new StreamLink(thisSideIS, this.hubOS,
-                                HubConnector.DEFAULT_TIMEOUT_IN_MILLIS, false);
+                                channelClear.maxIdleInMillis, false);
 
                         // who is partner?
                         CharSequence otherPeerID =
@@ -271,7 +275,7 @@ public class HubConnectorImpl implements HubConnector {
                         HubConnectorImpl.this.silentUntil = System.currentTimeMillis() + silentRQ.waitDuration;
                         this.again = false; // end loop
                         // start DataChannelEstablishment
-                        new Thread(new DataChannelEstablishmentThread(hubIS, hubOS)).start();
+                        new Thread(new DataChannelEstablishmentThread(hubIS, hubOS, silentRQ.waitDuration)).start();
                     }
 
                     // got reply: new connection to peer established
@@ -299,7 +303,7 @@ public class HubConnectorImpl implements HubConnector {
                 Log.writeLog(this, "wrong pdu class - crazy: " + e.getLocalizedMessage());
             }
 
-            Log.writeLog(this, "shutdown management protocol engine connector side: " + localPeerID);
+            Log.writeLog(this, "end connector hub protocol engine: " + localPeerID);
         }
 
         /////////// react on PDUs

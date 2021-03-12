@@ -19,6 +19,7 @@ public class HubUsageTests {
         CharSequence host = "localhost";
         TCPHubEntity hub = new TCPHubEntity(specificPort);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
+        hub.setMaxIdleConnectionInSeconds(1);
         hub.start();
 
         HubConnector aliceHubConnector = TCPHubConnector.createTCPHubConnector(host, specificPort);
@@ -88,14 +89,20 @@ public class HubUsageTests {
                 String receivedMessage = ASAPSerialization.readCharSequenceParameter(hubSessionConnection.getInputStream());
                 System.out.println(this.peerID + " received: " + receivedMessage);
 
-                Thread.sleep(100);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 message = "Hi: " + receivedMessage;
+                //System.out.println(this.peerID + " going to send " + message);
                 ASAPSerialization.writeCharSequenceParameter(message, hubSessionConnection.getOutputStream());
+                //System.out.println(this.peerID + " going to read ");
                 receivedMessage = ASAPSerialization.readCharSequenceParameter(hubSessionConnection.getInputStream());
                 // read
                 System.out.println(this.peerID + " received#2: " + receivedMessage);
                 hubSessionConnection.close();
-            } catch (IOException | ASAPException | InterruptedException e) {
+            } catch (IOException | ASAPException e) {
                 e.printStackTrace();
             }
         }

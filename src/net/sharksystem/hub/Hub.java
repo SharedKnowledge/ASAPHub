@@ -33,4 +33,6 @@ public interface Hub {
     void connectionRequest(CharSequence peerID, HubSession hubSession) throws ASAPException, IOException;
 
     void notifySilent(HubSession hubSession);
+
+    long getMaxIdleInMillis();
 }

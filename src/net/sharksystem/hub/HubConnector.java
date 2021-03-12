@@ -18,8 +18,6 @@ import java.util.Collection;
  * @see HubEntity
  */
 public interface HubConnector {
-    long DEFAULT_TIMEOUT_IN_MILLIS = 1000;
-
     /**
      * A hub can asked to provide a list of peer names which are connected right now.
      * @return peer name list - can be empty but not null.

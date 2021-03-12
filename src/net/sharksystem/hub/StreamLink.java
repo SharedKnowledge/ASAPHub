@@ -51,7 +51,7 @@ class StreamLink extends Thread {
     public void run() {
         //Log.writeLog(this, "start read/write loop");
         try {
-            Thread alarmClock = null;
+            AlarmClock alarmClock = null;
             int read = -1;
             boolean again;
             do {
@@ -73,27 +73,29 @@ class StreamLink extends Thread {
                     read = sourceIS.read();
                     /* back from read because:
                     a) read something
-                    b) interrupted by alarm thread
+                    b) interrupted by alarm thread - does not work - tested it
                     c) streams closed by alarm thread
 
-                    b) and c) should result in a read == -1
+                    c) should result in a read == -1
                      */
 
                     // a) we read something
                     if (alarmClock != null) {
                         alarmClock.interrupt();
-                        alarmClock = null;
                     }
 
-                    if(read != -1) {
+                    // read something and time was not up.
+                    if(read != -1 && !alarmClock.timedOut) {
                         targetOS.write(read);
                         again = true;
                     }
+
+                    alarmClock = null;
                 }
             } while (again);
         } catch (IOException e) {
             try {
-                targetOS.close();
+                if(this.closeStreams) this.targetOS.close();
             } catch (IOException ioException) {
             }
         }

@@ -12,12 +12,10 @@ import java.util.List;
 import java.util.Set;
 
 public class HubSession implements HubSessionConnection {
-    private static final long DEFAULT_TIMEOUT_IN_MILLIS = 1000;
     private final InputStream is;
     private final OutputStream os;
     private final Hub hub;
     private final String peerID;
-    private long timeOutInMillis = DEFAULT_TIMEOUT_IN_MILLIS;
 
     public HubSession(InputStream is, OutputStream os, Hub hub)
             throws IOException, ASAPException {
@@ -92,12 +90,12 @@ public class HubSession implements HubSessionConnection {
                 Log.writeLog(this, "launch hub session with: " + HubSession.this.peerID);
                 while (this.again) {
                     // read - will most probably block
-                    Log.writeLog(this, "before read from " + HubSession.this.peerID);
+                    //Log.writeLog(this, "before read from " + HubSession.this.peerID);
                     HubPDU hubPDU = HubPDU.readPDU(HubSession.this.is);
                     synchronized(this) {
                         int syncWithSilentRQ = 42; // we need a line of code to stop sync the process
                     }
-                    Log.writeLog(this, "received from " + HubSession.this.peerID);
+                    //Log.writeLog(this, "received from " + HubSession.this.peerID);
 
                     ///// handle PDUs
                     if (hubPDU instanceof HubPDUHubStatusRQ) {
@@ -234,10 +232,11 @@ public class HubSession implements HubSessionConnection {
     }
 
     private void notifySilent(long duration) {
-        this.hub.notifySilent(this);
         // start a thread to get control back
         this.remainSilentThread = new RemainSilentThread(duration);
         this.remainSilentThread.start();
+        // notify hub after(!) that
+        this.hub.notifySilent(this);
     }
 
     public boolean isSilent() {
@@ -251,6 +250,7 @@ public class HubSession implements HubSessionConnection {
         @Override
         public void run() {
             try {
+                Log.writeLog(this, "remain silent:  " + this.duration + " ms: " + peerID);
                 Thread.sleep(duration);
                 // woke up - restart hub protocol engine
                 Log.writeLog(this, "silence ended - restart hub session protocol engine: " + peerID);
@@ -276,7 +276,7 @@ public class HubSession implements HubSessionConnection {
             this.remainSilentThread.interrupt();
         }
         // put data session object in queue DataSession object
-        this.dataSessionThread = new DataSessionThread(otherSession, this.is, this.os, this.timeOutInMillis);
+        this.dataSessionThread = new DataSessionThread(otherSession, this.is, this.os, this.hub.getMaxIdleInMillis());
         this.dataSessionThread.start();
     }
 
@@ -286,29 +286,27 @@ public class HubSession implements HubSessionConnection {
         private final HubSessionConnection otherSession;
         private final InputStream localPeerIS;
         private final OutputStream localPeerOS;
-        private final long timeOut;
+        private final long maxIdleInMillis;
 
         DataSessionThread(HubSessionConnection otherSession,
-                          InputStream localPeerIS, OutputStream localPeerOS, long timeOut) {
+                          InputStream localPeerIS, OutputStream localPeerOS, long maxIdleInMillis) {
             this.otherSession = otherSession;
             this.localPeerIS = localPeerIS;
             this.localPeerOS = localPeerOS;
-            this.timeOut = timeOut;
+            this.maxIdleInMillis = maxIdleInMillis;
         }
 
         public void run() {
             StreamLink remote2Local = new StreamLink(
-                    otherSession.getInputStream(), localPeerOS, this.timeOut, false);
+                    otherSession.getInputStream(), localPeerOS, this.maxIdleInMillis, false);
 
             StreamLink local2Remote = new StreamLink(
-                    localPeerIS, otherSession.getOutputStream(), this.timeOut, false);
+                    localPeerIS, otherSession.getOutputStream(), this.maxIdleInMillis, false);
 
             // tell connector we are ready
             HubPDUChannelClear channelClear =
-                new HubPDUChannelClear(
-                    HubSession.this.peerID,
-                    this.otherSession.getPeerID(),
-                    HubSession.DEFAULT_TIMEOUT_IN_MILLIS);
+                new HubPDUChannelClear(HubSession.this.peerID,
+                        this.otherSession.getPeerID(), HubSession.this.hub.getMaxIdleInMillis());
 
             // send channel clear pdu
             try {

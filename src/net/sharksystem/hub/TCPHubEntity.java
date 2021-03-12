@@ -13,9 +13,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class TCPHubEntity extends Thread implements HubEntity, Hub {
-    private static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
-    private static final long REMAIN_SILENT_IN_MILLIS = 5000;
-    private int maxIdleInSeconds = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS;
+    public static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
+    private int maxIdleInMillis = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS * 1000;
+
     private final int port;
     private final ServerSocket serverSocket;
     private int minPort = 0;
@@ -45,7 +45,7 @@ public class TCPHubEntity extends Thread implements HubEntity, Hub {
     }
 
     public void setMaxIdleConnectionInSeconds(int maxIdleInSeconds) {
-        this.maxIdleInSeconds = maxIdleInSeconds;
+        this.maxIdleInMillis = maxIdleInSeconds * 1000;
     }
 
     private synchronized ServerSocket getServerSocket() throws IOException {
@@ -178,8 +178,8 @@ public class TCPHubEntity extends Thread implements HubEntity, Hub {
         this.rememberConnectionRequest(targetPeerID, sourceHubSession.getPeerID());
 
         // ask both session to get quiet - need threads - hub would stop otherwise
-        sourceHubSession.silentRQ(REMAIN_SILENT_IN_MILLIS);
-        targetHubSession.silentRQ(REMAIN_SILENT_IN_MILLIS);
+        sourceHubSession.silentRQ(this.maxIdleInMillis * 2);
+        targetHubSession.silentRQ(this.maxIdleInMillis * 2);
     }
 
     public void notifySilent(HubSession hubSession) {
@@ -222,5 +222,10 @@ public class TCPHubEntity extends Thread implements HubEntity, Hub {
                 Log.writeLogErr(this, "cannot launch data session: " + e.getLocalizedMessage());
             }
         }
+    }
+
+    @Override
+    public long getMaxIdleInMillis() {
+        return this.maxIdleInMillis;
     }
 }
