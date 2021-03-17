@@ -115,6 +115,7 @@ public class TCPHubEntity extends Thread implements HubEntity, Hub {
 
     @Override
     public void sessionEnded(CharSequence peerID, HubSession hubSession) {
+        Log.writeLog(this, "remove hub session for " + peerID);
         this.hubSessions.remove(peerID);
     }
 

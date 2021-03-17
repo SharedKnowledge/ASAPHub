@@ -47,19 +47,19 @@ public class HubUsageTests {
 
         bobHubConnector.syncHubInformation();
 
-        System.out.println("************************ your leaving the stable sector ****************************");
-
         /// Alice meets Bob
         aliceHubConnector.connectPeer(BOB_ID);
 
-        Thread.sleep(1000);
+        Thread.sleep(3000);
         //Thread.sleep(Long.MAX_VALUE);
         Assert.assertEquals(1, aliceListener.numberNotifications());
         Assert.assertEquals(1, bobListener.numberNotifications());
 
+        System.out.println("************************ alice connector disconnect ****************************");
         aliceHubConnector.disconnectHub();
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
+        System.out.println("************************ bob connector sync ****************************");
         bobHubConnector.syncHubInformation();
         Thread.sleep(100);
 
@@ -76,34 +76,40 @@ public class HubUsageTests {
         }
 
         @Override
-        public void notifyPeerConnected(HubSessionConnection hubSessionConnection) {
+        public void notifyPeerConnected(SessionConnection sessionConnection) {
             System.out.println("listener of " + peerID + " got notified about connection from "
-                    + hubSessionConnection.getPeerID());
+                    + sessionConnection.getPeerID());
             this.numberNofications++;
 
             try {
                 //Thread.sleep(1500);
                 String message = this.peerID;
-                ASAPSerialization.writeCharSequenceParameter(message, hubSessionConnection.getOutputStream());
+                ASAPSerialization.writeCharSequenceParameter(message, sessionConnection.getOutputStream());
                 // read
-                String receivedMessage = ASAPSerialization.readCharSequenceParameter(hubSessionConnection.getInputStream());
+                String receivedMessage = ASAPSerialization.readCharSequenceParameter(sessionConnection.getInputStream());
                 System.out.println(this.peerID + " received: " + receivedMessage);
 
+                /*
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                 */
                 message = "Hi: " + receivedMessage;
                 //System.out.println(this.peerID + " going to send " + message);
-                ASAPSerialization.writeCharSequenceParameter(message, hubSessionConnection.getOutputStream());
+                ASAPSerialization.writeCharSequenceParameter(message, sessionConnection.getOutputStream());
                 //System.out.println(this.peerID + " going to read ");
-                receivedMessage = ASAPSerialization.readCharSequenceParameter(hubSessionConnection.getInputStream());
+                receivedMessage = ASAPSerialization.readCharSequenceParameter(sessionConnection.getInputStream());
                 // read
                 System.out.println(this.peerID + " received#2: " + receivedMessage);
-                hubSessionConnection.close();
-            } catch (IOException | ASAPException e) {
+                sessionConnection.close();
+            } catch (ASAPException e) {
+                System.out.println(this.peerID + " asapException ");
                 e.printStackTrace();
+            } catch (IOException iex) {
+                System.out.println(this.peerID + " ioException ");
+                iex.printStackTrace();
             }
         }
 

@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class HubSession implements HubSessionConnection {
+public class HubSession implements SessionConnection {
     private final InputStream is;
     private final OutputStream os;
     private final Hub hub;
@@ -46,7 +46,7 @@ public class HubSession implements HubSessionConnection {
         return "HubSession(" + peerID + ")";
     }
 
-    private List<DataSessionThread> pendingDataSessions = new ArrayList<>();
+    private List<HubDataSession> pendingDataSessions = new ArrayList<>();
     private List<HubPDU> pendingPDUs = new ArrayList<>();
 
     private HubSessionProtocolEngine hubProtocolThread;
@@ -122,7 +122,7 @@ public class HubSession implements HubSessionConnection {
                         // connection is silent now
                         HubPDUSilentRPLY silentRPLY = (HubPDUSilentRPLY) hubPDU;
                         this.again = false; // end this thread
-                        HubSession.this.notifySilent(silentRPLY.waitDuration);
+                        HubSession.this.enterSilence(silentRPLY.waitDuration);
                     } else {
                         Log.writeLog(this, "got unknown PDU type from " + HubSession.this.peerID);
                     }
@@ -130,12 +130,13 @@ public class HubSession implements HubSessionConnection {
             } catch (IOException | ASAPException e) {
                 Log.writeLog(this, "connection lost to: " + HubSession.this.peerID);
                 Log.writeLog(this, "remove connection to: " + HubSession.this.peerID);
-                HubSession.this.hub.sessionEnded(HubSession.this.peerID, HubSession.this);
             } catch (ClassCastException e) {
                 Log.writeLog(this, "wrong pdu class - crazy: " + e.getLocalizedMessage());
             }
-
-            Log.writeLog(this, "end hub session with: " + HubSession.this.peerID);
+            finally {
+                Log.writeLog(this, "end hub session with: " + HubSession.this.peerID);
+                HubSession.this.hub.sessionEnded(HubSession.this.peerID, HubSession.this);
+            }
         }
     }
 
@@ -195,14 +196,21 @@ public class HubSession implements HubSessionConnection {
     //                                switching hub protocol / data stream management                        //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private void dataSessionEnded() {
+    private void dataSessionEnded(long syncTimeInMillis) {
+        Helper.syncStream(this.is, this.os, syncTimeInMillis);
+
+        Log.writeLog(this, "start hub protocol engine after data session: " + peerID);
+        this.startHubProtocolEngine();
+
         // another silent request during the data session?
         if(this.silentRQDurationWhileDataSession > 0) {
-            long duration = this.silentRQDurationWhileDataSession;
-            this.silentRQDurationWhileDataSession = 0; // reset
-            this.notifySilent(duration);
-        } else {
-            this.startHubProtocolEngine();
+            Log.writeLog(this, "there was another silent request in the meantime - call again: " + peerID);
+            try {
+                this.silentRQ(this.silentRQDurationWhileDataSession);
+            } catch (IOException e) {
+                Log.writeLogErr(this, "when calling silentRQ after data session: " + peerID);
+                e.printStackTrace();
+            }
         }
     }
 
@@ -215,7 +223,7 @@ public class HubSession implements HubSessionConnection {
      */
     public void silentRQ(long duration) throws IOException {
         Log.writeLog(this, "got silenceRQ: " + peerID  + " | " + this);
-        if(this.dataSessionThread != null) {
+        if(this.hubDataSession != null) {
             // remember this call
             Log.writeLog(this, "data thread running: " + peerID);
             this.silentRQDurationWhileDataSession = duration;
@@ -231,7 +239,7 @@ public class HubSession implements HubSessionConnection {
         }
     }
 
-    private void notifySilent(long duration) {
+    private void enterSilence(long duration) {
         // start a thread to get control back
         this.remainSilentThread = new RemainSilentThread(duration);
         this.remainSilentThread.start();
@@ -270,26 +278,26 @@ public class HubSession implements HubSessionConnection {
     //                                              data session                                               //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void openDataSession(HubSessionConnection otherSession) throws IOException {
+    public void openDataSession(SessionConnection otherSession) throws IOException {
         // kill remain silent thread - which is there..
         if(this.remainSilentThread != null) {
             this.remainSilentThread.interrupt();
         }
         // put data session object in queue DataSession object
-        this.dataSessionThread = new DataSessionThread(otherSession, this.is, this.os, this.hub.getMaxIdleInMillis());
-        this.dataSessionThread.start();
+        this.hubDataSession = new HubDataSession(otherSession, this.is, this.os, this.hub.getMaxIdleInMillis());
+        this.hubDataSession.start();
     }
 
-    private DataSessionThread dataSessionThread = null;
+    private HubDataSession hubDataSession = null;
 
-    private class DataSessionThread extends Thread {
-        private final HubSessionConnection otherSession;
+    private class HubDataSession extends Thread {
+        private final SessionConnection otherSession;
         private final InputStream localPeerIS;
         private final OutputStream localPeerOS;
         private final long maxIdleInMillis;
 
-        DataSessionThread(HubSessionConnection otherSession,
-                          InputStream localPeerIS, OutputStream localPeerOS, long maxIdleInMillis) {
+        HubDataSession(SessionConnection otherSession,
+                       InputStream localPeerIS, OutputStream localPeerOS, long maxIdleInMillis) {
             this.otherSession = otherSession;
             this.localPeerIS = localPeerIS;
             this.localPeerOS = localPeerOS;
@@ -297,37 +305,55 @@ public class HubSession implements HubSessionConnection {
         }
 
         public void run() {
-            StreamLink remote2Local = new StreamLink(
-                    otherSession.getInputStream(), localPeerOS, this.maxIdleInMillis, false);
+            // wrap each side
+            String debugIDLocal = "HubSession => Connector (" + peerID + ")";
+            BorrowedConnection localBorrowedConnection = new BorrowedConnection(localPeerIS, localPeerOS,
+                    debugIDLocal, maxIdleInMillis);
 
-            StreamLink local2Remote = new StreamLink(
-                    localPeerIS, otherSession.getOutputStream(), this.maxIdleInMillis, false);
+            String debugIDOther = "HubSession => Connector (" + otherSession.getPeerID() + ")";
+            BorrowedConnection otherBorrowedConnection = new BorrowedConnection(
+                    otherSession.getInputStream(), otherSession.getOutputStream(),
+                    debugIDOther, maxIdleInMillis);
 
-            // tell connector we are ready
-            HubPDUChannelClear channelClear =
-                new HubPDUChannelClear(HubSession.this.peerID,
-                        this.otherSession.getPeerID(), HubSession.this.hub.getMaxIdleInMillis());
+            try {
+                String other2LocalString = otherSession.getPeerID() + " => " + peerID;
+                StreamLink other2Local = new StreamLink(
+                        otherBorrowedConnection.getInputStream(), localBorrowedConnection.getOutputStream(),
+                        this.maxIdleInMillis, false, other2LocalString);
+
+                String local2OtherString = peerID + " => " + otherSession.getPeerID();
+                StreamLink local2Other = new StreamLink(
+                        localBorrowedConnection.getInputStream(), otherBorrowedConnection.getOutputStream(),
+                        this.maxIdleInMillis, false, local2OtherString);
+
+                // tell connector we are ready
+                HubPDUChannelClear channelClear =
+                    new HubPDUChannelClear(HubSession.this.peerID,
+                            this.otherSession.getPeerID(), HubSession.this.hub.getMaxIdleInMillis());
 
             // send channel clear pdu
-            try {
-                Log.writeLog(this, "send channel clear PDU");
+                Log.writeLog(this, "send channel clear PDU: " + peerID);
                 channelClear.sendPDU(localPeerOS);
+
+                Log.writeLog(this, "launch stream links: " + peerID);
+                localBorrowedConnection.start();
+                otherBorrowedConnection.start();
+                other2Local.start();
+                local2Other.start();
             } catch (IOException e) {
                 Log.writeLogErr(this, "cannot send channel clear pdu: " + e.getLocalizedMessage());
             }
 
-            Log.writeLog(this, "launch stream links");
-            remote2Local.start();
-            local2Remote.start();
-
             // wait until data session ends
-            Log.writeLog(this, "wait for stream links to end");
-            try { remote2Local.join(); } catch (InterruptedException e) { /* ignore */ }
-            try { local2Remote.join(); } catch (InterruptedException e) { /* ignore */ }
+            Log.writeLog(this, "wait for stream links to end: " + peerID);
+//            try { other2Local.join(); } catch (InterruptedException e) { /* ignore */ }
+//            try { local2Other.join(); } catch (InterruptedException e) { /* ignore */ }
 
-            Log.writeLog(this, "stream links finished - restart protocol engine");
+            try { localBorrowedConnection.join(); } catch (InterruptedException e) { /* ignore */ }
+            try { otherBorrowedConnection.join(); } catch (InterruptedException e) { /* ignore */ }
+            Log.writeLog(this, "data session finished - restart protocol engine: " + peerID);
             // end thread
-            HubSession.this.dataSessionEnded();
+            HubSession.this.dataSessionEnded(this.maxIdleInMillis);
         }
     }
 

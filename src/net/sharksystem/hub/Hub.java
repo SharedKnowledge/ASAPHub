@@ -28,7 +28,7 @@ public interface Hub {
      * Ask hub to create a new connection to a peer within the hub. Hub calls openDataSession in return
      * @param peerID target peer id
      * @return open connection
-     * @see HubSession#openDataSession(HubSessionConnection)
+     * @see HubSession#openDataSession(SessionConnection)
      */
     void connectionRequest(CharSequence peerID, HubSession hubSession) throws ASAPException, IOException;
 
