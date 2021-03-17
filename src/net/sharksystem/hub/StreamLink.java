@@ -38,19 +38,23 @@ class StreamLink extends Thread {
                     again = true;
                 } else {
                     // block
-                    Log.writeLog(this, "going to block in read(): " + id);
+                    //Log.writeLog(this, "going to block in read(): " + id);
                     read = sourceIS.read();
-                    targetOS.write(read);
+                    if(read != -1) {
+                        targetOS.write(read);
+                        again = true;
+                    }
                 }
             } while (again);
         } catch (IOException e) {
-            e.printStackTrace();
-            try {
-                if(this.closeStreams) this.targetOS.close();
-            } catch (IOException ioException) {
+            Log.writeLog(this, "ioException - most probably connection closed: " + id);
+        } finally {
+            if(this.closeStreams) {
+                try {this.targetOS.close();} catch (IOException ioException) { /* ignore */ }
+                try {this.sourceIS.close();} catch (IOException ioException) { /* ignore */ }
             }
-        }
 
-        Log.writeLog(this, "end connection: " + id);
+            Log.writeLog(this, "end connection: " + id);
+        }
     }
 }

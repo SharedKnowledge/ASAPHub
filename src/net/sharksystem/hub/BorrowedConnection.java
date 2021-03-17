@@ -115,7 +115,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
                 Random random = new Random(seed);
 
                 localFirstSyncInt = random.nextInt();
-                Log.writeLog(this, "flip and take number " + localFirstSyncInt);
+                //Log.writeLog(this, "flip and take number " + localFirstSyncInt);
                 ASAPSerialization.writeIntegerParameter(localFirstSyncInt, this.borrowedOS);
                 remoteFirstSyncInt = ASAPSerialization.readIntegerParameter(this.borrowedIS);
                 counter++;
@@ -135,12 +135,13 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
         byte localSyncSign = (byte) localFirstSyncInt; // cut it to byte
         byte remoteSyncSign = (byte) remoteFirstSyncInt; // cut it to byte
 
+        /*
         Log.writeLog(this, "synchronised with maxMillis | sync number local|remote: " + this + " | "
                 + negotiatedMaxIdleInMillis + " | " + localSyncSign + " | " + remoteSyncSign);
+         */
 
         try {
-            Log.writeLog(this, "take a nap (half of max idle time) to allow both side to settle: "
-                    + this);
+            //Log.writeLog(this, "take a nap (half of max idle time) to allow both side to settle: " + this);
 
             Thread.sleep(this.maxIdleInMillis / 2);
         } catch (InterruptedException e) {
@@ -158,7 +159,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
         Log.writeLog(this, "start lending streams: " + this);
         do {
             try {
-                Log.writeLog(this, "next lending time (in ms): " + newSleepingTime);
+//                Log.writeLog(this, "next lending time (in ms): " + newSleepingTime);
                 // remember when started sleeping
                 long bedtime = System.currentTimeMillis();
                 Thread.sleep(newSleepingTime);
@@ -179,8 +180,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
 
         // but first - sleep a little moment to increase the chance that both sides are run the cleaning protocol.
         try {
-            Log.writeLog(this, "another nap (half of max idle time) to ensure lender came to an end: "
-                    + this);
+//            Log.writeLog(this, "another nap (half of max idle time) to ensure lender came to an end: " + this);
 
             Thread.sleep(this.maxIdleInMillis / 2);
         } catch (InterruptedException e) {
@@ -218,11 +218,11 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
                 readBefore = false;
                 byte readByte = (byte) readInt;
                 if(readByte == localSyncSign) {
-                    Log.writeLog(this, "local sync sign read: " + this);
+//                    Log.writeLog(this, "local sync sign read: " + this);
                     localSyncSignRead = true;
                 }
                 else if(readByte == remoteSyncSign) {
-                    Log.writeLog(this, "remote sync sign read: " + this);
+//                    Log.writeLog(this, "remote sync sign read: " + this);
                     remoteSyncSignRead = true;
                     this.borrowedOS.write(remoteSyncSign);
                 }
@@ -231,7 +231,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
             // both sync signs read - we are in sync
 
             // just in case
-            Log.writeLog(this, "final check on remaining signs on stream: " + this);
+//            Log.writeLog(this, "final check on remaining signs on stream: " + this);
             while(this.borrowedIS.available() > 0) {
                 this.borrowedIS.read();
             }
@@ -242,6 +242,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
             // end give this thread back - borrowed streams are most probably closed
             Log.writeLog(this, "ioException on borrowed streams - give up: " + this);
             this.exception = e;
+            e.printStackTrace();
         }
 
         // end thread
