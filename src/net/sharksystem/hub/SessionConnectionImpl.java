@@ -21,7 +21,6 @@ public class SessionConnectionImpl implements SessionConnection {
     @Override
     public OutputStream getOutputStream() { return this.os; }
 
-    @Override
     public CharSequence getPeerID() {
         return this.peerID;
     }

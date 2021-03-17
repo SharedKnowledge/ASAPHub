@@ -213,8 +213,11 @@ public class TCPHubEntity extends Thread implements HubEntity, Hub {
 
         if(otherSilentSession != null) {
             // launch data session
-            Log.writeLog(this, "ask to open data session "
-                    + otherSilentSession.getPeerID() + " | " + hubSession.getPeerID());
+            HubDataSession hubDataSession = new HubDataSession(hubSession, otherSilentSession, this.maxIdleInMillis);
+            hubDataSession.start();
+
+            /*
+            Log.writeLog(this, "open data session ");
 
             try {
                 hubSession.openDataSession(otherSilentSession);
@@ -222,6 +225,7 @@ public class TCPHubEntity extends Thread implements HubEntity, Hub {
             } catch (IOException e) {
                 Log.writeLogErr(this, "cannot launch data session: " + e.getLocalizedMessage());
             }
+             */
         }
     }
 

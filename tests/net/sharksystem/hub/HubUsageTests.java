@@ -77,8 +77,7 @@ public class HubUsageTests {
 
         @Override
         public void notifyPeerConnected(SessionConnection sessionConnection) {
-            System.out.println("listener of " + peerID + " got notified about connection from "
-                    + sessionConnection.getPeerID());
+            System.out.println("listener of " + peerID + " got notified about a connection ");
             this.numberNofications++;
 
             try {

@@ -16,7 +16,7 @@ import java.util.Random;
  *
  * Object of this class are threads. This threads terminates if no data are transmitted over a defined period of time.
  */
-class BorrowedConnection extends Thread implements StreamWrapperListener {
+class BorrowedConnection extends Thread implements StreamWrapperListener, SessionConnection {
     private static final int NUMBER_SYNC_SIGNS = 10;
     private final InputStreamWrapper wrappedIS;
     private final OutputStreamWrapper wrappedOS;
@@ -47,6 +47,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener {
             // let thread wait
             this.waitingThreads.add(Thread.currentThread());
             try {
+                Log.writeLog(this, "connection not yet established - thread waits");
                 Thread.sleep(Long.MAX_VALUE);
             } catch (InterruptedException e) {
                 // back
@@ -87,7 +88,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener {
     private Thread waitThread = null;
 
     public void run() {
-        Log.writeLog(this, "started synchronising " + this);
+        Log.writeLog(this, "synchronising with counterpart..: " + this);
 
         long negotiatedMaxIdleInMillis = 0;
         int localFirstSyncInt = 0, remoteFirstSyncInt = 0;
@@ -109,7 +110,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener {
 
             int counter = 0;
             do {
-                Log.writeLog(this, "create a random int");
+//                Log.writeLog(this, "create a random int");
                 long seed = this.hashCode() * System.currentTimeMillis();
                 Random random = new Random(seed);
 
@@ -136,6 +137,15 @@ class BorrowedConnection extends Thread implements StreamWrapperListener {
 
         Log.writeLog(this, "synchronised with maxMillis | sync number local|remote: " + this + " | "
                 + negotiatedMaxIdleInMillis + " | " + localSyncSign + " | " + remoteSyncSign);
+
+        try {
+            Log.writeLog(this, "take a nap (half of max idle time) to allow both side to settle: "
+                    + this);
+
+            Thread.sleep(this.maxIdleInMillis / 2);
+        } catch (InterruptedException e) {
+            // ignore
+        }
 
         ////////////////////////////////// start borrowing streams
         this.readyForLender = true;
@@ -187,11 +197,13 @@ class BorrowedConnection extends Thread implements StreamWrapperListener {
             this.borrowedOS.write(localSyncSign);
 
             // first round - read remain bytes from stream if any - make sure not to block
+            int n = 0;
             while(this.borrowedIS.available() > 0) {
                 readInt = this.borrowedIS.read();
                 readBefore = true;
+                n++;
             }
-            Log.writeLog(this, "done reading remaining bytes from stream: " + this);
+            Log.writeLog(this, "done reading (remaining) " + n + " bytes from stream: " + this);
 
             ////////////////////// ensure there is my counterpart talking on the other side & get in sync with it
 

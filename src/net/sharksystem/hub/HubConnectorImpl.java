@@ -64,11 +64,11 @@ public class HubConnectorImpl implements HubConnector {
 
     @Override
     public void syncHubInformation() throws IOException {
-        Log.writeLog(this, "sync called " + this.localPeerID);
+//        Log.writeLog(this, "sync called " + this.localPeerID);
         this.checkConnected();
-        Log.writeLog(this, "sync called #2 " + this.localPeerID);
+//        Log.writeLog(this, "sync called #2 " + this.localPeerID);
         this.sendPDU(new HubPDUHubStatusRQ());
-        Log.writeLog(this, "sync called #3 " + this.localPeerID);
+//        Log.writeLog(this, "sync called #3 " + this.localPeerID);
     }
 
     @Override
@@ -124,8 +124,6 @@ public class HubConnectorImpl implements HubConnector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void restartHubProtocolEngine() {
-        Helper.syncStream(this.hubIS, this.hubOS, this.lastMaxIdleInMillis);
-
         Log.writeLog(this, "restart hub protocol engine");
         HubConnectorProtocolEngine engine = new HubConnectorProtocolEngine(this.hubIS, this.hubOS);
         // send postponed pdu - if any
