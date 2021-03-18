@@ -91,10 +91,10 @@ public class HubSession implements SessionConnection {
                 @Override
                 public void run() {
                     try {
-                        Log.writeLog(this, "data session ended:#2 " + HubSession.this);
+                        //Log.writeLog(this, "data session ended:#2 " + HubSession.this);
                         borrowedConnection.close();
                         borrowedConnection.join();
-                        Log.writeLog(this, "data session ended:#3 " + HubSession.this);
+                        Log.writeLog(HubSession.this, "borrowed connection finished: " + HubSession.this);
                     } catch (InterruptedException e) {
                         // ignore
                     }
@@ -248,7 +248,7 @@ public class HubSession implements SessionConnection {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void proceedAfterDataSession(long syncTimeInMillis) {
-        Log.writeLog(this, "start hub protocol engine after data session: " + peerID);
+        Log.writeLog(this, "proceed after data session: " + peerID);
         this.startHubProtocolEngine();
 
         // another silent request during the data session?

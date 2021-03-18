@@ -190,14 +190,35 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
         /* at this moment: both sides are out of data session mode and willing to sync
         * Idea: Thank to our negotiation we can decide what sides starts. This side sends
         * a serious of same bytes. Other sides sends back.
+        *
+        * Problem: We do not know exactly when each party enters this state. We must ensure that neither process blocks
+
+        boolean beaconActive = true;
+        byte anotherSign = (byte) (localSyncSign & remoteSyncSign);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Log.writeLog(BorrowedConnection.this, "start beacon with " + anotherSign);
+                    while(beaconActive) {
+                            borrowedOS.write(anotherSign); // any sign - just write something
+                    }
+                } catch (IOException e) {
+                    // ignore
+                }
+                Log.writeLog( BorrowedConnection.this, "beacon ended");
+            }
+        }).start();
+        *
         * */
 
         try {
-            byte expectedSign;
             int counter = 0;
             boolean send;
 
-            expectedSign = iAmFirst ? localSyncSign : remoteSyncSign;
+            byte expectedSign = iAmFirst ? localSyncSign : remoteSyncSign;
+            byte unexpectedSign = iAmFirst ? remoteSyncSign : localSyncSign;
             send = iAmFirst;
 
             Log.writeLog(this, "start sync round: "
@@ -207,6 +228,9 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
                     + ": " + this
             );
 
+            // case: Comes second, other is sender but is already blocked in read(): write at least one sign to unblock
+            this.borrowedOS.write(unexpectedSign);
+            //Log.writeLog(this, "sent == " + unexpectedSign + " : " + this);
             while(counter < NUMBER_SYNC_SIGNS) {
                 if(send) {
                     // fill stream
@@ -223,10 +247,13 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
                     this.borrowedOS.write(expectedSign);
                     //Log.writeLog(this, "reply expected sign: " + this);
                 } else {
-                //    Log.writeLog(this, "reset counter " + this);
+                    //Log.writeLog(this, "reset counter " + this);
                     counter = 0;
                 }
             }
+
+            // Weird and I am not really sure - sometimes a single byte gets lost... this fixes it
+            /*for(int i = 0; i < NUMBER_SYNC_SIGNS; i++)*/ this.borrowedOS.write(expectedSign);
 
             Log.writeLog(this, "synchronised - empty input stream: " + this);
             while(this.borrowedIS.available() > 0) {

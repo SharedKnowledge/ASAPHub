@@ -12,6 +12,7 @@ import static net.sharksystem.hub.TestConstants.*;
 
 public class HubUsageTests {
     String ROOT_FOLDER = TestConstants.ROOT_DIRECTORY + HubUsageTests.class.getSimpleName() + "/";
+    int maxTimeInSeconds = 1;
 
     @Test
     public void usage() throws IOException, InterruptedException, ASAPException {
@@ -19,7 +20,7 @@ public class HubUsageTests {
         CharSequence host = "localhost";
         TCPHubEntity hub = new TCPHubEntity(specificPort);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
-        hub.setMaxIdleConnectionInSeconds(1);
+        hub.setMaxIdleConnectionInSeconds(maxTimeInSeconds);
         hub.start();
 
         HubConnector aliceHubConnector = TCPHubConnector.createTCPHubConnector(host, specificPort);
@@ -50,7 +51,7 @@ public class HubUsageTests {
         /// Alice meets Bob
         aliceHubConnector.connectPeer(BOB_ID);
 
-        Thread.sleep(3000);
+        Thread.sleep(maxTimeInSeconds * 1000 * 3);
         System.out.println("************************ back from sleep ****************************");
         //Thread.sleep(Long.MAX_VALUE);
         Assert.assertEquals(1, aliceListener.numberNotifications());
@@ -58,7 +59,7 @@ public class HubUsageTests {
 
         System.out.println("************************ alice connector disconnect ****************************");
         aliceHubConnector.disconnectHub();
-        Thread.sleep(1000);
+        Thread.sleep(maxTimeInSeconds * 1000 * 3);
 
         System.out.println("************************ bob connector sync ****************************");
         bobHubConnector.syncHubInformation();
