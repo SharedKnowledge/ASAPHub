@@ -134,6 +134,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
         // init first
         byte localSyncSign = (byte) localFirstSyncInt; // cut it to byte
         byte remoteSyncSign = (byte) remoteFirstSyncInt; // cut it to byte
+        boolean iAmFirst = localFirstSyncInt > remoteFirstSyncInt;
 
         /*
         Log.writeLog(this, "synchronised with maxMillis | sync number local|remote: " + this + " | "
@@ -166,85 +167,81 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
                 newSleepingTime = this.lastAction - bedtime;
                 if(this.lastAction == 0 || newSleepingTime <= 0) {
                     // nothing happened at all or is longer ahead than max waiting time
+                    Log.writeLog(this, "max time millis exceeded / close stream wrapper: " + this);
                     this.close(); // do not allow process to used borrowed streams any longer
                     break;
                 }
             } catch (InterruptedException e) {
                 // interrupted
+                Log.writeLog(this, "interrupted (most prob. closed) / wait timeout period: " + this);
+                this.close(); // do not allow process to used borrowed streams any longer
+                try {
+                    // other side cannot know about closed streams - this side must wait it out
+                    Thread.sleep(negotiatedMaxIdleInMillis);
+                } catch (InterruptedException interruptedException) {
+                    // ignore
+                }
                 break;
             }
         } while(!this.terminated);
         Log.writeLog(this, "take back lent streams: " + this);
 
         ////////////////////// re-take streams
-
-        // but first - sleep a little moment to increase the chance that both sides are run the cleaning protocol.
-        try {
-//            Log.writeLog(this, "another nap (half of max idle time) to ensure lender came to an end: " + this);
-
-            Thread.sleep(this.maxIdleInMillis / 2);
-        } catch (InterruptedException e) {
-            // ignore
-        }
+        /* at this moment: both sides are out of data session mode and willing to sync
+        * Idea: Thank to our negotiation we can decide what sides starts. This side sends
+        * a serious of same bytes. Other sides sends back.
+        * */
 
         try {
-            boolean remoteSyncSignRead = false;
-            boolean localSyncSignRead = false;
-            int readInt = 0;
-            boolean readBefore = false;
+            byte expectedSign;
+            int counter = 0;
+            boolean send;
 
-            // send a sign into stream to unblock a borrow readers
-            this.borrowedOS.write(localSyncSign);
+            expectedSign = iAmFirst ? localSyncSign : remoteSyncSign;
+            send = iAmFirst;
 
-            // first round - read remain bytes from stream if any - make sure not to block
-            int n = 0;
-            while(this.borrowedIS.available() > 0) {
-                readInt = this.borrowedIS.read();
-                readBefore = true;
-                n++;
+            Log.writeLog(this, "start sync round: "
+                    + "expectedSign == " + expectedSign
+                    + " | send == " + send
+                    + " | iAmFirst == " + iAmFirst
+                    + ": " + this
+            );
+
+            while(counter < NUMBER_SYNC_SIGNS) {
+                if(send) {
+                    // fill stream
+                    this.borrowedOS.write(expectedSign);
+                    //Log.writeLog(this, "write expected sign: " + this);
+                }
+
+                int readSign = this.borrowedIS.read();
+                if(readSign == -1) throw new IOException("read -1 - stream gone");
+                byte byteSign = (byte) readSign;
+                //Log.writeLog(this, "read == " + byteSign + " | counter == " + counter + " : " + this);
+                if (byteSign == expectedSign) {
+                    counter++;
+                    this.borrowedOS.write(expectedSign);
+                    //Log.writeLog(this, "reply expected sign: " + this);
+                } else {
+                //    Log.writeLog(this, "reset counter " + this);
+                    counter = 0;
+                }
             }
-            Log.writeLog(this, "done reading (remaining) " + n + " bytes from stream: " + this);
 
-            ////////////////////// ensure there is my counterpart talking on the other side & get in sync with it
-
-            // write local sync sign again
-            this.borrowedOS.write(localSyncSign);
-
-            do {
-                if(!readBefore) {
-                    readInt = this.borrowedIS.read();
-                }
-
-                readBefore = false;
-                byte readByte = (byte) readInt;
-                if(readByte == localSyncSign) {
-//                    Log.writeLog(this, "local sync sign read: " + this);
-                    localSyncSignRead = true;
-                }
-                else if(readByte == remoteSyncSign) {
-//                    Log.writeLog(this, "remote sync sign read: " + this);
-                    remoteSyncSignRead = true;
-                    this.borrowedOS.write(remoteSyncSign);
-                }
-            } while(!localSyncSignRead || !remoteSyncSignRead);
-
-            // both sync signs read - we are in sync
-
-            // just in case
-//            Log.writeLog(this, "final check on remaining signs on stream: " + this);
+            Log.writeLog(this, "synchronised - empty input stream: " + this);
             while(this.borrowedIS.available() > 0) {
                 this.borrowedIS.read();
             }
 
-            // streams are empty now
-            Log.writeLog(this, "synchronised: " + this);
         } catch (IOException e) {
             // end give this thread back - borrowed streams are most probably closed
             Log.writeLog(this, "ioException on borrowed streams - give up: " + this);
             this.exception = e;
-            e.printStackTrace();
+            //e.printStackTrace();
         }
 
+        // streams are empty now
+        Log.writeLog(this, "thread ended: " + this);
         // end thread
     }
 
@@ -261,6 +258,10 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
 
     public String toString() {
         return this.debugID;
+    }
+
+    public long getMaxIdleInMillis() {
+        return this.maxIdleInMillis;
     }
 
     private class InputStreamWrapper extends InputStream {

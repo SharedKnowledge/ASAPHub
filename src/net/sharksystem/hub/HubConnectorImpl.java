@@ -33,7 +33,11 @@ public class HubConnectorImpl implements HubConnector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void checkConnected() throws IOException {
-        if(this.localPeerID == null) throw new IOException("not connected to hub yet");
+        if(!this.isConnected()) throw new IOException("not connected to hub yet");
+    }
+
+    private boolean isConnected() {
+        return(this.localPeerID != null);
     }
 
     private boolean hubProtocolRunning() {
@@ -119,12 +123,32 @@ public class HubConnectorImpl implements HubConnector {
         }
     }
 
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if(this.isConnected()) {
+            sb.append(this.localPeerID);
+        } else {
+            sb.append("not connected to hub");
+        }
+
+        return sb.toString();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                data connection establishment                                   //
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void restartHubProtocolEngine() {
-        Log.writeLog(this, "restart hub protocol engine");
+        try {
+            this.checkConnected();
+        } catch (IOException e) {
+            // not connected any longer
+            Log.writeLog(this,
+                    "not connected any longer to hub - do not try to relaunch hub protocol engine: " + this);
+            return;
+        }
+
+        Log.writeLog(this, "restart hub protocol engine: " + this);
         HubConnectorProtocolEngine engine = new HubConnectorProtocolEngine(this.hubIS, this.hubOS);
         // send postponed pdu - if any
         if(!this.pduList.isEmpty()) {

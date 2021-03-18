@@ -23,12 +23,12 @@ class HubDataSession extends Thread {
             String a2bIDString = "HubSession(" + sideA.getPeerID() + ") => HubSession(" + sideB.getPeerID() + ")";
             StreamLink a2bLink = new StreamLink(
                     sessionConnectionA.getInputStream(), sessionConnectionB.getOutputStream(),
-                    this.maxIdleInMillis, false, a2bIDString);
+                    this.maxIdleInMillis, true, a2bIDString);
 
             String b2aIDString = "HubSession(" + sideB.getPeerID() + ") => HubSession(" + sideA.getPeerID() + ")";
             StreamLink b2aLink = new StreamLink(
                     sessionConnectionB.getInputStream(), sessionConnectionA.getOutputStream(),
-                    this.maxIdleInMillis, false, b2aIDString);
+                    this.maxIdleInMillis, true, b2aIDString);
 
             Log.writeLog(this, "launch stream links: " + this);
             a2bLink.start();
@@ -36,6 +36,7 @@ class HubDataSession extends Thread {
 
             try { a2bLink.join(); } catch (InterruptedException e) { /* ignore */ }
             try { b2aLink.join(); } catch (InterruptedException e) { /* ignore */ }
+            Log.writeLog(this, "stream link threads ended: " + this);
 
             // end thread
             this.sideA.dataSessionEnded(sessionConnectionA);

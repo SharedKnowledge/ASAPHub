@@ -23,26 +23,30 @@ class StreamLink extends Thread {
         this(sourceIS, targetOS, maxIdleInMillis, closeStreams, "no id");
     }
 
+    public void close() {
+        this.again = false;
+    }
+
+    private boolean again = true;
+
     public void run() {
         //Log.writeLog(this, "start read/write loop");
         try {
             int read = -1;
-            boolean again;
             do {
-                again = false;
                 int available = sourceIS.available();
                 if (available > 0) {
                     byte[] buffer = new byte[available];
                     sourceIS.read(buffer);
                     targetOS.write(buffer);
-                    again = true;
                 } else {
                     // block
                     //Log.writeLog(this, "going to block in read(): " + id);
                     read = sourceIS.read();
                     if(read != -1) {
                         targetOS.write(read);
-                        again = true;
+                    } else {
+                        again = false;
                     }
                 }
             } while (again);
@@ -50,8 +54,11 @@ class StreamLink extends Thread {
             Log.writeLog(this, "ioException - most probably connection closed: " + id);
         } finally {
             if(this.closeStreams) {
-                try {this.targetOS.close();} catch (IOException ioException) { /* ignore */ }
-                try {this.sourceIS.close();} catch (IOException ioException) { /* ignore */ }
+                Log.writeLog(this, "close streams: " + id);
+                try {this.targetOS.close();}
+                catch (IOException ioException) { Log.writeLog(this, "failed close input stream: " + id); }
+                try {this.sourceIS.close();}
+                catch (IOException ioException) { Log.writeLog(this, "failed close output stream: " + id); }
             }
 
             Log.writeLog(this, "end connection: " + id);

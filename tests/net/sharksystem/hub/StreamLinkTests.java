@@ -151,7 +151,7 @@ public class StreamLinkTests {
         StreamLink two2one = new StreamLink(side2A_IS, side1B_OS, maxIdleMillis, true, "Alice <= Bob");
         two2one.start();
 
-        // simulate protocol a exchange
+        // simulate protocol
         System.out.println("+++++++++++++++++ simulate protocol ++++++++++++++++++");
         int rounds = 5;
         DataExchangeTester aliceDataSession = new DataExchangeTester(side1A_IS, side1A_OS, rounds, "Alice");

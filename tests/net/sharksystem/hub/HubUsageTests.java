@@ -51,6 +51,7 @@ public class HubUsageTests {
         aliceHubConnector.connectPeer(BOB_ID);
 
         Thread.sleep(3000);
+        System.out.println("************************ back from sleep ****************************");
         //Thread.sleep(Long.MAX_VALUE);
         Assert.assertEquals(1, aliceListener.numberNotifications());
         Assert.assertEquals(1, bobListener.numberNotifications());

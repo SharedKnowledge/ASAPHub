@@ -82,6 +82,7 @@ public class HubSession implements SessionConnection {
     }
 
     public void dataSessionEnded(SessionConnection sessionConnection) {
+        Log.writeLog(this, "data session ended: " + this);
         if(sessionConnection instanceof BorrowedConnection) {
             BorrowedConnection borrowedConnection = (BorrowedConnection) sessionConnection;
 
@@ -90,18 +91,17 @@ public class HubSession implements SessionConnection {
                 @Override
                 public void run() {
                     try {
+                        Log.writeLog(this, "data session ended:#2 " + HubSession.this);
+                        borrowedConnection.close();
                         borrowedConnection.join();
+                        Log.writeLog(this, "data session ended:#3 " + HubSession.this);
                     } catch (InterruptedException e) {
                         // ignore
                     }
+                    proceedAfterDataSession(borrowedConnection.getMaxIdleInMillis());
                 }
             });
             wait4BorrowedConnection.start();
-            try {
-                wait4BorrowedConnection.join();
-            } catch (InterruptedException e) {
-                // ignore
-            }
         }
 
         this.dataConnectionOn = false;
@@ -181,12 +181,12 @@ public class HubSession implements SessionConnection {
             } catch (IOException | ASAPException e) {
                 Log.writeLog(this, "connection lost to: " + HubSession.this.peerID);
                 Log.writeLog(this, "remove connection to: " + HubSession.this.peerID);
+                HubSession.this.hub.sessionEnded(HubSession.this.peerID, HubSession.this);
             } catch (ClassCastException e) {
                 Log.writeLog(this, "wrong pdu class - crazy: " + e.getLocalizedMessage());
             }
             finally {
                 Log.writeLog(this, "end hub session with: " + HubSession.this.peerID);
-                //HubSession.this.hub.sessionEnded(HubSession.this.peerID, HubSession.this);
             }
         }
     }
@@ -247,7 +247,7 @@ public class HubSession implements SessionConnection {
     //                                switching hub protocol / data stream management                        //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private void dataConnectionFinished(long syncTimeInMillis) {
+    private void proceedAfterDataSession(long syncTimeInMillis) {
         Log.writeLog(this, "start hub protocol engine after data session: " + peerID);
         this.startHubProtocolEngine();
 
