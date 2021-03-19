@@ -15,7 +15,7 @@ public class HubConnectorImpl implements HubConnector {
     private NewConnectionListener listener;
 
     private HubConnectorProtocolEngine hubConnectorProtocolEngine;
-    private ConnectorDataChannelEstablishmentThread dataChannelEstablishmentThread;
+    private DataSessionEstablishmentThread dataChannelEstablishmentThread;
 
     private Collection<CharSequence> peerIDs = new ArrayList<>();
     private CharSequence localPeerID;
@@ -67,45 +67,44 @@ public class HubConnectorImpl implements HubConnector {
     }
 
     @Override
-    public void syncHubInformation() throws IOException {
-//        Log.writeLog(this, "sync called " + this.localPeerID);
-        this.checkConnected();
-//        Log.writeLog(this, "sync called #2 " + this.localPeerID);
-        this.sendPDU(new HubPDUHubStatusRQ());
-//        Log.writeLog(this, "sync called #3 " + this.localPeerID);
-    }
-
-    @Override
-    public void connectPeer(CharSequence peerID) throws IOException {
-        this.checkConnected();
-
-        // register with hub
-        this.sendPDU(new HubPDUConnectPeerRQ(peerID));
-    }
-
-    @Override
     public void disconnectHub() throws IOException {
         this.localPeerID = null;
         this.hubConnectorProtocolEngine.kill();
     }
 
-    private List<HubPDU> pduList = new ArrayList<>();
-    private void sendPDU(HubPDU pdu) throws IOException {
-//        Log.writeLog(this, "sendPDU called #1 " + this.localPeerID);
-        this.checkConnected();
-//        Log.writeLog(this, "sendPDU called #2 " + this.localPeerID);
-        if(this.hubProtocolRunning()) {
-//            Log.writeLog(this, "sendPDU called #3 " + this.localPeerID);
-            // hub protocol engine is up and running - send pdu
-            pdu.sendPDU(this.hubOS);
-//            Log.writeLog(this, "sendPDU called #4 " + this.localPeerID);
-        } else {
-            // engine not running but connected - we are in a data session
+    @Override
+    public void syncHubInformation() throws IOException {
+        this.sendPDU(new HubPDUHubStatusRQ());
+    }
+
+    private List<HubPDUConnectPeerRQ> connectRQList = new ArrayList<>();
+
+    @Override
+    public void connectPeer(CharSequence peerID) throws IOException {
+        HubPDUConnectPeerRQ connectRQ = new HubPDUConnectPeerRQ(peerID);
+        if(!this.sendPDU(connectRQ)) {
             synchronized (this) {
-//                Log.writeLog(this, "sendPDU called #5 " + this.localPeerID);
-                this.pduList.add(pdu);
+                for(HubPDUConnectPeerRQ otherRQ : this.connectRQList) {
+                    if(otherRQ.peerID.toString().equalsIgnoreCase(peerID.toString())) {
+                        Log.writeLog(this, "there is already a connect request to " + peerID);
+                        return;
+                    }
+                }
+                this.connectRQList.add(connectRQ);
             }
         }
+    }
+
+    private boolean sendPDU(HubPDU pdu) throws IOException {
+        this.checkConnected();
+        if(this.hubProtocolRunning()) {
+            synchronized (this.hubOS) {
+                pdu.sendPDU(this.hubOS);
+            }
+            return true;
+        }
+
+        return false;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,9 +138,7 @@ public class HubConnectorImpl implements HubConnector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void restartHubProtocolEngine() {
-        try {
-            this.checkConnected();
-        } catch (IOException e) {
+        if(!this.isConnected()) {
             // not connected any longer
             Log.writeLog(this,
                     "not connected any longer to hub - do not try to relaunch hub protocol engine: " + this);
@@ -149,56 +146,42 @@ public class HubConnectorImpl implements HubConnector {
         }
 
         Log.writeLog(this, "restart hub protocol engine: " + this);
-        HubConnectorProtocolEngine engine = new HubConnectorProtocolEngine(this.hubIS, this.hubOS);
-        // send postponed pdu - if any
-        if(!this.pduList.isEmpty()) {
-            Log.writeLog(this, "send stored hub pdus");
-            synchronized (this) {
-                for (HubPDU pdu : this.pduList) {
+        this.hubConnectorProtocolEngine = new HubConnectorProtocolEngine(this.hubIS, this.hubOS);
+        this.hubConnectorProtocolEngine.start();
+        Log.writeLog(this, "ask for fresh hub status: " + this);
+        try {
+            HubConnectorImpl.this.syncHubInformation();
+        } catch (IOException e) {
+            /* ignore */
+        }
+
+        // send postponed connect pdus - if any
+        synchronized (this) {
+            if(!this.connectRQList.isEmpty()) {
+                Log.writeLog(this, "send stored hub pdus");
+                for (HubPDU connectRQ : this.connectRQList) {
                     try {
-                        this.sendPDU(pdu);
+                        synchronized (this.hubOS) {
+                            connectRQ.sendPDU(this.hubOS);
+                        }
                     } catch (IOException e) {
                         // fatal
                         Log.writeLogErr(this, "cannot write to stream / fatal: " + e.getLocalizedMessage());
-                        engine.kill();
+                        this.hubConnectorProtocolEngine.kill();
                         return;
                     }
                 }
-                this.pduList = new ArrayList<>();
-            }
-        }
-
-        // would send pdus again
-        this.hubConnectorProtocolEngine = engine;
-    }
-
-    private class RelaunchHubProtocolEngineThread extends Thread {
-        private final long duration;
-        private final Thread thread2interrupt;
-
-        RelaunchHubProtocolEngineThread(long duration, Thread thread2interrupt) {
-            this.duration = duration;
-            this.thread2interrupt = thread2interrupt;
-        }
-        public void run() {
-            Log.writeLog(this, "wait");
-            try {
-                Thread.sleep(duration);
-                Log.writeLog(this, "interrupt reader thread");
-                this.thread2interrupt.interrupt();
-                HubConnectorImpl.this.restartHubProtocolEngine();
-            } catch (InterruptedException e) {
-                Log.writeLog(this, "interrupted / ioException");
+                this.connectRQList = new ArrayList<>();
             }
         }
     }
 
-    private class ConnectorDataChannelEstablishmentThread implements Runnable {
+    private class DataSessionEstablishmentThread implements Runnable {
         private final InputStream hubIS;
         private final OutputStream hubOS;
         private final long remainSilentInMillis;
 
-        public ConnectorDataChannelEstablishmentThread(InputStream hubIS, OutputStream hubOS, long remainSilentInMillis) {
+        public DataSessionEstablishmentThread(InputStream hubIS, OutputStream hubOS, long remainSilentInMillis) {
             this.hubIS = hubIS;
             this.hubOS = hubOS;
             this.remainSilentInMillis = remainSilentInMillis;
@@ -212,7 +195,9 @@ public class HubConnectorImpl implements HubConnector {
 
                 HubPDUSilentRPLY silentRPLY = new HubPDUSilentRPLY(this.remainSilentInMillis);
                 try {
-                    silentRPLY.sendPDU(this.hubOS);
+                    synchronized (this.hubOS) {
+                        silentRPLY.sendPDU(this.hubOS);
+                    }
 
                     HubPDU hubPDU = HubPDU.readPDU(this.hubIS);
 
@@ -305,7 +290,7 @@ public class HubConnectorImpl implements HubConnector {
                         HubConnectorImpl.this.silentUntil = System.currentTimeMillis() + silentRQ.waitDuration;
                         this.again = false; // end loop
                         // start DataChannelEstablishment
-                        new Thread(new ConnectorDataChannelEstablishmentThread(hubIS, hubOS, silentRQ.waitDuration)).start();
+                        new Thread(new DataSessionEstablishmentThread(hubIS, hubOS, silentRQ.waitDuration)).start();
                     }
 
                     // got reply: new connection to peer established

@@ -216,6 +216,8 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
         try {
             int counter = 0;
             boolean send;
+            long sumDiff = 0;
+            long lastArrival = 0;
 
             byte expectedSign = iAmFirst ? localSyncSign : remoteSyncSign;
             byte unexpectedSign = iAmFirst ? remoteSyncSign : localSyncSign;
@@ -243,21 +245,37 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
                 byte byteSign = (byte) readSign;
                 //Log.writeLog(this, "read == " + byteSign + " | counter == " + counter + " : " + this);
                 if (byteSign == expectedSign) {
+                    long now = System.currentTimeMillis();
                     counter++;
                     this.borrowedOS.write(expectedSign);
+                    if(lastArrival > 0) {
+                        sumDiff += now - lastArrival;
+                    }
+                    lastArrival = now;
                     //Log.writeLog(this, "reply expected sign: " + this);
                 } else {
                     //Log.writeLog(this, "reset counter " + this);
                     counter = 0;
+                    lastArrival = 0; sumDiff = 0;
                 }
             }
 
+            long avgDiff = sumDiff / counter;
+
             // Weird and I am not really sure - sometimes a single byte gets lost... this fixes it
             /*for(int i = 0; i < NUMBER_SYNC_SIGNS; i++)*/ this.borrowedOS.write(expectedSign);
+            this.borrowedOS.write(unexpectedSign);
 
-            Log.writeLog(this, "synchronised - empty input stream: " + this);
+            Log.writeLog(this, "synchronised (sum diff in ms: " + sumDiff + ") - empty input stream: " + this);
             while(this.borrowedIS.available() > 0) {
                 this.borrowedIS.read();
+            }
+
+            Log.writeLog(this, "wait " + sumDiff + " ms to give other side time to settle " + this);
+            try {
+                Thread.sleep(sumDiff);
+            } catch (InterruptedException e) {
+                // ignore
             }
 
         } catch (IOException e) {
