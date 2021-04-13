@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public interface SessionConnection {
+public interface StreamPair {
     /** InputStream to read data from the other side */
     InputStream getInputStream() throws IOException;
     /** OutputStream to send data to the other side */

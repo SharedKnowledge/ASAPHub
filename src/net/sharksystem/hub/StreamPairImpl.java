@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class SessionConnectionImpl implements SessionConnection {
+public class StreamPairImpl implements StreamPair {
     private final InputStream is;
     private final OutputStream os;
     private final CharSequence peerID;
 
-    public SessionConnectionImpl(InputStream is, OutputStream os, CharSequence peerID) {
+    public StreamPairImpl(InputStream is, OutputStream os, CharSequence peerID) {
         this.peerID = peerID;
         this.is = is;
         this.os = os;

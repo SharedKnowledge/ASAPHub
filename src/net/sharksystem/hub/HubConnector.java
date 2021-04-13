@@ -15,7 +15,7 @@ import java.util.Collection;
  * for each peer connection. This situation is also hidden from connector users.
  *
  * @author Thomas Schwotzer
- * @see HubEntity
+ * @see Hub
  */
 public interface HubConnector {
     /**

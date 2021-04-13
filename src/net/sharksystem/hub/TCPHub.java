@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TCPHubEntity extends Thread implements HubEntity, Hub {
+public class TCPHub extends Thread implements Hub, HubInternal {
     public static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
     private int maxIdleInMillis = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS * 1000;
 
@@ -23,11 +23,11 @@ public class TCPHubEntity extends Thread implements HubEntity, Hub {
     private int nextPort = 0;
     private Map<CharSequence, HubSession> hubSessions = new HashMap<>();
 
-    public TCPHubEntity() throws IOException {
+    public TCPHub() throws IOException {
         this(DEFAULT_PORT);
     }
 
-    public TCPHubEntity(int port) throws IOException {
+    public TCPHub(int port) throws IOException {
         this.port = port;
         this.nextPort = port+1;
         this.serverSocket = new ServerSocket(this.port);

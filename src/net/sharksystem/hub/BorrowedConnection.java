@@ -16,7 +16,7 @@ import java.util.Random;
  *
  * Object of this class are threads. This threads terminates if no data are transmitted over a defined period of time.
  */
-class BorrowedConnection extends Thread implements StreamWrapperListener, SessionConnection {
+class BorrowedConnection extends Thread implements StreamWrapperListener, StreamPair {
     private static final int NUMBER_SYNC_SIGNS = 10;
     private final InputStreamWrapper wrappedIS;
     private final OutputStreamWrapper wrappedOS;
@@ -243,7 +243,7 @@ class BorrowedConnection extends Thread implements StreamWrapperListener, Sessio
                 int readSign = this.borrowedIS.read();
                 if(readSign == -1) throw new IOException("read -1 - stream gone");
                 byte byteSign = (byte) readSign;
-                //Log.writeLog(this, "read == " + byteSign + " | counter == " + counter + " : " + this);
+                Log.writeLog(this, "read == " + byteSign + " | counter == " + counter + " : " + this);
                 if (byteSign == expectedSign) {
                     long now = System.currentTimeMillis();
                     counter++;

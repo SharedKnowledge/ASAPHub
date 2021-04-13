@@ -69,7 +69,10 @@ public class HubConnectorImpl implements HubConnector {
     @Override
     public void disconnectHub() throws IOException {
         this.localPeerID = null;
-        this.hubConnectorProtocolEngine.kill();
+        if(this.hubConnectorProtocolEngine != null) {
+            this.hubConnectorProtocolEngine.kill();
+        }
+        this.hubConnectorProtocolEngine = null;
     }
 
     @Override
@@ -221,7 +224,7 @@ public class HubConnectorImpl implements HubConnector {
 
                         // tell listener
                         listener.notifyPeerConnected(
-                                new SessionConnectionImpl(
+                                new StreamPairImpl(
                                         newConnection.getInputStream(),
                                         newConnection.getOutputStream(),
                                         otherPeerID));
@@ -273,14 +276,19 @@ public class HubConnectorImpl implements HubConnector {
             this.again = true;
         }
 
+        public void kill() {
+            this.again = false;
+        }
+
         public void run() {
             Log.writeLog(this, "launch management protocol engine connector side");
-            this.thread = Thread.currentThread();
+            HubConnectorImpl.this.hubConnectorProtocolEngine = this;
             try {
                 while(this.again) {
                     //Log.writeLog(this, "before read: " + localPeerID);
                     HubPDU hubPDU = HubPDU.readPDU(hubIS);
                     //Log.writeLog(this, "after read: " + localPeerID);
+                    if(!this.again) break; // check again after blocked in read
 
                     // get a silent request
                     if (hubPDU instanceof HubPDUSilentRQ) {
@@ -317,6 +325,10 @@ public class HubConnectorImpl implements HubConnector {
             } catch (ClassCastException e) {
                 Log.writeLog(this, "wrong pdu class - crazy: " + e.getLocalizedMessage());
             }
+            finally {
+                // unregister yourself
+                HubConnectorImpl.this.hubConnectorProtocolEngine = null;
+            }
 
             Log.writeLog(this, "end connector hub protocol engine: " + localPeerID);
         }
@@ -344,13 +356,6 @@ public class HubConnectorImpl implements HubConnector {
         private void handleHubStatsRequest(HubPDUHubStatusRPLY hubPDU) {
             synchronized (HubConnectorImpl.this) {
                 HubConnectorImpl.this.peerIDs = hubPDU.connectedPeers;
-            }
-        }
-
-        public void kill() {
-            this.again = false;
-            if(this.thread != null) {
-                this.thread.interrupt(); // nice try but would not help to get it out from read()
             }
         }
     }

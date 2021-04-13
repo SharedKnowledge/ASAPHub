@@ -11,20 +11,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class HubSession implements SessionConnection {
+public class HubSession implements StreamPair {
     private final InputStream is;
     private final OutputStream os;
-    private final Hub hub;
+    private final HubInternal hubInternal;
     private final String peerID;
 
-    public HubSession(InputStream is, OutputStream os, Hub hub)
+    public HubSession(InputStream is, OutputStream os, HubInternal hubInternal)
             throws IOException, ASAPException {
 
         this.is = is;
         this.os = os;
-        this.hub = hub;
+        this.hubInternal = hubInternal;
 
-        if(this.is == null || this.os == null || this.hub == null)
+        if(this.is == null || this.os == null || this.hubInternal == null)
             throw new ASAPException("streams and hub sessions manager objects must not be null");
 
         // read hello pdu
@@ -32,7 +32,7 @@ public class HubSession implements SessionConnection {
         this.peerID = hubPDURegister.peerID.toString();
         Log.writeLog(this, "new connector: " + this.peerID);
 
-        if(this.hub.isRegistered(this.peerID)) {
+        if(this.hubInternal.isRegistered(this.peerID)) {
             Log.writeLog(this, "already connected: " + this.peerID);
             // already exists
             throw new ASAPException("already connected: " + this.peerID);
@@ -53,11 +53,11 @@ public class HubSession implements SessionConnection {
 
     public void start() {
         (new HubSessionProtocolEngine()).start();
-        HubSession.this.hub.sessionStarted(HubSession.this.peerID, HubSession.this);
+        HubSession.this.hubInternal.sessionStarted(HubSession.this.peerID, HubSession.this);
     }
 
     private boolean dataConnectionOn = false;
-    public SessionConnection createDataConnection(CharSequence remotePeerID, long maxIdleInMillis) throws IOException {
+    public StreamPair createDataConnection(CharSequence remotePeerID, long maxIdleInMillis) throws IOException {
         Log.writeLog(this, "create data connection called: " + this);
         // TODO - right status?
         if(this.remainSilentThread != null) this.remainSilentThread.interrupt();
@@ -81,10 +81,10 @@ public class HubSession implements SessionConnection {
         return localBorrowedConnection;
     }
 
-    public void dataSessionEnded(SessionConnection sessionConnection) {
+    public void dataSessionEnded(StreamPair streamPair) {
         Log.writeLog(this, "data session ended: " + this);
-        if(sessionConnection instanceof BorrowedConnection) {
-            BorrowedConnection borrowedConnection = (BorrowedConnection) sessionConnection;
+        if(streamPair instanceof BorrowedConnection) {
+            BorrowedConnection borrowedConnection = (BorrowedConnection) streamPair;
 
             // let thread go away - we wait for our connection to come to an end
             Thread wait4BorrowedConnection = new Thread(new Runnable() {
@@ -166,7 +166,7 @@ public class HubSession implements SessionConnection {
                         HubPDUConnectPeerRQ connectRQ = (HubPDUConnectPeerRQ) hubPDU;
 
                         // ask hub to establish a silent connection to this peer - asynchronous call
-                        HubSession.this.hub.connectionRequest(connectRQ.peerID, HubSession.this);
+                        HubSession.this.hubInternal.connectionRequest(connectRQ.peerID, HubSession.this);
 
                     } else if (hubPDU instanceof HubPDUSilentRPLY) {
                         Log.writeLog(this, "got silent reply from " + HubSession.this.peerID);
@@ -181,7 +181,7 @@ public class HubSession implements SessionConnection {
             } catch (IOException | ASAPException e) {
                 Log.writeLog(this, "connection lost to: " + HubSession.this.peerID);
                 Log.writeLog(this, "remove connection to: " + HubSession.this.peerID);
-                HubSession.this.hub.sessionEnded(HubSession.this.peerID, HubSession.this);
+                HubSession.this.hubInternal.sessionEnded(HubSession.this.peerID, HubSession.this);
             } catch (ClassCastException e) {
                 Log.writeLog(this, "wrong pdu class - crazy: " + e.getLocalizedMessage());
             }
@@ -197,7 +197,7 @@ public class HubSession implements SessionConnection {
     }
 
     private void sendHubStatusRPLY() throws IOException {
-        Set<CharSequence> allPeers = this.hub.getRegisteredPeerIDs();
+        Set<CharSequence> allPeers = this.hubInternal.getRegisteredPeerIDs();
         // sort out calling peer
         //Log.writeLog(this, "assemble registered peer list for " + this.peerID);
         Set<CharSequence> peersWithoutCaller = new HashSet();
@@ -293,7 +293,7 @@ public class HubSession implements SessionConnection {
         this.remainSilentThread = new RemainSilentThread(duration);
         this.remainSilentThread.start();
         // notify hub after(!) that
-        this.hub.notifySilent(this);
+        this.hubInternal.notifySilent(this);
     }
 
     public boolean isSilent() {

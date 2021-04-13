@@ -17,17 +17,17 @@ class HubDataSession extends Thread {
 
     public void run() {
         try {
-            SessionConnection sessionConnectionA = sideA.createDataConnection(sideB.getPeerID(), this.maxIdleInMillis);
-            SessionConnection sessionConnectionB = sideB.createDataConnection(sideB.getPeerID(), this.maxIdleInMillis);
+            StreamPair streamPairA = sideA.createDataConnection(sideB.getPeerID(), this.maxIdleInMillis);
+            StreamPair streamPairB = sideB.createDataConnection(sideB.getPeerID(), this.maxIdleInMillis);
 
             String a2bIDString = "HubSession(" + sideA.getPeerID() + ") => HubSession(" + sideB.getPeerID() + ")";
             StreamLink a2bLink = new StreamLink(
-                    sessionConnectionA.getInputStream(), sessionConnectionB.getOutputStream(),
+                    streamPairA.getInputStream(), streamPairB.getOutputStream(),
                     this.maxIdleInMillis, true, a2bIDString);
 
             String b2aIDString = "HubSession(" + sideB.getPeerID() + ") => HubSession(" + sideA.getPeerID() + ")";
             StreamLink b2aLink = new StreamLink(
-                    sessionConnectionB.getInputStream(), sessionConnectionA.getOutputStream(),
+                    streamPairB.getInputStream(), streamPairA.getOutputStream(),
                     this.maxIdleInMillis, true, b2aIDString);
 
             Log.writeLog(this, "launch stream links: " + this);
@@ -39,8 +39,8 @@ class HubDataSession extends Thread {
             Log.writeLog(this, "stream link threads ended: " + this);
 
             // end thread
-            this.sideA.dataSessionEnded(sessionConnectionA);
-            this.sideB.dataSessionEnded(sessionConnectionB);
+            this.sideA.dataSessionEnded(streamPairA);
+            this.sideB.dataSessionEnded(streamPairB);
 
         } catch (IOException e) {
             Log.writeLogErr(this, "cannot send channel clear pdu: " + e.getLocalizedMessage());
