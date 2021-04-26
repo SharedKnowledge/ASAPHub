@@ -1,4 +1,4 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-abstract class HubPDU {
+public abstract class HubPDU {
     static final byte HUB_REGISTER = 0;
     static final byte CONNECT_PEER_REQUEST = 1;
     static final byte CONNECT_PEER_REPLY = 2;
@@ -41,7 +41,7 @@ abstract class HubPDU {
         }
     }
 
-    abstract void sendPDU(OutputStream os) throws IOException;
+    public abstract void sendPDU(OutputStream os) throws IOException;
 
     void sendPDUNumber(OutputStream os) throws IOException {
         ASAPSerialization.writeByteParameter(pduNumber, os);

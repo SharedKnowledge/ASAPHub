@@ -1,4 +1,4 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class HubPDUChannelClear extends HubConnectionPDU {
-    final long maxIdleInMillis;
+    public final long maxIdleInMillis;
 
     public HubPDUChannelClear(CharSequence sourcePeerID, CharSequence targetPeerID, long maxIdleInMillis) {
         super(HubPDU.CHANNEL_CLEAR, sourcePeerID, targetPeerID);
@@ -21,7 +21,7 @@ public class HubPDUChannelClear extends HubConnectionPDU {
     }
 
     @Override
-    void sendPDU(OutputStream os) throws IOException {
+    public void sendPDU(OutputStream os) throws IOException {
         super.sendPDUNumber(os);
         super.sendFromTo(os);
         ASAPSerialization.writeLongParameter(this.maxIdleInMillis, os);

@@ -1,6 +1,9 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.connectorside;
 
 import net.sharksystem.asap.ASAPException;
+import net.sharksystem.hub.protocol.HubPDU;
+import net.sharksystem.hub.protocol.HubPDUConnectPeerNewConnectionRPLY;
+import net.sharksystem.hub.protocol.HubPDUHubStatusRPLY;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;

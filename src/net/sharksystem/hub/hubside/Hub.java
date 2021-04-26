@@ -1,6 +1,7 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPPeer;
+import net.sharksystem.hub.connectorside.HubConnector;
 
 /**
  * A hub is an infrastructure element supporting ASAP applications. Any ASAP communication takes place during

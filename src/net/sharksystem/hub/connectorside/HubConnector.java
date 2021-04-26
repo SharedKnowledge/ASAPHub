@@ -1,4 +1,6 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.connectorside;
+
+import net.sharksystem.hub.hubside.Hub;
 
 import java.io.IOException;
 import java.util.Collection;

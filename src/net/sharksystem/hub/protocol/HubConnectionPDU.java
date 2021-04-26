@@ -1,4 +1,4 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-abstract class HubConnectionPDU extends HubPDU {
-    final CharSequence sourcePeerID;
-    final CharSequence targetPeerID;
+public abstract class HubConnectionPDU extends HubPDU {
+    public final CharSequence sourcePeerID;
+    public final CharSequence targetPeerID;
 
     HubConnectionPDU(byte pduNumber, CharSequence sourcePeerID, CharSequence targetPeerID) {
         super(pduNumber);

@@ -6,13 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class StreamLink extends Thread {
+public class StreamLink extends Thread {
     private final InputStream sourceIS;
     private final OutputStream targetOS;
     private final boolean closeStreams;
     private String id = "anon";
 
-    StreamLink(InputStream sourceIS, OutputStream targetOS, long maxIdleInMillis, boolean closeStreams, String id) {
+    public StreamLink(InputStream sourceIS, OutputStream targetOS, long maxIdleInMillis, boolean closeStreams, String id) {
         this.sourceIS = sourceIS;
         this.targetOS = targetOS;
         this.closeStreams = closeStreams;

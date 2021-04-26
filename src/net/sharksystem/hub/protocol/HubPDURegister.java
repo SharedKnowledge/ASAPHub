@@ -1,4 +1,4 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class HubPDURegister extends HubPDU {
-    final CharSequence peerID;
+public class HubPDURegister extends HubPDU {
+    public final CharSequence peerID;
 
-    HubPDURegister(CharSequence peerID) {
+    public HubPDURegister(CharSequence peerID) {
         super(HUB_REGISTER);
         this.peerID = peerID;
     }
@@ -21,7 +21,7 @@ class HubPDURegister extends HubPDU {
     }
 
     @Override
-    void sendPDU(OutputStream os) throws IOException {
+    public void sendPDU(OutputStream os) throws IOException {
         super.sendPDUNumber(os);
         ASAPSerialization.writeCharSequenceParameter(this.peerID, os);
     }

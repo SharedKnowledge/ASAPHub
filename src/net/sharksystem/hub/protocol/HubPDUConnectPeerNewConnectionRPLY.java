@@ -1,4 +1,4 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-class HubPDUConnectPeerNewConnectionRPLY extends HubPDU {
+public class HubPDUConnectPeerNewConnectionRPLY extends HubPDU {
     CharSequence peerID;
     int port;
 
@@ -24,7 +24,7 @@ class HubPDUConnectPeerNewConnectionRPLY extends HubPDU {
     }
 
     @Override
-    void sendPDU(OutputStream os) throws IOException {
+    public void sendPDU(OutputStream os) throws IOException {
         super.sendPDUNumber(os);
         ASAPSerialization.writeIntegerParameter(this.port, os);
         ASAPSerialization.writeCharSequenceParameter(this.peerID, os);

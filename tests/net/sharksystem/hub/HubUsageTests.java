@@ -2,6 +2,10 @@ package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
+import net.sharksystem.hub.connectorside.HubConnector;
+import net.sharksystem.hub.connectorside.NewConnectionListener;
+import net.sharksystem.hub.connectorside.TCPHubConnector;
+import net.sharksystem.hub.hubside.TCPHub;
 import org.junit.Assert;
 import org.junit.Test;
 

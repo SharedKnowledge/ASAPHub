@@ -1,6 +1,7 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPException;
+import net.sharksystem.hub.StreamPair;
 
 import java.io.IOException;
 import java.util.Set;
@@ -32,7 +33,6 @@ public interface HubInternal {
      * Ask hub to create a new connection to a peer within the hub. Hub calls openDataSession in return
      * @param peerID target peer id
      * @return open connection
-     * @see HubSession#openDataSession(StreamPair)
      */
     void connectionRequest(CharSequence peerID, HubSession hubSession) throws ASAPException, IOException;
 

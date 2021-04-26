@@ -1,4 +1,6 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.connectorside;
+
+import net.sharksystem.hub.StreamPair;
 
 /**
  * Peer can establish a connected mediated by a hub. This listener interface is used whenever a new connection

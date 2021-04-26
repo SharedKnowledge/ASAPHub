@@ -1,4 +1,4 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-abstract class HubPDUSilent extends HubPDU {
-    long waitDuration;
+public abstract class HubPDUSilent extends HubPDU {
+    public long waitDuration;
 
     public HubPDUSilent(byte pduNumber, long waitDuration) {
         super(pduNumber);
@@ -21,7 +21,7 @@ abstract class HubPDUSilent extends HubPDU {
     }
 
     @Override
-    void sendPDU(OutputStream os) throws IOException {
+    public void sendPDU(OutputStream os) throws IOException {
         super.sendPDUNumber(os);
         ASAPSerialization.writeLongParameter(this.waitDuration, os);
     }

@@ -1,6 +1,8 @@
-package net.sharksystem.hub;
+package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPException;
+import net.sharksystem.hub.*;
+import net.sharksystem.hub.protocol.*;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
