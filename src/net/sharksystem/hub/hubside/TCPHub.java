@@ -2,10 +2,6 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPPeer;
-import net.sharksystem.hub.hubside.Hub;
-import net.sharksystem.hub.hubside.HubDataSession;
-import net.sharksystem.hub.hubside.HubInternal;
-import net.sharksystem.hub.hubside.HubSession;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -16,7 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TCPHub extends Thread implements Hub, HubInternal {
+public class TCPHub extends Thread implements Hub, HubInternalOld {
     public static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
     private int maxIdleInMillis = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS * 1000;
 

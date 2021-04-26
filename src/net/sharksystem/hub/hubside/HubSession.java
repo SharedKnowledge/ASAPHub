@@ -16,10 +16,10 @@ import java.util.Set;
 public class HubSession implements StreamPair {
     private final InputStream is;
     private final OutputStream os;
-    private final HubInternal hubInternal;
+    private final HubInternalOld hubInternal;
     private final String peerID;
 
-    public HubSession(InputStream is, OutputStream os, HubInternal hubInternal)
+    public HubSession(InputStream is, OutputStream os, HubInternalOld hubInternal)
             throws IOException, ASAPException {
 
         this.is = is;
