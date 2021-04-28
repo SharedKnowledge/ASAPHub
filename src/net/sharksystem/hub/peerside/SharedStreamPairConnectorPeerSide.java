@@ -1,4 +1,4 @@
-package net.sharksystem.hub.connectorside;
+package net.sharksystem.hub.peerside;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.protocol.HubPDU;

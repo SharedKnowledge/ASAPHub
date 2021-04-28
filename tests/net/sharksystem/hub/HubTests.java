@@ -1,8 +1,8 @@
 package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
-import net.sharksystem.hub.connectorside.HubConnector;
-import net.sharksystem.hub.connectorside.SharedStreamPairConnectorPeerSide;
+import net.sharksystem.hub.peerside.HubConnector;
+import net.sharksystem.hub.peerside.SharedStreamPairConnectorPeerSide;
 import net.sharksystem.hub.hubside.TCPHub;
 
 import java.io.IOException;
