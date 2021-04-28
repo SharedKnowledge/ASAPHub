@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * An existing pair of input and output stream shall temporary be used by another process (a data session). Actual
+ * An existing pair of input and output stream shall temporarily be used by another process (a data session). Actual
  * user of this data session is unknown. It can (and most probably will) close a connection after finished. This must
  * not effect the established stream pair.
  *
  * Object of this class are threads. This threads terminates if no data are transmitted over a defined period of time.
  */
-public class BorrowedConnection extends Thread implements StreamWrapperListener, StreamPair {
+public class ObservedConnection extends Thread implements StreamPairListener, StreamPair {
     private static final int NUMBER_SYNC_SIGNS = 10;
     private final InputStreamWrapper wrappedIS;
     private final OutputStreamWrapper wrappedOS;
@@ -26,7 +26,7 @@ public class BorrowedConnection extends Thread implements StreamWrapperListener,
     private final OutputStream borrowedOS;
     private IOException exception;
 
-    public BorrowedConnection(InputStream borrowedIS, OutputStream borrowedOS, CharSequence debugID, long maxIdleInMillis) {
+    public ObservedConnection(InputStream borrowedIS, OutputStream borrowedOS, CharSequence debugID, long maxIdleInMillis) {
         this.borrowedIS = borrowedIS;
         this.borrowedOS = borrowedOS;
         this.wrappedIS = new InputStreamWrapper(borrowedIS, this);
@@ -35,7 +35,7 @@ public class BorrowedConnection extends Thread implements StreamWrapperListener,
         this.maxIdleInMillis = maxIdleInMillis;
     }
 
-    BorrowedConnection(InputStream borrowedIS, OutputStream borrowedOS, long maxIdleInMillis) {
+    ObservedConnection(InputStream borrowedIS, OutputStream borrowedOS, long maxIdleInMillis) {
         this(borrowedIS, borrowedOS, "untagged", maxIdleInMillis);
     }
 
@@ -293,11 +293,11 @@ public class BorrowedConnection extends Thread implements StreamWrapperListener,
     private long lastAction = 0;
 
     @Override
-    public void notifyClosed() {
+    public void notifyClosed(int key) {
         this.close();
     }
 
-    public void notifyAction() {
+    public void notifyAction(int key) {
         this.lastAction = System.currentTimeMillis();
     }
 
@@ -311,10 +311,10 @@ public class BorrowedConnection extends Thread implements StreamWrapperListener,
 
     private class InputStreamWrapper extends InputStream {
         private final InputStream is;
-        private final StreamWrapperListener listener;
+        private final StreamPairListener listener;
         private boolean closed = false;
 
-        InputStreamWrapper(InputStream is, StreamWrapperListener listener) {
+        InputStreamWrapper(InputStream is, StreamPairListener listener) {
             this.is = is;
             this.listener = listener;
         }
@@ -323,7 +323,7 @@ public class BorrowedConnection extends Thread implements StreamWrapperListener,
         public int read() throws IOException {
             if (this.closed) throw new IOException("stream close");
             int i = this.is.read();
-            this.listener.notifyAction();
+            this.listener.notifyAction(42);
             if(terminated) throw new IOException("stream closed");
             return i;
         }
@@ -331,16 +331,16 @@ public class BorrowedConnection extends Thread implements StreamWrapperListener,
         public void close() {
             if (this.closed) return;
             this.closed = true;
-            this.listener.notifyClosed();
+            this.listener.notifyClosed(42);
         }
     }
 
     private class OutputStreamWrapper extends OutputStream {
         private final OutputStream os;
-        private final StreamWrapperListener listener;
+        private final StreamPairListener listener;
         private boolean closed = false;
 
-        OutputStreamWrapper(OutputStream os, StreamWrapperListener listener) {
+        OutputStreamWrapper(OutputStream os, StreamPairListener listener) {
             this.os = os;
             this.listener = listener;
         }
@@ -349,13 +349,13 @@ public class BorrowedConnection extends Thread implements StreamWrapperListener,
         public void write(int value) throws IOException {
             if (this.closed) throw new IOException("stream close");
             this.os.write(value);
-            this.listener.notifyAction();
+            this.listener.notifyAction(42);
         }
 
         public void close() {
             if (this.closed) return;
             this.closed = true;
-            this.listener.notifyClosed();
+            this.listener.notifyClosed(42);
         }
     }
 }

@@ -219,7 +219,7 @@ public class HubConnectorImpl implements HubConnector {
                                     channelClear.targetPeerID : channelClear.sourcePeerID;
 
                         String debugID = "Connector => HubSession (" + localPeerID + ")";
-                        BorrowedConnection newConnection = new BorrowedConnection(
+                        ObservedConnection newConnection = new ObservedConnection(
                                 hubIS, hubOS, debugID, channelClear.maxIdleInMillis);
 
                         newConnection.start();

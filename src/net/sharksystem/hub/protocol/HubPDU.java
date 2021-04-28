@@ -2,6 +2,7 @@ package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
+import net.sharksystem.hub.ASAPHubException;
 
 import java.io.IOException;
 import java.io.InputStream;

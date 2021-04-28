@@ -12,15 +12,15 @@ public class StreamLink extends Thread {
     private final boolean closeStreams;
     private String id = "anon";
 
-    public StreamLink(InputStream sourceIS, OutputStream targetOS, long maxIdleInMillis, boolean closeStreams, String id) {
+    public StreamLink(InputStream sourceIS, OutputStream targetOS, boolean closeStreams, String id) {
         this.sourceIS = sourceIS;
         this.targetOS = targetOS;
         this.closeStreams = closeStreams;
         this.id = id;
     }
 
-    StreamLink(InputStream sourceIS, OutputStream targetOS, long maxIdleInMillis, boolean closeStreams) {
-        this(sourceIS, targetOS, maxIdleInMillis, closeStreams, "no id");
+    StreamLink(InputStream sourceIS, OutputStream targetOS, boolean closeStreams) {
+        this(sourceIS, targetOS, closeStreams, "no id");
     }
 
     public void close() {
@@ -30,7 +30,7 @@ public class StreamLink extends Thread {
     private boolean again = true;
 
     public void run() {
-        //Log.writeLog(this, "start read/write loop");
+        Log.writeLog(this, "start read/write loop");
         try {
             int read = -1;
             do {

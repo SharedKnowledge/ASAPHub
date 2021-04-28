@@ -1,7 +1,6 @@
 package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPException;
-import net.sharksystem.asap.ASAPPeer;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -12,7 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TCPHub extends Thread implements Hub, HubInternalOld {
+public class TCPHub extends HubSingleEntity implements Runnable {
     public static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
     private int maxIdleInMillis = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS * 1000;
 
@@ -21,7 +20,6 @@ public class TCPHub extends Thread implements Hub, HubInternalOld {
     private int minPort = 0;
     private int maxPort = 0;
     private int nextPort = 0;
-    private Map<CharSequence, HubSession> hubSessions = new HashMap<>();
 
     public TCPHub() throws IOException {
         this(DEFAULT_PORT);
@@ -75,48 +73,13 @@ public class TCPHub extends Thread implements Hub, HubInternalOld {
                 Socket newConnection = this.serverSocket.accept();
 
                 // another connector has connected
-                HubSession hubSession = new HubSession(
+                SharedStreamPairConnectorHubSideImpl hubConnectorSession = new SharedStreamPairConnectorHubSideImpl(
                         newConnection.getInputStream(),newConnection.getOutputStream(), this);
-
-                // start session
-                hubSession.start();
             }
         } catch (IOException | ASAPException e) {
             // gone
             Log.writeLog(this, "TCP Hub died: " + e.getLocalizedMessage());
         }
-    }
-
-    @Override
-    public void addASAPPeer(ASAPPeer peer) {
-        // TODO
-    }
-
-    @Override
-    public void removeASAPPeer(ASAPPeer peer) {
-        // TODO
-    }
-
-
-    @Override
-    public boolean isRegistered(CharSequence peerID) {
-        return this.hubSessions.keySet().contains(peerID);
-    }
-
-    @Override
-    public Set<CharSequence> getRegisteredPeerIDs() {
-        return this.hubSessions.keySet();
-    }
-
-    @Override
-    public void sessionStarted(CharSequence peerID, HubSession hubSession) {
-        this.hubSessions.put(peerID, hubSession);
-    }
-
-    @Override
-    public void sessionEnded(CharSequence peerID, HubSession hubSession) {
-        Log.writeLog(this, "remove hub session for " + peerID);
-        this.hubSessions.remove(peerID);
     }
 
     Map<CharSequence, Set<CharSequence>> connectionRequests = new HashMap<>();
@@ -158,79 +121,5 @@ public class TCPHub extends Thread implements Hub, HubInternalOld {
 
             otherPeers.add(peerB);
         }
-    }
-
-    /** single communication channel version */
-    @Override
-    public void connectionRequest(CharSequence targetPeerID, HubSession sourceHubSession)
-            throws ASAPException, IOException {
-
-        Log.writeLog(this, "connection request from | to : "
-                + sourceHubSession.getPeerID() + " | " + targetPeerID);
-
-        HubSession targetHubSession = this.hubSessions.get(targetPeerID);
-        if(targetHubSession == null) {
-            return;
-//            throw new ASAPException("no session");
-        }
-
-        // remember connection request
-        this.rememberConnectionRequest(sourceHubSession.getPeerID(), targetPeerID);
-        this.rememberConnectionRequest(targetPeerID, sourceHubSession.getPeerID());
-
-        // ask both session to get quiet - need threads - hub would stop otherwise
-        sourceHubSession.silentRQ(this.maxIdleInMillis * 2);
-        targetHubSession.silentRQ(this.maxIdleInMillis * 2);
-    }
-
-    public void notifySilent(HubSession hubSession) {
-        CharSequence silentPeerID = hubSession.getPeerID();
-        Log.writeLog(this, "notified silent from: " + silentPeerID);
-        HubSession otherSilentSession = null;
-
-        //Log.writeLog(this, this.connectionRequestsToString());
-
-        synchronized (this.connectionRequests) {
-            Set<CharSequence> otherPeers = this.connectionRequests.get(silentPeerID);
-            if(otherPeers != null) {
-                for(CharSequence otherPeerID : otherPeers) {
-                    HubSession otherSession = this.hubSessions.get(otherPeerID);
-                    if(otherSession.isSilent()) {
-                        Log.writeLog(this, "found matching silent session: " + otherPeerID);
-                        otherSilentSession = otherSession;
-                        // we have a match
-                        otherPeers.remove(otherPeerID);
-
-                        Set<CharSequence> peersOfOtherPeer = this.connectionRequests.get(otherPeerID);
-                        if(peersOfOtherPeer != null) {
-                            // must not null - but just in case
-                            peersOfOtherPeer.remove(silentPeerID);
-                        }
-                    }
-                }
-            }
-        }
-
-        if(otherSilentSession != null) {
-            // launch data session
-            HubDataSession hubDataSession = new HubDataSession(hubSession, otherSilentSession, this.maxIdleInMillis);
-            hubDataSession.start();
-
-            /*
-            Log.writeLog(this, "open data session ");
-
-            try {
-                hubSession.openDataSession(otherSilentSession);
-                otherSilentSession.openDataSession(hubSession);
-            } catch (IOException e) {
-                Log.writeLogErr(this, "cannot launch data session: " + e.getLocalizedMessage());
-            }
-             */
-        }
-    }
-
-    @Override
-    public long getMaxIdleInMillis() {
-        return this.maxIdleInMillis;
     }
 }

@@ -13,7 +13,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class TCPHubConnector extends HubConnectorImpl implements HubConnector {
+public class SharedStreamPairConnectorPeerSide extends HubConnectorImpl implements HubConnector {
     private final String hostName;
     private final int port;
     private NewConnectionListener listener;
@@ -24,10 +24,10 @@ public class TCPHubConnector extends HubConnectorImpl implements HubConnector {
         // create TCP connection to hub
         Socket hubSocket = new Socket(hostName.toString(), port);
 
-        return new TCPHubConnector(hubSocket, hostName, port);
+        return new SharedStreamPairConnectorPeerSide(hubSocket, hostName, port);
     }
 
-    public TCPHubConnector(Socket hubSocket, CharSequence hostName, int port) throws IOException {
+    public SharedStreamPairConnectorPeerSide(Socket hubSocket, CharSequence hostName, int port) throws IOException {
         super(hubSocket.getInputStream(), hubSocket.getOutputStream());
         this.hubSocket = hubSocket;
         this.hostName = hostName.toString();

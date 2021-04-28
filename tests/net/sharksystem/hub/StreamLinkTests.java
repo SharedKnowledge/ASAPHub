@@ -57,22 +57,22 @@ public class StreamLinkTests {
         sideB_OS.write(42);
 
         System.out.println("+++++++++++++++++ re-run with borrowed connection ++++++++++++++++++");
-        BorrowedConnection aliceBorrowedConnection = new BorrowedConnection(sideA_IS, sideA_OS, "Alice (BC)", maxIdleMillis);
-        BorrowedConnection bobBorrowedConnection = new BorrowedConnection(sideB_IS, sideB_OS, "Bob (BC)", 2*maxIdleMillis);
+        ObservedConnection aliceObservedConnection = new ObservedConnection(sideA_IS, sideA_OS, "Alice (BC)", maxIdleMillis);
+        ObservedConnection bobObservedConnection = new ObservedConnection(sideB_IS, sideB_OS, "Bob (BC)", 2*maxIdleMillis);
 
-        Thread aliceBorrowedConnectionThread = new Thread(aliceBorrowedConnection);
-        Thread bobBorrowedConnectionThread = new Thread(bobBorrowedConnection);
+        Thread aliceBorrowedConnectionThread = new Thread(aliceObservedConnection);
+        Thread bobBorrowedConnectionThread = new Thread(bobObservedConnection);
 
         aliceBorrowedConnectionThread.start();
         bobBorrowedConnectionThread.start();
 
         // run session
         aliceDataSession = new DataExchangeTester(
-                aliceBorrowedConnection.getInputStream(), aliceBorrowedConnection.getOutputStream(),
+                aliceObservedConnection.getInputStream(), aliceObservedConnection.getOutputStream(),
                 rounds, "Alice on BC");
 
         bobDataSession = new DataExchangeTester(
-                bobBorrowedConnection.getInputStream(), bobBorrowedConnection.getOutputStream(),
+                bobObservedConnection.getInputStream(), bobObservedConnection.getOutputStream(),
                 rounds, "Bob on BC");
 
         aliceDataSessionThread = new Thread(aliceDataSession);
@@ -145,10 +145,10 @@ public class StreamLinkTests {
         OutputStream side2B_OS = socketFactory.getOutputStream();
 
         /* side 1A_OS --> socket 1 --> side 1B_IS ==> side 2A_OS --> socket 2 --> side 2B_IS */
-        StreamLink one2two = new StreamLink(side1B_IS, side2A_OS, maxIdleMillis, true, "Alice => Bob");
+        StreamLink one2two = new StreamLink(side1B_IS, side2A_OS, true, "Alice => Bob");
         one2two.start();
         /* side 1A_IS <-- socket 1 <-- side 1B_OS <== side 2A_IS <-- socket 2 <-- side 2B_OS */
-        StreamLink two2one = new StreamLink(side2A_IS, side1B_OS, maxIdleMillis, true, "Alice <= Bob");
+        StreamLink two2one = new StreamLink(side2A_IS, side1B_OS, true, "Alice <= Bob");
         two2one.start();
 
         // simulate protocol

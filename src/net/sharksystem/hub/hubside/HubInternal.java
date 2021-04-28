@@ -1,19 +1,22 @@
 package net.sharksystem.hub.hubside;
 
+import net.sharksystem.hub.ASAPHubException;
+
 import java.util.Set;
 
-public interface HubInternal {
+public interface HubInternal extends ConnectionEstablisher {
     /**
      * register new peer
      * @param peerId alias for peer connection
+     * @param hubConnectorSession
      */
-    public void register(CharSequence peerId);
+    void register(CharSequence peerId, ConnectorInternal hubConnectorSession);
 
     /**
      * unregister a peer
      * @param peerId alias for peer connection
      */
-    public void unregister(CharSequence peerId);
+    void unregister(CharSequence peerId);
 
     /**
      * get all registered peers in hub
@@ -22,15 +25,22 @@ public interface HubInternal {
     Set<CharSequence> getRegisteredPeers();
 
     /**
-     * establish connection to a peer
-     * @param peerId alias of peer to connect
-     * @return Session object to access input- and output streams
+     * Ask of a peer with id is already registered with this hub.
+     * @param peerID
+     * @return peer is already registered or not.
      */
-    public Session connectToPeer(CharSequence peerId);
+    boolean isRegistered(CharSequence peerID);
 
     /**
-     * close active connection from peer
-     * @param peerId alias of connection
+     * ask for a new connection to a peer
+     * @param peerId alias of peer to connect
+     * @throws ASAPHubException no such peer, no connection at all, internal failure
      */
-    public void disconnectFromPeer(CharSequence peerId);
+//    void connect(CharSequence peerId, HubConnectionListener listener) throws ASAPHubException;
+
+    /**
+     * close active connection from peer or remove pending connection requests
+     * @param peerId peer id.
+     */
+//    void disconnect(CharSequence peerId);
 }

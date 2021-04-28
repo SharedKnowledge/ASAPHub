@@ -10,6 +10,6 @@ public interface StreamPair {
     /** OutputStream to send data to the other side */
     OutputStream getOutputStream() throws IOException;
     /** close connection to peer */
-    void close() throws IOException;
+    void close();
 
 }
