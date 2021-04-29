@@ -24,7 +24,6 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
     public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
         // request comes from hub connector - relay this request to the other side
-
         this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
     }
 
