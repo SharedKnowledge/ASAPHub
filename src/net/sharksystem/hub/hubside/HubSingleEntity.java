@@ -27,7 +27,7 @@ public class HubSingleEntity extends HubGenericImpl {
         // an exception would have been thrown in case there is no such connector
 
         // asked connector to establish a connection - it will try and call hub back and asks for a data session
-        targetConnector.connectionRequest(targetPeerID, sourcePeerID, timeout);
+        targetConnector.connectionRequest(sourcePeerID, targetPeerID, timeout);
     }
 
     /**

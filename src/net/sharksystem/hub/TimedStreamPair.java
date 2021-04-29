@@ -1,5 +1,7 @@
 package net.sharksystem.hub;
 
+import net.sharksystem.utils.Log;
+
 public class TimedStreamPair implements AlarmClockListener, StreamPairListener {
     private final StreamPairWrapper streamPairWrapper;
     private final long maxIdleInMillis;
@@ -11,11 +13,14 @@ public class TimedStreamPair implements AlarmClockListener, StreamPairListener {
         this.streamPairWrapper = streamPairWrapper;
         this.maxIdleInMillis = maxIdleInMillis;
         this.streamPairWrapper.addListener(this);
+        this.startLending();
     }
 
     public void startLending() {
+        if(this.alarmClock != null) this.alarmClock.kill();
         this.wasIdle = true;
-        this.alarmClock = new AlarmClock(maxIdleInMillis, this);
+        Log.writeLog(this, "timed stream pair launched, alarm in ms: " + this.maxIdleInMillis);
+        this.alarmClock = new AlarmClock(this.maxIdleInMillis, this);
         this.alarmClock.start();
     }
 

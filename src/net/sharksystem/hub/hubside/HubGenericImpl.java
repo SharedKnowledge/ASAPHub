@@ -103,22 +103,8 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
      * @param timeout
      * @see HubGenericImpl#connectionCreated(CharSequence, CharSequence, StreamPair, int)
      */
-    protected abstract void createConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException;
-
-    private class PendingDataSession {
-        private final long until;
-        private final CharSequence sourcePeerID;
-        private final CharSequence targetPeerID;
-        private final StreamPair connection;
-
-        PendingDataSession(CharSequence sourcePeerID, CharSequence targetPeerID,
-                           StreamPair connection, int timeout) {
-            this.sourcePeerID = sourcePeerID;
-            this.targetPeerID = targetPeerID;
-            this.connection = connection;
-            this.until = System.currentTimeMillis() + timeout;
-        }
-    }
+    protected abstract void createConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+            throws ASAPHubException, IOException;
 
     public void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID,
                                   StreamPair connection, int timeout) {
