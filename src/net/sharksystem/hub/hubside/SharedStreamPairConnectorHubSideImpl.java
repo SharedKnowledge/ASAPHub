@@ -278,15 +278,19 @@ public class SharedStreamPairConnectorHubSideImpl implements ConnectorInternal, 
     // alarm clock rings
     @Override
     public void alarmClockRinging(int yourKey) {
+        Log.writeLog(this, "alarm clock is ringing...");
         switch (yourKey) {
             case ALARM_CLOCK_ASK_SILENCE:
+                Log.writeLog(this, "... ended: asked for silence");
                 this.askedForSilenceClock = null;
                 break;
 
             case ALARM_CLOCK_CHANNEL_SILENCE:
+                Log.writeLog(this, "... ended: channel silence");
                 this.inSilenceClock = null; break;
 
             case ALARM_CLOCK_DATA_SESSION:
+                Log.writeLog(this, "... ended: data session");
                 this.dataSessionClock = null;
                 this.closeDataSessionStreamPair();
                 break;

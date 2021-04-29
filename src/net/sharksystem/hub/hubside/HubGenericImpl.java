@@ -181,6 +181,8 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     private Map<CharSequence, ConnectorInternal> hubSessions = new HashMap<>();
 
+    // TODO: register peer in a decentralized hub!!
+
     @Override
     public boolean isRegistered(CharSequence peerID) {
         return this.hubSessions.keySet().contains(peerID);
