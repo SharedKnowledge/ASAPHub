@@ -59,4 +59,14 @@ public class HubSingleEntity extends HubGenericImpl {
         // tell hub about creation
         this.connectionCreated(sourcePeerID, targetPeerID, connection, timeout);
     }
+
+    @Override
+    void notifyPeerRegistered(CharSequence peerID) {
+        // nothing in a centralized system
+    }
+
+    @Override
+    void notifyPeerUnregistered(CharSequence peerID) {
+        // nothing in a centralized system
+    }
 }

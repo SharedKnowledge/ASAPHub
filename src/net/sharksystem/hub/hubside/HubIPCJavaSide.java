@@ -21,4 +21,14 @@ public class HubIPCJavaSide extends HubGenericImpl{
     protected void createConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
 
     }
+
+    @Override
+    void notifyPeerRegistered(CharSequence peerID) {
+
+    }
+
+    @Override
+    void notifyPeerUnregistered(CharSequence peerID) {
+
+    }
 }

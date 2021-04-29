@@ -183,6 +183,9 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
 
     // TODO: register peer in a decentralized hub!!
 
+    abstract void notifyPeerRegistered(CharSequence peerID);
+    abstract void notifyPeerUnregistered(CharSequence peerID);
+
     @Override
     public boolean isRegistered(CharSequence peerID) {
         return this.hubSessions.keySet().contains(peerID);
@@ -196,10 +199,12 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
     @Override
     public void register(CharSequence peerID, ConnectorInternal hubConnectorSession) {
         this.hubSessions.put(peerID, hubConnectorSession);
+        this.notifyPeerRegistered(peerID);
     }
 
     @Override
     public void unregister(CharSequence peerID) {
         this.hubSessions.remove(peerID);
+        this.notifyPeerUnregistered(peerID);
     }
 }
