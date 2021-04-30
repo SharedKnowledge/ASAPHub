@@ -2,6 +2,7 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.StreamPair;
+import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
 import net.sharksystem.hub.hubside.lora_ipc.PeerModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegistrationModel;
@@ -13,29 +14,28 @@ import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-public class HubIPCJavaSide extends HubGenericImpl{
+public class HubIPCJavaSide extends HubGenericImpl {
     // see documentation of those abstract methods in HubGenericImpl, example implementation e.g. in HubSingleEntity
     private final String delimiter = "|";
-    private final String host;
-    private final int port;
     private final InputStream inputStream;
     private final OutputStream outputStream;
+    private Map<CharSequence, ConnectorInternal> connectorInternalMap;
 
     public HubIPCJavaSide(String host, int port) throws IOException {
-        this.host = host;
-        this.port = port;
-        Socket socket = new Socket(this.host,this.port);
+        Socket socket = new Socket(host, port);
         this.outputStream = socket.getOutputStream();
         this.inputStream = socket.getInputStream();
+        this.connectorInternalMap = new HashMap<>();
     }
 
 
     @Override
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
-
     }
 
     @Override
@@ -44,7 +44,8 @@ public class HubIPCJavaSide extends HubGenericImpl{
     }
 
     @Override
-    protected void createConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
+    public void createConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
+        this.sendXMLObject(new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout));
 
     }
 
@@ -54,27 +55,24 @@ public class HubIPCJavaSide extends HubGenericImpl{
     }
 
     /**
-     * TODO clarify whether hubConnectorSession parameter is necessary here
-     * @param peerId alias for peer connection
+     * @param peerId              alias for peer connection
      * @param hubConnectorSession
      */
     @Override
     public void register(CharSequence peerId, ConnectorInternal hubConnectorSession) {
         this.sendRegistrationMessage(peerId, true);
+        this.connectorInternalMap.put(peerId, hubConnectorSession);
     }
 
     @Override
     public void unregister(CharSequence peerId) {
         this.sendRegistrationMessage(peerId, false);
+        this.connectorInternalMap.remove(peerId);
     }
 
-    private void sendRegistrationMessage(CharSequence peerId, boolean register){
-        RegistrationModel peerRegistration = new RegistrationModel(new PeerModel((String) peerId), register);
-        StringWriter sw = new StringWriter();
-        JAXB.marshal(peerRegistration, sw);
-        String xmlString = sw.toString();
+    private void sendRegistrationMessage(CharSequence peerId, boolean register) {
         try {
-            this.outputStream.write(xmlString.getBytes(StandardCharsets.UTF_8));
+            this.sendXMLObject(new RegistrationModel(new PeerModel((String) peerId), register));
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
@@ -87,26 +85,22 @@ public class HubIPCJavaSide extends HubGenericImpl{
             this.outputStream.write("registeredPeers?".getBytes(StandardCharsets.UTF_8));
             BufferedReader reader = new BufferedReader(new InputStreamReader(this.inputStream, StandardCharsets.UTF_8));
             String message = "";
-            while(true){
+            while (true) {
                 String characterAsStr = String.valueOf((char) reader.read());
-                if (!characterAsStr.equals(this.delimiter)){
+                if (!characterAsStr.equals(this.delimiter)) {
                     message = message + characterAsStr;
-                }else {
+                } else {
                     break;
                 }
             }
-            JAXBContext jaxbContext = JAXBContext.newInstance(RegisteredPeersModel.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            registeredPeers = (RegisteredPeersModel) this.loadFromXML(message, RegisteredPeersModel.class);
 
-            StringReader stringReader = new StringReader(message);
-            registeredPeers = (RegisteredPeersModel) unmarshaller.unmarshal(stringReader);
-
-        } catch (IOException | JAXBException ioException) {
+        } catch (IOException ioException) {
             ioException.printStackTrace();
         }
         Set<CharSequence> peers = new HashSet<>();
-        if (null != registeredPeers.getRegisteredPeers()){
-            for (PeerModel peerModel: registeredPeers.getRegisteredPeers()){
+        if (null != registeredPeers.getRegisteredPeers()) {
+            for (PeerModel peerModel : registeredPeers.getRegisteredPeers()) {
                 peers.add(peerModel.getPeerId());
             }
         }
@@ -115,12 +109,29 @@ public class HubIPCJavaSide extends HubGenericImpl{
 
     @Override
     public boolean isRegistered(CharSequence peerID) {
-        for (CharSequence peer: this.getRegisteredPeers()) {
-            if(peer.equals(peerID)){
+        for (CharSequence peer : this.getRegisteredPeers()) {
+            if (peer.equals(peerID)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private void sendXMLObject(Object object) throws IOException {
+        StringWriter sw = new StringWriter();
+        JAXB.marshal(object, sw);
+        this.outputStream.write(sw.toString().getBytes(StandardCharsets.UTF_8));
+
+    }
+
+    private Object loadFromXML(String xml, Class<? extends Object> classOfObject) {
+        try {
+            Unmarshaller unmarshaller = JAXBContext.newInstance(classOfObject).createUnmarshaller();
+            return unmarshaller.unmarshal(new StringReader(xml));
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

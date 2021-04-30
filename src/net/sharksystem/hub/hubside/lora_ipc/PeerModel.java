@@ -1,10 +1,7 @@
 package net.sharksystem.hub.hubside.lora_ipc;
 
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Collection;
-import java.util.List;
 
 @XmlRootElement(name="peer")
 public class PeerModel {
