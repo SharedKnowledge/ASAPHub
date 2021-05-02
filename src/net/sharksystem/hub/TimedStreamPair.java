@@ -23,7 +23,7 @@ public class TimedStreamPair implements StreamPair, AlarmClockListener, StreamPa
     public void startLending() {
         if(this.alarmClock != null) this.alarmClock.kill();
         this.wasIdle = true;
-        Log.writeLog(this, "timed stream pair launched, alarm in ms: " + this.maxIdleInMillis);
+        Log.writeLog(this, this.toString(), "timed stream pair launched, alarm in ms: " + this.maxIdleInMillis);
         this.alarmClock = new AlarmClock(this.maxIdleInMillis, this);
         this.alarmClock.start();
     }
@@ -31,6 +31,7 @@ public class TimedStreamPair implements StreamPair, AlarmClockListener, StreamPa
     @Override
     public void alarmClockRinging(int yourKey) {
         if(this.closed || this.wasIdle) {
+            Log.writeLog(this, this.toString(), "time out - alarm ringing");
             this.streamPairWrapper.close();
         } else {
             this.startLending();
@@ -38,12 +39,12 @@ public class TimedStreamPair implements StreamPair, AlarmClockListener, StreamPa
     }
 
     @Override
-    public void notifyClosed(int key) {
+    public void notifyClosed(String key) {
         this.closed = true;
     }
 
     @Override
-    public void notifyAction(int key) {
+    public void notifyAction(String key) {
         this.wasIdle = false;
     }
 
@@ -60,5 +61,9 @@ public class TimedStreamPair implements StreamPair, AlarmClockListener, StreamPa
     @Override
     public void close() {
         this.streamPairWrapper.close();
+    }
+
+    public String toString() {
+        return this.streamPairWrapper.toString();
     }
 }

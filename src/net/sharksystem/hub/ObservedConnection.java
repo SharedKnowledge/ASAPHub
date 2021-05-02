@@ -293,11 +293,11 @@ public class ObservedConnection extends Thread implements StreamPairListener, St
     private long lastAction = 0;
 
     @Override
-    public void notifyClosed(int key) {
+    public void notifyClosed(String key) {
         this.close();
     }
 
-    public void notifyAction(int key) {
+    public void notifyAction(String key) {
         this.lastAction = System.currentTimeMillis();
     }
 
@@ -323,7 +323,7 @@ public class ObservedConnection extends Thread implements StreamPairListener, St
         public int read() throws IOException {
             if (this.closed) throw new IOException("stream close");
             int i = this.is.read();
-            this.listener.notifyAction(42);
+            this.listener.notifyAction("42");
             if(terminated) throw new IOException("stream closed");
             return i;
         }
@@ -331,7 +331,7 @@ public class ObservedConnection extends Thread implements StreamPairListener, St
         public void close() {
             if (this.closed) return;
             this.closed = true;
-            this.listener.notifyClosed(42);
+            this.listener.notifyClosed("42");
         }
     }
 
@@ -349,13 +349,13 @@ public class ObservedConnection extends Thread implements StreamPairListener, St
         public void write(int value) throws IOException {
             if (this.closed) throw new IOException("stream close");
             this.os.write(value);
-            this.listener.notifyAction(42);
+            this.listener.notifyAction("42");
         }
 
         public void close() {
             if (this.closed) return;
             this.closed = true;
-            this.listener.notifyClosed(42);
+            this.listener.notifyClosed("42");
         }
     }
 }

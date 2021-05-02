@@ -1,7 +1,6 @@
 package net.sharksystem.hub.protocol;
 
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.hubside.ConnectorInternal;
 import net.sharksystem.utils.Log;
 
 import java.io.InputStream;
@@ -52,17 +51,21 @@ public abstract class ConnectorImpl implements Connector {
 
     public abstract CharSequence getPeerID();
 
-    private String toStringResult = null;
-    public String toString() {
-        if(this.toStringResult == null) {
+    private String idString = null;
+    protected String getID() {
+        if(this.idString == null) {
             if (this.isHubSide()) {
-                this.toStringResult = "hub ";
+                this.idString = "hub ";
             } else {
-                this.toStringResult = "peer ";
+                this.idString = "peer ";
             }
 
-            this.toStringResult = this.toStringResult + this.getPeerID().toString();
+            this.idString = this.idString + this.getPeerID().toString();
         }
-        return this.toStringResult;
+        return this.idString;
+    }
+
+    public String toString() {
+        return this.getID();
     }
 }

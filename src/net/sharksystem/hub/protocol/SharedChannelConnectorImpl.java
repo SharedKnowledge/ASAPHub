@@ -53,6 +53,21 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     AlarmClock inSilenceClock = null;
     AlarmClock dataSessionClock = null;
 
+    private void stopAlarmClocks() {
+        if(this.askedForSilenceClock != null) {
+            this.askedForSilenceClock.kill();
+            this.askedForSilenceClock = null;
+        }
+        if(this.inSilenceClock != null) {
+            this.inSilenceClock.kill();
+            this.inSilenceClock = null;
+        }
+        if(this.dataSessionClock != null) {
+            this.dataSessionClock.kill();
+            this.dataSessionClock = null;
+        }
+    }
+
     // alarm clock rings
     public void alarmClockRinging(int yourKey) {
         Log.writeLog(this, this.toString(), "alarm clock is ringing...");
@@ -137,7 +152,8 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     }
 
     private TimedStreamPair launchDataSession(int timeout) {
-        int sessionID = this.sessionCounter++;
+        String sessionID = this.getID() + ":" + this.sessionCounter++;
+
         Log.writeLog(this, this.toString(), "start new data session ");
         this.wrappedDataSessionStreamPair = new StreamPairWrapper(
                 this.getInputStream(), this.getOutputStream(), this, sessionID);
@@ -149,6 +165,9 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         } catch (ASAPHubException e) {
             // no connector thread - should not happen but wouldn't be bad - we kill it anyway
         }
+
+        // kill all other alarm clocks
+        this.stopAlarmClocks();
 
         // set alarm clock
         this.dataSessionClock = new AlarmClock(this.getTimeOutDataConnection(), ALARM_CLOCK_DATA_SESSION, this);
@@ -164,12 +183,14 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     }
 
     private void closeDataSessionStreamPair() {
-        this.wrappedDataSessionStreamPair.close();
-        this.wrappedDataSessionStreamPair = null;
+        if(this.wrappedDataSessionStreamPair != null) {
+            this.wrappedDataSessionStreamPair.close();
+            this.wrappedDataSessionStreamPair = null;
+        }
     }
 
     @Override
-    public void notifyClosed(int key) {
+    public void notifyClosed(String key) {
         Log.writeLog(this, this.toString(), "data session closed: " + key);
         this.wrappedDataSessionStreamPair = null;
 
@@ -181,7 +202,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     }
 
     @Override
-    public void notifyAction(int key) {
+    public void notifyAction(String key) {
         // no action when data session notifies of something - only interested in close event
     }
 

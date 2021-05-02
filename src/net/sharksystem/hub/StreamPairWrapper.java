@@ -9,13 +9,13 @@ import java.util.List;
 public class StreamPairWrapper implements StreamPair {
     private final InputStreamWrapper is;
     private final OutputStreamWrapper os;
-    private final int key;
+    private final String id;
     private List<StreamPairListener> listenerList = new ArrayList<>();
 
-    public StreamPairWrapper(InputStream is, OutputStream os, StreamPairListener listener, int key) {
+    public StreamPairWrapper(InputStream is, OutputStream os, StreamPairListener listener, String id) {
         this.is = new InputStreamWrapper(is);
         this.os = new OutputStreamWrapper(os);
-        this.key = key;
+        this.id = id;
         if(listener != null) {
             this.listenerList.add(listener);
         }
@@ -23,7 +23,7 @@ public class StreamPairWrapper implements StreamPair {
     }
 
     public StreamPairWrapper(InputStream is, OutputStream os) {
-        this(is, os, null, 0);
+        this(is, os, null, "0");
     }
 
     @Override
@@ -43,7 +43,7 @@ public class StreamPairWrapper implements StreamPair {
         this.os.closed = true;
         if(!this.listenerList.isEmpty()) {
             for(StreamPairListener listener : this.listenerList) {
-                listener.notifyClosed(this.key);
+                listener.notifyClosed(this.id);
             }
         }
     }
@@ -51,7 +51,7 @@ public class StreamPairWrapper implements StreamPair {
     private void notifyAction() {
         if(!this.listenerList.isEmpty()) {
             for(StreamPairListener listener : this.listenerList) {
-                listener.notifyAction(this.key);
+                listener.notifyAction(this.id);
             }
         }
     }
@@ -99,5 +99,9 @@ public class StreamPairWrapper implements StreamPair {
         public void close() {
             StreamPairWrapper.this.close();
         }
+    }
+
+    public String toString() {
+        return this.id;
     }
 }
