@@ -58,9 +58,7 @@ public class HubSingleEntity extends HubGenericImpl {
 
         ConnectorInternal targetConnector = this.getConnector(targetPeerID);
         // ask for data connection - can fail and produce exceptions
-        StreamPair connection = targetConnector.initDataSession(targetPeerID, sourcePeerID, timeout);
-        // tell hub about creation
-        this.connectionCreated(sourcePeerID, targetPeerID, connection, timeout);
+        StreamPair streamPair = targetConnector.initDataSession(targetPeerID, sourcePeerID, timeout);
     }
 
     protected ConnectorInternal getConnector(CharSequence peerID) throws ASAPHubException {

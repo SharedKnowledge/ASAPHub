@@ -2,8 +2,9 @@ package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.peerside.HubConnector;
-import net.sharksystem.hub.peerside.SharedStreamPairConnectorPeerSide;
+import net.sharksystem.hub.peerside.SharedChannelConnectorPeerSide;
 import net.sharksystem.hub.hubside.TCPHub;
+import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
 
 import java.io.IOException;
 
@@ -19,7 +20,7 @@ public class HubTests {
         hub.setMaxIdleConnectionInSeconds(TestConstants.maxTimeInSeconds);
         new Thread(hub).start();
 
-        HubConnector aliceHubConnector = SharedStreamPairConnectorPeerSide.createTCPHubConnector(host, specificPort);
+        HubConnector aliceHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
         HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
         aliceHubConnector.setListener(aliceListener);
 

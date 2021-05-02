@@ -2,7 +2,11 @@ package net.sharksystem.hub;
 
 import net.sharksystem.utils.Log;
 
-public class TimedStreamPair implements AlarmClockListener, StreamPairListener {
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+public class TimedStreamPair implements StreamPair, AlarmClockListener, StreamPairListener {
     private final StreamPairWrapper streamPairWrapper;
     private final long maxIdleInMillis;
     private AlarmClock alarmClock;
@@ -41,5 +45,20 @@ public class TimedStreamPair implements AlarmClockListener, StreamPairListener {
     @Override
     public void notifyAction(int key) {
         this.wasIdle = false;
+    }
+
+    @Override
+    public InputStream getInputStream() throws IOException {
+        return this.streamPairWrapper.getInputStream();
+    }
+
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        return this.streamPairWrapper.getOutputStream();
+    }
+
+    @Override
+    public void close() {
+        this.streamPairWrapper.close();
     }
 }

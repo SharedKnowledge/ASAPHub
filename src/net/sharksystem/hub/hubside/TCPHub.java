@@ -1,6 +1,7 @@
 package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPException;
+import net.sharksystem.hub.protocol.ConnectorThread;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -73,8 +74,10 @@ public class TCPHub extends HubSingleEntity implements Runnable {
                 Socket newConnection = this.serverSocket.accept();
 
                 // another connector has connected
-                SharedStreamPairConnectorHubSideImpl hubConnectorSession = new SharedStreamPairConnectorHubSideImpl(
+                SharedChannelConnectorHubSideImpl hubConnectorSession = new SharedChannelConnectorHubSideImpl(
                         newConnection.getInputStream(),newConnection.getOutputStream(), this);
+
+                (new ConnectorThread(hubConnectorSession, newConnection.getInputStream())).start();
             }
         } catch (IOException | ASAPException e) {
             // gone

@@ -1,5 +1,6 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.hubside.Hub;
 
 import java.io.IOException;
@@ -50,13 +51,13 @@ public interface HubConnector {
      * @param localPeerID a name under which this peer registers itself on the hub
      * @throws IOException communication problem, cannot connect to hub
      */
-    void connectHub(CharSequence localPeerID) throws IOException;
+    void connectHub(CharSequence localPeerID) throws IOException, ASAPHubException;
 
     /**
      * Disconnect from hub.
      * @throws IOException communication problem, cannot connect to hub
      */
-    void disconnectHub() throws IOException;
+    void disconnectHub() throws IOException, ASAPHubException;
 
     /**
      * Set an object that deals with newly established connections.
