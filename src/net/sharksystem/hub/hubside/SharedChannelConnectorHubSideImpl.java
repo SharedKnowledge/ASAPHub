@@ -24,6 +24,11 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     public HubInternal getHub() { return this.hub; }
     public CharSequence getPeerID() { return this.peerID; }
 
+    @Override
+    public boolean isHubSide() {
+        return true;
+    }
+
     public SharedChannelConnectorHubSideImpl(InputStream is, OutputStream os, HubInternal hub) throws ASAPException {
         super(is, os);
 
@@ -39,7 +44,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         try {
             HubPDURegister hubPDURegister = (HubPDURegister) HubPDU.readPDU(this.getInputStream());
             this.peerID = hubPDURegister.peerID.toString();
-            Log.writeLog(this, "new connector: " + this.getPeerID());
+            Log.writeLog(this, this.toString(), "new connector: " + this.getPeerID());
             this.sendHubStatusRPLY();
         } catch (IOException e) {
             throw new ASAPHubException(e);
@@ -77,10 +82,10 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
             this.connectionRequest(targetPeerID);
         } else {
             // remember call
-            this.connectionRequestList.add(
+            this.externalConnectionRequestList.add(
                     new ConnectionRequest(sourcePeerID, targetPeerID, System.currentTimeMillis() + timeout));
 
-            this.handleConnectionRequestList();
+            this.handleExternalConnectionRequestList();
         }
     }
 
@@ -88,7 +93,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         this.hub.connectionRequest(this.getPeerID(), targetPeerID, this.getTimeOutConnectionRequest());
     }
 
-    private List<ConnectionRequest> connectionRequestList = new ArrayList<>();
+    private List<ConnectionRequest> externalConnectionRequestList = new ArrayList<>();
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                       reaction on status changes                                        //
@@ -97,7 +102,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     @Override
     protected void silenceStarted() {
         try {
-            this.handleConnectionRequestList();
+            this.handleExternalConnectionRequestList();
         } catch (ASAPHubException | IOException e) {
             e.printStackTrace();
         }
@@ -118,39 +123,39 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
 
     }
 
-    synchronized private void handleConnectionRequestList() throws ASAPHubException, IOException {
+    synchronized private void handleExternalConnectionRequestList() throws ASAPHubException, IOException {
         // lets see if we can start another connection
-        Log.writeLog(this, "#entries connection request list: " + this.connectionRequestList.size());
+        Log.writeLog(this, this.toString(), "#entries connection request list: " + this.externalConnectionRequestList.size());
         if(this.statusInSilence()) {
-            Log.writeLog(this, "in silence mode - ok");
+            Log.writeLog(this, this.toString(), "in silence mode - ok");
             // we are in the right status - take oldest request
             ConnectionRequest connectionRequest = null;
-            while(connectionRequest == null && !this.connectionRequestList.isEmpty()) {
-                connectionRequest = this.connectionRequestList.remove(0);
+            while(connectionRequest == null && !this.externalConnectionRequestList.isEmpty()) {
+                connectionRequest = this.externalConnectionRequestList.remove(0);
                 if(connectionRequest.until < System.currentTimeMillis()) {
-                    Log.writeLog(this, "discard connection request - timed out");
+                    Log.writeLog(this, this.toString(), "discard connection request - timed out");
                     connectionRequest = null;
                 }
             }
 
             if(connectionRequest == null) return; // list empty
 
-            Log.writeLog(this, "launch data session by request: " + connectionRequest);
+            Log.writeLog(this, this.toString(), "launch data session by request: " + connectionRequest);
             // init data session
             TimedStreamPair timedStreamPair =
                     this.initDataSession(connectionRequest, this.getTimeOutDataConnection());
 
             // tell hub
-            Log.writeLog(this, "tell hub about newly created data session: ");
-            this.hub.startDataSession(this.getPeerID(), connectionRequest.targetPeerID,
+            Log.writeLog(this, this.toString(), "tell hub about newly created data session: " + connectionRequest);
+            this.hub.startDataSession(this.getPeerID(), connectionRequest.sourcePeerID,
                     timedStreamPair, this.getTimeOutDataConnection());
         } else {
-            Log.writeLog(this, "not in silence mode - ask for silence");
+            Log.writeLog(this, this.toString(), "not in silence mode - ask for silence");
             // not in silence - should we asked for silence
             if(this.statusHubConnectorProtocol()) { // we are in protocol status - change it
                 this.askForSilence(this.getTimeOutSilenceChannel());
             } else {
-                Log.writeLog(this, "cannot ask for silence .. not in connector mode");
+                Log.writeLog(this, this.toString(), "cannot ask for silence .. not in connector mode");
             }
         }
     }
@@ -166,8 +171,8 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
      * @throws ASAPHubException if local peer is neither source nor target
      */
     private boolean localCall(CharSequence sourcePeerID, CharSequence targetPeerID) throws ASAPHubException {
-        if(sourcePeerID.toString().equalsIgnoreCase(this.peerID.toString())) return true;
-        if(targetPeerID.toString().equalsIgnoreCase(this.peerID.toString())) return false;
+        if(PeerIDHelper.sameID(sourcePeerID, this.getPeerID())) return true;
+        if(PeerIDHelper.sameID(targetPeerID, this.getPeerID())) return false;
 
         // neither
         throw new ASAPHubException("connector is neither source nor target: " + sourcePeerID + " | " + targetPeerID);
@@ -186,17 +191,17 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     public void disconnect(CharSequence sourcePeerID, CharSequence targetPeerID) throws ASAPHubException {
         Log.writeLog(this, "disconnect called");
         ConnectionRequest removeRequest = null;
-        for(ConnectionRequest request : this.connectionRequestList) {
+        for(ConnectionRequest request : this.externalConnectionRequestList) {
             if( PeerIDHelper.sameID(sourcePeerID, request.sourcePeerID)
                 && PeerIDHelper.sameID(targetPeerID, request.targetPeerID)) {
 
-                Log.writeLog(this, "found connection request");
+                Log.writeLog(this, this.toString(), "found connection request");
                 removeRequest = request;
                 break;
             }
         }
 
-        if(removeRequest != null) this.connectionRequestList.remove(removeRequest);
+        if(removeRequest != null) this.externalConnectionRequestList.remove(removeRequest);
     }
 
     /**
@@ -212,16 +217,16 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     public void startDataSession(CharSequence sourcePeerID, CharSequence targetPeerID,
                                  StreamPair stream2Hub, int timeout) throws ASAPHubException, IOException {
 
-        Log.writeLog(this, "asked to start data session");
+        Log.writeLog(this, this.toString(), "asked to start data session");
         if(this.localCall(sourcePeerID, targetPeerID))
             throw new ASAPHubException("a connection started notification cannot come from local peer");
 
         StreamPair stream2Peer = this.initDataSession(sourcePeerID, targetPeerID, timeout);
-        Log.writeLog(this, "got connection to peer side");
+        Log.writeLog(this, this.toString(), "got connection to peer side");
 
         // link stream pair from hub with stream pair to peer
         new StreamPairLink(stream2Peer, sourcePeerID, stream2Hub, targetPeerID);
-        Log.writeLog(this, "created and started stream pair link");
+        Log.writeLog(this, this.toString(), "created and started stream pair link");
     }
 
     /**
@@ -236,7 +241,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     public void notifyConnectionEnded(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection)
             throws ASAPHubException {
 
-        Log.writeLog(this, "connection ended .. nothing to do here (?)");
+        Log.writeLog(this, this.toString(), "connection ended .. nothing to do here (?)");
 
     }
 
@@ -256,7 +261,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
             }
         }
         HubPDU hubInfoPDU = new HubPDUHubStatusRPLY(peersWithoutCaller);
-        Log.writeLog(this, "send hub status to " + this.peerID);
+        Log.writeLog(this, this.toString(), "send hub status to " + this.peerID);
         hubInfoPDU.sendPDU(this.getOutputStream());
     }
 
@@ -268,28 +273,32 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     @Override
     public void register(HubPDURegister pdu) {
         // received register pdu - tell hub
-        Log.writeLog(this, "received register from peer side - tell hub");
+        Log.writeLog(this, this.toString(), "received register from peer side - tell hub");
         this.hub.register(pdu.peerID, this);
     }
 
     @Override
     public void connectPeerRQ(HubPDUConnectPeerRQ pdu) {
         // received connection request from peer side - tell hub
-        Log.writeLog(this, "received connection RQ from peer side - tell hub");
+        Log.writeLog(this, this.toString(), "received connection RQ from peer side - tell hub");
         try {
             this.hub.connectionRequest(this.peerID, pdu.peerID, this.getTimeOutConnectionRequest());
         } catch (ASAPHubException | IOException e) {
-            Log.writeLogErr(this, "connection RQ failed woith hub: " + e.getLocalizedMessage());
+            Log.writeLogErr(this, this.toString(), "connection RQ failed woith hub: " + e.getLocalizedMessage());
         }
     }
 
     @Override
     public void hubStatusRQ(HubPDUHubStatusRQ pdu) {
-        HubPDUHubStatusRPLY reply = new HubPDUHubStatusRPLY(this.hub.getRegisteredPeers());
+        Set<CharSequence> peersWithoutThis = new HashSet<>();
+        peersWithoutThis.addAll(this.getHub().getRegisteredPeers());
+        peersWithoutThis.remove(this.getPeerID());
+
+        HubPDUHubStatusRPLY reply = new HubPDUHubStatusRPLY(peersWithoutThis);
         try {
             reply.sendPDU(this.getOutputStream());
         } catch (IOException e) {
-            Log.writeLogErr(this, "cannot send hub status reply: " + e.getLocalizedMessage());
+            Log.writeLogErr(this, this.toString(), "cannot send hub status reply: " + e.getLocalizedMessage());
         }
     }
 
@@ -301,8 +310,4 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                           debug helper                                              //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public String toString() {
-        return "ConnectorImpl(" + this.getPeerID() + ")";
-    }
 }

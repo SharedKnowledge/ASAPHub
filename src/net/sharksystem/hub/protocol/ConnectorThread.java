@@ -26,40 +26,40 @@ public class ConnectorThread extends Thread {
     public void run() {
         try {
             this.connector.connectorSessionStarted(this);
-            Log.writeLog(this, "connector engine started");
+            Log.writeLog(this, this.toString(),"connector engine started");
 
             while (this.again) {
                 HubPDU hubPDU = HubPDU.readPDU(this.is);
 
                 if (hubPDU instanceof HubPDUHubStatusRQ) {
-                    Log.writeLog(this, "read hub status RQ");
+                    Log.writeLog(this, this.toString(), "read hub status RQ");
                     this.connector.hubStatusRQ((HubPDUHubStatusRQ) hubPDU);
                 }
                 else if (hubPDU instanceof HubPDUHubStatusRPLY) {
-                    Log.writeLog(this, "read hub status RPLY");
+                    Log.writeLog(this, this.toString(), "read hub status RPLY");
                     this.connector.hubStatusRPLY((HubPDUHubStatusRPLY) hubPDU);
                 }
                 else if (hubPDU instanceof HubPDUSilentRQ) {
-                    Log.writeLog(this, "read hub silent RQ");
+                    Log.writeLog(this, this.toString(), "read hub silent RQ");
                     this.connector.silentRQ((HubPDUSilentRQ) hubPDU);
                 }
                 else if (hubPDU instanceof HubPDUSilentRPLY) {
-                    Log.writeLog(this, "read hub silent RPLY");
+                    Log.writeLog(this, this.toString(), "read hub silent RPLY");
                     this.connector.silentRPLY((HubPDUSilentRPLY) hubPDU);
                 }
                 else if (hubPDU instanceof HubPDUChannelClear) {
-                    Log.writeLog(this, "read hub channel clear");
+                    Log.writeLog(this, this.toString(), "read hub channel clear");
                     this.connector.channelClear((HubPDUChannelClear) hubPDU);
                 }
                 else if (hubPDU instanceof HubPDURegister) {
-                    Log.writeLog(this, "read hub register");
+                    Log.writeLog(this, this.toString(), "read hub register");
                     this.connector.register((HubPDURegister) hubPDU);
                 }
                 else if (hubPDU instanceof HubPDUConnectPeerRQ) {
-                    Log.writeLog(this, "read hub connect peer RQ");
+                    Log.writeLog(this, this.toString(), "read hub connect peer RQ");
                     this.connector.connectPeerRQ((HubPDUConnectPeerRQ) hubPDU);
                 } else {
-                    Log.writeLog(this, "got unknown / unsupported PDU type: "
+                    Log.writeLog(this, this.toString(), "got unknown / unsupported PDU type: "
                         + hubPDU.getClass().getSimpleName());
                 }
             }
@@ -71,5 +71,9 @@ public class ConnectorThread extends Thread {
             Log.writeLog(this, "hub session ended");
             this.connector.connectorSessionEnded();
         }
+    }
+
+    public String toString() {
+        return this.connector.toString();
     }
 }

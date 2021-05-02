@@ -2,6 +2,7 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.StreamPair;
+import net.sharksystem.utils.Log;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,8 +29,10 @@ public class HubSingleEntity extends HubGenericImpl {
 
         ConnectorInternal targetConnector = this.getConnector(targetPeerID);
         // an exception would have been thrown in case there is no such connector
+        Log.writeLog(this, "got connector for " + targetPeerID);
 
         // asked connector to establish a connection - it will try and call hub back and asks for a data session
+        Log.writeLog(this, "create connection request ("  + sourcePeerID + " -> " + targetPeerID + ")");
         targetConnector.connectionRequest(sourcePeerID, targetPeerID, timeout);
     }
 
@@ -58,7 +61,7 @@ public class HubSingleEntity extends HubGenericImpl {
 
         ConnectorInternal targetConnector = this.getConnector(targetPeerID);
         // ask for data connection - can fail and produce exceptions
-        StreamPair streamPair = targetConnector.initDataSession(targetPeerID, sourcePeerID, timeout);
+        StreamPair streamPair = targetConnector.initDataSession(sourcePeerID, targetPeerID, timeout);
     }
 
     protected ConnectorInternal getConnector(CharSequence peerID) throws ASAPHubException {

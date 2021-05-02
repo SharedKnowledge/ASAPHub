@@ -50,9 +50,19 @@ public abstract class ConnectorImpl implements Connector {
         return this.connectorThread;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                           send PDUs                                                 //
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public abstract CharSequence getPeerID();
 
+    private String toStringResult = null;
+    public String toString() {
+        if(this.toStringResult == null) {
+            if (this.isHubSide()) {
+                this.toStringResult = "hub ";
+            } else {
+                this.toStringResult = "peer ";
+            }
 
+            this.toStringResult = this.toStringResult + this.getPeerID().toString();
+        }
+        return this.toStringResult;
+    }
 }

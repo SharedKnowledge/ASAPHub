@@ -22,6 +22,16 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
         super(is, os);
     }
 
+    @Override
+    public CharSequence getPeerID() {
+        return this.localPeerID;
+    }
+
+    @Override
+    public boolean isHubSide() {
+        return false;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                 guard methods - ensure right status                            //
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,7 +69,7 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
         hubPDURegister.sendPDU(this.getOutputStream());
 
         // start management protocol
-        Log.writeLog(this, "start hub protocol engine");
+        Log.writeLog(this, this.toString(), "start hub protocol engine");
         (new ConnectorThread(this, this.getInputStream())).start();
     }
 
@@ -83,7 +93,7 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
             synchronized (this) {
                 for(HubPDUConnectPeerRQ otherRQ : this.connectRQList) {
                     if(otherRQ.peerID.toString().equalsIgnoreCase(peerID.toString())) {
-                        Log.writeLog(this, "there is already a connect request to " + peerID);
+                        Log.writeLog(this, this.toString(), "there is already a connect request to " + peerID);
                         return;
                     }
                 }
@@ -162,22 +172,7 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
         try {
             this.syncHubInformation();
         } catch (IOException e) {
-            Log.writeLogErr(this,"sync problems: " + e.getLocalizedMessage());
+            Log.writeLogErr(this, this.toString(), "sync problems: " + e.getLocalizedMessage());
         }
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                            debug helper                                                 //
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if(this.isConnected()) {
-            sb.append(this.localPeerID);
-        } else {
-            sb.append("not connected to hub");
-        }
-
-        return sb.toString();
     }
 }

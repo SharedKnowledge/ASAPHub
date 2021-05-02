@@ -23,6 +23,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
     @Override
     public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
+        Log.writeLog(this, "received connection request (" + sourcePeerID + " -> " + targetPeerID + ")");
         // request comes from hub connector - relay this request to the other side
         this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
     }
@@ -76,6 +77,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
 
         // remember this request
         this.dataSessionRequestList.add(new DataSessionRequest(sourcePeerID, targetPeerID, connection, timeout));
+        Log.writeLog(this, "start data session " + sourcePeerID + " -> " + targetPeerID);
         this.createConnection(sourcePeerID, targetPeerID, timeout);
     }
 

@@ -86,4 +86,12 @@ public interface Connector {
      * @param connectorThread
      */
     void connectorSessionStarted(ConnectorThread connectorThread);
+
+    CharSequence getPeerID();
+
+    /**
+     * True if this connector runs on hub side - false if peer side
+     * @return
+     */
+    boolean isHubSide();
 }
