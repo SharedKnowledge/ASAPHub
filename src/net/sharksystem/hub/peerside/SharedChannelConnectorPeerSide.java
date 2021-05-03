@@ -165,7 +165,12 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
     protected void silenceEnded() { }
 
     @Override
-    protected void dataSessionStarted(TimedStreamPair timedStreamPair) { }
+    protected void dataSessionStarted(StreamPair streamPair) {
+        // tell listener
+        if(this.listener != null) {
+            this.listener.notifyPeerConnected(streamPair);
+        }
+    }
 
     @Override
     protected void dataSessionEnded() {

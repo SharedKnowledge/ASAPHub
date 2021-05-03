@@ -25,8 +25,5 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
         this.hubSocket = hubSocket;
         this.hostName = hostName.toString();
         this.port = port;
-
-
-
     }
 }

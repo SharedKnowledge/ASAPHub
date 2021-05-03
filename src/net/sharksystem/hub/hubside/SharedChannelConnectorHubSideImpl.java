@@ -4,6 +4,7 @@ import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.PeerIDHelper;
 import net.sharksystem.hub.*;
 import net.sharksystem.hub.protocol.*;
+import net.sharksystem.utils.AlarmClockListener;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -114,7 +115,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     }
 
     @Override
-    protected void dataSessionStarted(TimedStreamPair timedStreamPair) {
+    protected void dataSessionStarted(StreamPair streamPair) {
 
     }
 
@@ -142,13 +143,13 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
 
             Log.writeLog(this, this.toString(), "launch data session by request: " + connectionRequest);
             // init data session
-            TimedStreamPair timedStreamPair =
+            StreamPair streamPair =
                     this.initDataSession(connectionRequest, this.getTimeOutDataConnection());
 
             // tell hub
             Log.writeLog(this, this.toString(), "tell hub about newly created data session: " + connectionRequest);
             this.hub.startDataSession(this.getPeerID(), connectionRequest.sourcePeerID,
-                    timedStreamPair, this.getTimeOutDataConnection());
+                    streamPair, this.getTimeOutDataConnection());
         } else {
             Log.writeLog(this, this.toString(), "not in silence mode - ask for silence");
             // not in silence - should we asked for silence

@@ -21,9 +21,11 @@ class HubConnectorTester implements NewConnectionListener {
 
         try {
             //Thread.sleep(1500);
+            System.out.println(peerID + " write into stream...");
             String message = this.peerID;
             ASAPSerialization.writeCharSequenceParameter(message, streamPair.getOutputStream());
             // read
+            System.out.println(peerID + " start reading from stream...");
             String receivedMessage = ASAPSerialization.readCharSequenceParameter(streamPair.getInputStream());
             System.out.println(this.peerID + " received: " + receivedMessage);
 

@@ -9,15 +9,19 @@ import java.io.OutputStream;
 
 public class HubPDUChannelClear extends HubConnectionPDU {
     public final long maxIdleInMillis;
+    public final byte[] syncSequence;
 
-    public HubPDUChannelClear(CharSequence sourcePeerID, CharSequence targetPeerID, long maxIdleInMillis) {
+    public HubPDUChannelClear(CharSequence sourcePeerID, CharSequence targetPeerID,
+                              long maxIdleInMillis, byte[] syncSequence) {
         super(HubPDU.CHANNEL_CLEAR, sourcePeerID, targetPeerID);
         this.maxIdleInMillis = maxIdleInMillis;
+        this.syncSequence = syncSequence;
     }
 
     public HubPDUChannelClear(InputStream is) throws IOException, ASAPException {
         super(HubPDU.CHANNEL_CLEAR, is);
         this.maxIdleInMillis = ASAPSerialization.readLongParameter(is);
+        this.syncSequence = ASAPSerialization.readByteArray(is);
     }
 
     @Override
@@ -25,5 +29,6 @@ public class HubPDUChannelClear extends HubConnectionPDU {
         super.sendPDUNumber(os);
         super.sendFromTo(os);
         ASAPSerialization.writeLongParameter(this.maxIdleInMillis, os);
+        ASAPSerialization.writeByteArray(this.syncSequence, os);
     }
 }

@@ -1,6 +1,10 @@
 package net.sharksystem.hub.protocol;
 
+import net.sharksystem.asap.utils.ASAPSerialization;
+import net.sharksystem.asap.utils.Helper;
 import net.sharksystem.hub.*;
+import net.sharksystem.utils.AlarmClock;
+import net.sharksystem.utils.AlarmClockListener;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -87,7 +91,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
                 Log.writeLog(this, this.toString(), "... ended: data session");
                 this.dataSessionClock = null;
                 this.closeDataSessionStreamPair();
-                this.dataSessionEnded();
+                //this.dataSessionEnded();
                 break;
 
             default: Log.writeLogErr(this, this.toString(), "unknown alarm clock was ringing: " + yourKey);
@@ -95,7 +99,10 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     }
 
     protected boolean statusHubConnectorProtocol() {
-        return !this.statusAskedForSilence() && !this.statusInSilence() && !this.statusInDataSession();
+        return !this.statusAskedForSilence()
+                && !this.statusInSilence()
+                && !this.statusInDataSession()
+                && !statusSynchronizing;
     }
 
     protected boolean statusAskedForSilence() {
@@ -109,9 +116,13 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     protected abstract void silenceEnded();
 
     protected boolean statusInDataSession() {
-        return this.dataSessionClock != null;
+//        return this.dataSessionClock != null;
+        return this.wrappedDataSessionStreamPair != null;
     }
-    protected abstract void dataSessionStarted(TimedStreamPair timedStreamPair);
+
+    private boolean statusSynchronizing = false;
+
+    protected abstract void dataSessionStarted(StreamPair streamPair);
     protected abstract void dataSessionEnded();
 
     public final void askForSilence(long waitDuration) throws IOException, ASAPHubException {
@@ -123,7 +134,9 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     }
 
     public final void enterSilence(long waitDuration) throws ASAPHubException, IOException {
-        if(this.statusInDataSession()) throw new ASAPHubException("cannot enter silence mode - already in data session");
+        if(!this.statusHubConnectorProtocol() && !this.statusAskedForSilence())
+            throw new ASAPHubException("cannot enter silence mode - not in connector mode or asked for silence");
+
         if(askedForSilenceClock != null) this.askedForSilenceClock.kill(); // kill - we in silence now
 
         if(this.inSilenceClock != null) {
@@ -151,7 +164,12 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         this.silenceStarted();
     }
 
-    private TimedStreamPair launchDataSession(int timeout) {
+    private void enterDataSession(int timeout) {
+        if(!this.statusInSilence()) {
+            Log.writeLogErr(this, this.toString(), "cannot enter data session - not in silence mode");
+            return;
+        }
+
         String sessionID = this.getID() + ":" + this.sessionCounter++;
 
         Log.writeLog(this, this.toString(), "start new data session ");
@@ -174,12 +192,49 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         this.dataSessionClock.start();
 
         // launch stream
-        TimedStreamPair timedStreamPair = new TimedStreamPair(this.wrappedDataSessionStreamPair, timeout);
+        //TimedStreamPair timedStreamPair = new TimedStreamPair(this.wrappedDataSessionStreamPair, timeout);
 
         // tell sub classes
-        this.dataSessionStarted(timedStreamPair);
+        this.dataSessionStarted(this.wrappedDataSessionStreamPair);
+    }
 
-        return timedStreamPair;
+    private byte[] syncSequence;
+    @Override
+    public void channelClear(HubPDUChannelClear pdu) {
+        // received clean channel pdu - launch data session
+        if(!this.statusInSilence()) {
+            Log.writeLogErr(this, this.toString(), "received clear pdu but not silenced");
+        }
+
+        // remember sync sequence
+        this.syncSequence = pdu.syncSequence;
+        /*
+        Log.writeLog(this, this.toString(), "synch sequence: ");
+        ASAPSerialization.printByteArray(this.syncSequence);
+         */
+
+        // launch data session
+        this.enterDataSession((int) pdu.maxIdleInMillis);
+    }
+
+    /**
+     * Clear channel in order to start a data session
+     * @param sourcePeerID
+     * @param targetPeerID
+     * @param timeout
+     */
+    private void clearChannel(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+            throws IOException, ASAPHubException {
+        if(!this.statusInSilence()) throw new ASAPHubException("not in silence mode - cannot clear channel");
+        // create a sync sequence
+        this.syncSequence = Helper.long2byteArray(System.currentTimeMillis());
+        /*
+        Log.writeLog(this, this.toString(), "synch sequence: ");
+        ASAPSerialization.printByteArray(this.syncSequence);
+         */
+
+        HubPDUChannelClear channelClear = new HubPDUChannelClear(sourcePeerID, targetPeerID, timeout, syncSequence);
+        channelClear.sendPDU(this.getOutputStream());
     }
 
     private void closeDataSessionStreamPair() {
@@ -189,10 +244,91 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         }
     }
 
-    @Override
-    public void notifyClosed(String key) {
-        Log.writeLog(this, this.toString(), "data session closed: " + key);
-        this.wrappedDataSessionStreamPair = null;
+    private void enterSyncAfterDataSession() {
+        if(!this.statusInDataSession()) {
+            Log.writeLogErr(this, this.toString(), "cannot enter sync after data session - not in data session mode");
+            return;
+        }
+
+        Log.writeLog(this, this.toString(), "enter sync status after data session");
+
+        this.stopAlarmClocks();
+        this.statusSynchronizing = true;
+        this.wrappedDataSessionStreamPair = null; // nullify it - sign: we are no longer in data session
+
+        Log.writeLog(this, this.toString(), "wait a moment to ensure both ends stopped reading");
+        try {
+            Thread.sleep(this.getTimeOutSilenceChannel());
+        } catch (InterruptedException e) {
+            // ignore
+        }
+        Log.writeLog(this, this.toString(), "hope that both ends stopped reading - start cleaning up stream");
+
+        if(this.syncSequence == null) {
+            Log.writeLogErr(this, this.toString(), "internal error, no sync sequence defined");
+            // go ahead and hope for the best
+            this.syncedAfterDataSession();
+            return;
+        }
+
+        // send synchronization sequence
+        OutputStream os = this.getOutputStream();
+        try {
+            Log.writeLog(this, this.toString(), "write sync sequence");
+            os.write(this.syncSequence);
+        } catch (IOException e) {
+            Log.writeLogErr(this, this.toString(), "fatal: output stream closed");
+            this.streamBroken();
+            return;
+        }
+
+        Log.writeLog(this, this.toString(), "start sync reader");
+        (new SyncAfterDataSessionThread(this.toString())).start();
+    }
+
+    private class SyncAfterDataSessionThread extends Thread {
+        private final String id;
+        SyncAfterDataSessionThread(String id) { this.id = id; }
+        public void run() {
+            // read until read whole sync sequence
+            int expectedLength = SharedChannelConnectorImpl.this.syncSequence.length;
+            /*
+            Log.writeLog(this, this.id, "expected sequence / from right to left");
+            ASAPSerialization.printByteArray(SharedChannelConnectorImpl.this.syncSequence);
+            System.out.print("\n");
+             */
+
+            int verifiedBytes = 0;
+            while(verifiedBytes < expectedLength) {
+                Log.writeLog(this, this.id, "verifiedBytes == " + verifiedBytes);
+                try {
+                    int readSign = SharedChannelConnectorImpl.this.getInputStream().read();
+                    if(readSign < 0) throw new IOException("why would I have a -1 here and no IOException??");
+
+                    byte readByte = (byte) readSign;
+                    Log.writeLog(this, this.id, "read byte");
+                    ASAPSerialization.printByte(readByte);
+                    System.out.print("\n");
+
+                    if(SharedChannelConnectorImpl.this.syncSequence[verifiedBytes] == readByte) verifiedBytes++;
+                    else verifiedBytes = 0; // re-set
+                } catch (IOException e) {
+                    // fatal
+                    SharedChannelConnectorImpl.this.streamBroken();
+                    return;
+                }
+            }
+
+            Log.writeLog(this, this.id, "in sync again");
+            SharedChannelConnectorImpl.this.syncedAfterDataSession();
+        }
+    }
+
+    private void syncedAfterDataSession() {
+        Log.writeLog(this, this.toString(), "synchronized status after data session");
+
+        // synchronized again
+        this.statusSynchronizing = false;
 
         // relaunch Connector thread
         (new ConnectorThread(this, this.getInputStream())).start();
@@ -202,8 +338,19 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     }
 
     @Override
+    public void notifyClosed(String key) {
+        Log.writeLog(this, this.toString(), "data session closed: " + key);
+        this.enterSyncAfterDataSession();
+    }
+
+    @Override
     public void notifyAction(String key) {
         // no action when data session notifies of something - only interested in close event
+    }
+
+    // TODO - take care of this ugly situation - connection broken to other side of this connector - shut all down
+    private void streamBroken() {
+        Log.writeLogErr(this, this.toString(), "fatal: stream broken - shut down - TODO");
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,7 +360,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     private StreamPairWrapper wrappedDataSessionStreamPair = null;
     private int sessionCounter = 0;
 
-    public TimedStreamPair initDataSession(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+    public StreamPair initDataSession(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
 
         return this.initDataSession(
@@ -223,7 +370,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
 
     private Thread threadWaitingForDataConnection = null;
 
-    synchronized protected TimedStreamPair initDataSession(
+    synchronized protected StreamPair initDataSession(
             ConnectionRequest connectionRequest, int timeout) throws ASAPHubException, IOException {
 
         Log.writeLog(this, this.toString(), "try to init data session over shared channel..");
@@ -254,16 +401,14 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         Log.writeLog(this, this.toString(), ".. we are in silence mode ..");
         // send clear message to the other side (peer)
         Log.writeLog(this, this.toString(), "send channel clear PDU: ");
-        // tell connector we are ready
-        HubPDUChannelClear channelClear = new HubPDUChannelClear(
-                connectionRequest.sourcePeerID, connectionRequest.targetPeerID, timeout);
-
-        channelClear.sendPDU(this.getOutputStream());
-
+        // clear channel
+        this.clearChannel(connectionRequest.sourcePeerID, connectionRequest.targetPeerID, timeout);
         Log.writeLog(this, this.toString(), ".. cleared channel - launch data session");
 
         // launch data session and wait
-        return this.launchDataSession(timeout);
+        this.enterDataSession(timeout);
+
+        return this.wrappedDataSessionStreamPair;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -298,22 +443,13 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         }
     }
 
-    @Override
-    public void channelClear(HubPDUChannelClear pdu) {
-        // received clean channel pdu - launch data session
-        if(!this.statusInSilence()) {
-            Log.writeLogErr(this, this.toString(), "received clear pdu but not silenced");
-        }
-
-        this.launchDataSession((int) pdu.maxIdleInMillis);
-    }
-
     public String toString() {
         String status = null;
         if(statusHubConnectorProtocol()) status = "connected";
         else if(statusInSilence()) status = "silence";
         else if(statusAskedForSilence()) status = "askedForSilence";
         else if(statusInDataSession()) status = "dataSession";
+        else if(statusSynchronizing) status = "syncing";
         return super.toString() + "|" + status;
     }
 }
