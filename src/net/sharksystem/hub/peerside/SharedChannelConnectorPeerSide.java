@@ -173,7 +173,13 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
         Log.writeLog(this, this.toString(), "data session started due to request: " + connectionRequest);
         // tell listener
         if(this.listener != null) {
-            this.listener.notifyPeerConnected(streamPair);
+            // make sure not to be blocked by application programmer
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    listener.notifyPeerConnected(streamPair);
+                }
+            }).start();
         }
     }
 
