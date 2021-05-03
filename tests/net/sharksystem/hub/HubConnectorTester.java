@@ -46,10 +46,10 @@ class HubConnectorTester implements NewConnectionListener {
             streamPair.close();
         } catch (ASAPException e) {
             System.out.println(this.peerID + " asapException ");
-            e.printStackTrace();
+            //e.printStackTrace();
         } catch (IOException iex) {
             System.out.println(this.peerID + " ioException ");
-            iex.printStackTrace();
+            //iex.printStackTrace();
         }
     }
 

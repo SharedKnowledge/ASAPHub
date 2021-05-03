@@ -78,7 +78,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
         // remember this request
         this.dataSessionRequestList.add(new DataSessionRequest(sourcePeerID, targetPeerID, connection, timeout));
         Log.writeLog(this, "start data session " + sourcePeerID + " -> " + targetPeerID);
-        this.createConnection(sourcePeerID, targetPeerID, timeout);
+        this.createDataConnection(sourcePeerID, targetPeerID, timeout);
     }
 
     private List<DataSessionRequest> dataSessionRequestList = new ArrayList<>();
@@ -104,12 +104,13 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
      * @param timeout
      * @see HubGenericImpl#connectionCreated(CharSequence, CharSequence, StreamPair, int)
      */
-    protected abstract void createConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+    protected abstract void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException;
 
-    public void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID,
+    void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID,
                                   StreamPair connection, int timeout) {
 
+        Log.writeLog(this, "connection created called");
         DataSessionRequest dataSessionRequest = null;
         List<DataSessionRequest> addAgain = new ArrayList<>();
         do {
@@ -133,6 +134,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             // found match
             Log.writeLog(this, "found fitting data session in list");
             try {
+                Log.writeLog(this, "create data link");
                 StreamPairLink dataLink =
                         new StreamPairLink(dataSessionRequest.connection, sourcePeerID, connection, targetPeerID);
             } catch (IOException e) {

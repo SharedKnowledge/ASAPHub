@@ -44,7 +44,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
     }
 
     @Override
-    public void createConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
+    public void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
         this.sendXMLObject(new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout));
 
     }

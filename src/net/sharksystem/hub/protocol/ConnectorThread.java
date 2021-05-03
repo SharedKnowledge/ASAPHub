@@ -64,11 +64,11 @@ public class ConnectorThread extends Thread {
                 }
             }
         } catch (IOException | ASAPException e) {
-            Log.writeLog(this, "connection lost to: ");
+            Log.writeLog(this, this.connector.toString(),"connection lost to: ");
         } catch (ClassCastException e) {
-            Log.writeLog(this, "wrong pdu class - crazy: " + e.getLocalizedMessage());
+            Log.writeLog(this, this.connector.toString(),"wrong pdu class - crazy: " + e.getLocalizedMessage());
         } finally {
-            Log.writeLog(this, "hub session ended");
+            Log.writeLog(this, this.connector.toString(), "hub session ended");
             this.connector.connectorSessionEnded();
         }
     }

@@ -115,13 +115,34 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     }
 
     @Override
-    protected void dataSessionStarted(StreamPair streamPair) {
-
+    protected void dataSessionStarted(ConnectionRequest connectionRequest, StreamPair streamPair) {
+        // hub takes care of the rest
+        /*
+        int timeout = (int) (connectionRequest.until - System.currentTimeMillis());
+        try {
+            this.getHub().startDataSession(
+                    connectionRequest.targetPeerID, // switch perspective now source <-> target
+                    connectionRequest.sourcePeerID,
+                    streamPair,
+                    timeout);
+        } catch (ASAPHubException e) {
+            Log.writeLogErr(this, this.toString(), "cannot start data session with hub: "
+                    + e.getLocalizedMessage());
+        } catch (IOException e) {
+            Log.writeLogErr(this, this.toString(), "cannot start data session with hub"
+                    + e.getLocalizedMessage());
+        }
+         */
     }
 
     @Override
     protected void dataSessionEnded() {
 
+    }
+
+    @Override
+    protected void shutdown() {
+        this.hub.unregister(this.getPeerID());
     }
 
     synchronized private void handleExternalConnectionRequestList() throws ASAPHubException, IOException {

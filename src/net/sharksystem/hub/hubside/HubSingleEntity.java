@@ -56,12 +56,17 @@ public class HubSingleEntity extends HubGenericImpl {
     }
 
     @Override
-    protected void createConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+    protected void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
 
+        Log.writeLog(this, "createDataConnection");
         ConnectorInternal targetConnector = this.getConnector(targetPeerID);
+        Log.writeLog(this, "found connector to " + targetPeerID);
         // ask for data connection - can fail and produce exceptions
         StreamPair streamPair = targetConnector.initDataSession(sourcePeerID, targetPeerID, timeout);
+        Log.writeLog(this, "got data connection (stream pair) " + targetPeerID);
+
+        this.connectionCreated(sourcePeerID, targetPeerID, streamPair, timeout);
     }
 
     protected ConnectorInternal getConnector(CharSequence peerID) throws ASAPHubException {

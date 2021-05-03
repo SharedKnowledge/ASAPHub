@@ -69,4 +69,6 @@ public interface HubConnector {
      * @see #connectPeer(CharSequence)
      */
     void setListener(NewConnectionListener listener);
+
+    boolean isShutdown();
 }

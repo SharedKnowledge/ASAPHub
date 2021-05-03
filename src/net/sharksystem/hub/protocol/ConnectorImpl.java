@@ -40,7 +40,7 @@ public abstract class ConnectorImpl implements Connector {
     }
 
     public void connectorSessionEnded() {
-        Log.writeLog(this, "connector thread ended");
+        Log.writeLog(this, this.toString(), "connector thread ended");
         this.connectorThread = null;
     }
 

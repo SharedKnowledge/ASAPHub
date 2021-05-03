@@ -1,6 +1,5 @@
 package net.sharksystem.hub.peerside;
 
-import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.*;
 import net.sharksystem.hub.protocol.*;
 import net.sharksystem.utils.Log;
@@ -8,7 +7,6 @@ import net.sharksystem.utils.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -17,6 +15,7 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
     private NewConnectionListener listener;
     private Collection<CharSequence> peerIDs = new ArrayList<>();
     private CharSequence localPeerID;
+    private boolean shutdown = false;
 
     public SharedChannelConnectorPeerSide(InputStream is, OutputStream os) throws ASAPHubException {
         super(is, os);
@@ -75,7 +74,13 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
 
     @Override
     public void disconnectHub() throws ASAPHubException {
-        this.getConnectorThread().kill();
+        try {
+            this.getConnectorThread();
+            this.getConnectorThread().kill();
+        }
+        catch(ASAPHubException e) {
+            Log.writeLog(this, this.toString(), "no connector thread running - cannot call disconnect");
+        }
     }
 
     @Override
@@ -122,7 +127,6 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
     }
 
     public Collection<CharSequence> getPeerIDs() throws IOException {
-        this.checkConnected();
         synchronized (this) {
             return this.peerIDs;
         }
@@ -165,7 +169,8 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
     protected void silenceEnded() { }
 
     @Override
-    protected void dataSessionStarted(StreamPair streamPair) {
+    protected void dataSessionStarted(ConnectionRequest connectionRequest, StreamPair streamPair) {
+        Log.writeLog(this, this.toString(), "data session started due to request: " + connectionRequest);
         // tell listener
         if(this.listener != null) {
             this.listener.notifyPeerConnected(streamPair);
@@ -175,9 +180,19 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
     @Override
     protected void dataSessionEnded() {
         try {
+            this.checkConnected(); // we should be connected again - trigger an exception in case
             this.syncHubInformation();
         } catch (IOException e) {
             Log.writeLogErr(this, this.toString(), "sync problems: " + e.getLocalizedMessage());
         }
+    }
+
+    @Override
+    protected void shutdown() {
+        this.shutdown = true;
+    }
+
+    public boolean isShutdown() {
+        return this.shutdown;
     }
 }
