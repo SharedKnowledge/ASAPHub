@@ -14,10 +14,7 @@ import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class HubIPCJavaSide extends HubGenericImpl {
     // see documentation of those abstract methods in HubGenericImpl, example implementation e.g. in HubSingleEntity
@@ -25,17 +22,26 @@ public class HubIPCJavaSide extends HubGenericImpl {
     private final InputStream inputStream;
     private final OutputStream outputStream;
     private Map<CharSequence, ConnectorInternal> connectorInternalMap;
+    private RegisteredPeersModel registeredPeersResponse;
+    private final int messagePort;
+    private final String host;
+    private Socket messageSocket;
 
-    public HubIPCJavaSide(String host, int port) throws IOException {
+
+    public HubIPCJavaSide(String host, int port, int messagePort) throws IOException {
         Socket socket = new Socket(host, port);
         this.outputStream = socket.getOutputStream();
         this.inputStream = socket.getInputStream();
         this.connectorInternalMap = new HashMap<>();
+        this.host = host;
+        this.messagePort = messagePort;
+
     }
 
 
     @Override
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
+        this.sendXMLObject(new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout));
     }
 
     @Override
@@ -45,7 +51,6 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     @Override
     public void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
-        this.sendXMLObject(new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout));
 
     }
 
@@ -62,6 +67,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
     public void register(CharSequence peerId, ConnectorInternal hubConnectorSession) {
         this.sendRegistrationMessage(peerId, true);
         this.connectorInternalMap.put(peerId, hubConnectorSession);
+
     }
 
     @Override
@@ -81,23 +87,21 @@ public class HubIPCJavaSide extends HubGenericImpl {
     @Override
     public Set<CharSequence> getRegisteredPeers() {
         RegisteredPeersModel registeredPeers = null;
+        int attempts = 0;
         try {
             this.outputStream.write("registeredPeers?".getBytes(StandardCharsets.UTF_8));
-            BufferedReader reader = new BufferedReader(new InputStreamReader(this.inputStream, StandardCharsets.UTF_8));
-            String message = "";
-            while (true) {
-                String characterAsStr = String.valueOf((char) reader.read());
-                if (!characterAsStr.equals(this.delimiter)) {
-                    message = message + characterAsStr;
-                } else {
-                    break;
-                }
-            }
-            registeredPeers = (RegisteredPeersModel) this.loadFromXML(message, RegisteredPeersModel.class);
-
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
+        while (this.registeredPeersResponse == null && attempts < 5) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            attempts++;
+        }
+        registeredPeers = this.registeredPeersResponse;
         Set<CharSequence> peers = new HashSet<>();
         if (null != registeredPeers.getRegisteredPeers()) {
             for (PeerModel peerModel : registeredPeers.getRegisteredPeers()) {
@@ -124,14 +128,71 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     }
 
-    private Object loadFromXML(String xml, Class<? extends Object> classOfObject) {
+    public Object loadFromXML(String xml, Class<? extends Object> classOfObject) {
         try {
             Unmarshaller unmarshaller = JAXBContext.newInstance(classOfObject).createUnmarshaller();
             return unmarshaller.unmarshal(new StringReader(xml));
         } catch (JAXBException e) {
-            e.printStackTrace();
+            return null;
         }
-        return null;
+    }
+
+    public void process_incoming_connect_request(ConnectRequestModel connectRequest) throws ASAPHubException, IOException {
+        CharSequence sourcePeerID = connectRequest.getSourcePeerID();
+        CharSequence targetPeerID = connectRequest.getTargetPeerID();
+        int timeout = connectRequest.getTimeout();
+        System.out.println(this.connectorInternalMap);
+        ConnectorInternal connectorInternal = this.connectorInternalMap.get(targetPeerID);
+        StreamPair streamPair = connectorInternal.initDataSession(sourcePeerID, targetPeerID, timeout);
+        this.startDataSession(sourcePeerID, targetPeerID, streamPair, timeout);
+
+    }
+
+    @Override
+    public void startDataSession(CharSequence sourcePeerID, CharSequence targetPeerID,
+                                 StreamPair connection, int timeout) throws ASAPHubException, IOException {
+        // establish connection to LoRa node of source peer id and provide in- and outputStreams
+        System.out.println("start data session");
+        this.messageSocket = new Socket(this.host, this.messagePort);
+        // TODO send connectionRequest back to sourcePeer
+    }
+
+    public void startReadingThread() {
+        Runnable r = () -> {
+            try {
+                while (true) {
+                    String message = readMessageFromInputStream();
+                    RegisteredPeersModel registeredPeers = (RegisteredPeersModel) loadFromXML(message, RegisteredPeersModel.class);
+                    if (registeredPeers != null) {
+                        registeredPeersResponse = registeredPeers;
+                        continue;
+                    }
+                    ConnectRequestModel connectRequestModel = (ConnectRequestModel) loadFromXML(message, ConnectRequestModel.class);
+                    if(connectRequestModel != null){
+                        this.process_incoming_connect_request(connectRequestModel);
+                    }
+                }
+
+            } catch (IOException | ASAPHubException e) {
+                e.printStackTrace();
+            }
+        };
+        Thread t = new Thread(r);
+        t.start();
+    }
+
+    private String readMessageFromInputStream() throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(this.inputStream, StandardCharsets.UTF_8));
+        String message = "";
+        while (true) {
+            String characterAsStr = String.valueOf((char) reader.read());
+            if (!characterAsStr.equals(this.delimiter)) {
+                message = message + characterAsStr;
+            } else {
+                break;
+            }
+        }
+        return message;
     }
 
 }
