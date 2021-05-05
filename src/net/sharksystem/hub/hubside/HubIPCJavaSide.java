@@ -2,10 +2,13 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.StreamPair;
+import net.sharksystem.hub.StreamPairImpl;
+import net.sharksystem.hub.StreamPairLink;
 import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
 import net.sharksystem.hub.hubside.lora_ipc.PeerModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegistrationModel;
+import net.sharksystem.utils.Log;
 
 import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
@@ -15,6 +18,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class HubIPCJavaSide extends HubGenericImpl {
     // see documentation of those abstract methods in HubGenericImpl, example implementation e.g. in HubSingleEntity
@@ -144,18 +148,15 @@ public class HubIPCJavaSide extends HubGenericImpl {
         System.out.println(this.connectorInternalMap);
         ConnectorInternal connectorInternal = this.connectorInternalMap.get(targetPeerID);
         StreamPair streamPair = connectorInternal.initDataSession(sourcePeerID, targetPeerID, timeout);
+        Socket socket = new Socket(this.host, this.messagePort);
+        this.messageSocket = socket;
+        StreamPair multihopStreamPair = new StreamPairImpl(socket.getInputStream(), socket.getOutputStream(),
+                targetPeerID);
+        new StreamPairLink(streamPair,"local", multihopStreamPair, "multihop");
         this.startDataSession(sourcePeerID, targetPeerID, streamPair, timeout);
-
+        this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
     }
 
-    @Override
-    public void startDataSession(CharSequence sourcePeerID, CharSequence targetPeerID,
-                                 StreamPair connection, int timeout) throws ASAPHubException, IOException {
-        // establish connection to LoRa node of source peer id and provide in- and outputStreams
-        System.out.println("start data session");
-        this.messageSocket = new Socket(this.host, this.messagePort);
-        // TODO send connectionRequest back to sourcePeer
-    }
 
     public void startReadingThread() {
         Runnable r = () -> {
@@ -168,7 +169,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
                         continue;
                     }
                     ConnectRequestModel connectRequestModel = (ConnectRequestModel) loadFromXML(message, ConnectRequestModel.class);
-                    if(connectRequestModel != null){
+                    if (connectRequestModel != null) {
                         this.process_incoming_connect_request(connectRequestModel);
                     }
                 }
