@@ -94,4 +94,6 @@ public interface Connector {
      * @return
      */
     boolean isHubSide();
+
+    void unregister(HubPDUUnregister hubPDU);
 }

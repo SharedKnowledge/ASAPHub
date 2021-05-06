@@ -18,6 +18,7 @@ public abstract class HubPDU {
     static final byte SILENT_REQUEST = 6;
     static final byte SILENT_REPLY = 7;
     static final byte CHANNEL_CLEAR = 8;
+    static final byte HUB_UNREGISTER = 9;
 
     private final byte pduNumber;
 
@@ -29,6 +30,7 @@ public abstract class HubPDU {
         byte b = ASAPSerialization.readByte(is);
         switch (b) {
             case HUB_REGISTER: return new HubPDURegister(is);
+            case HUB_UNREGISTER: return new HubPDUUnregister(is);
             case CONNECT_PEER_REQUEST: return new HubPDUConnectPeerRQ(is);
             case CONNECT_PEER_REPLY: return new HubPDUConnectPeerNewConnectionRPLY(is);
             case HUB_STATUS_REQUEST: return new HubPDUHubStatusRQ(is);

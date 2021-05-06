@@ -54,7 +54,7 @@ public interface HubConnector {
     void connectHub(CharSequence localPeerID) throws IOException, ASAPHubException;
 
     /**
-     * Disconnect from hub.
+     * Disconnect from hub. Leaves communication channel open.
      * @throws IOException communication problem, cannot connect to hub
      */
     void disconnectHub() throws IOException, ASAPHubException;

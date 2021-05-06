@@ -136,7 +136,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     }
 
     @Override
-    protected void dataSessionEnded() {
+    protected void resumedConnectorProtocol() {
 
     }
 
@@ -297,6 +297,12 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         // received register pdu - tell hub
         Log.writeLog(this, this.toString(), "received register from peer side - tell hub");
         this.hub.register(pdu.peerID, this);
+    }
+
+    @Override
+    public void unregister(HubPDUUnregister pdu) {
+        Log.writeLog(this, this.toString(), "received unregister from peer side - tell hub");
+        this.hub.unregister(pdu.peerID);
     }
 
     @Override

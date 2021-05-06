@@ -1,7 +1,7 @@
-package net.sharksystem.hub.protocol;
+package net.sharksystem.hub;
 
 import net.sharksystem.asap.utils.Helper;
-import net.sharksystem.hub.*;
+import net.sharksystem.hub.protocol.*;
 import net.sharksystem.utils.AlarmClock;
 import net.sharksystem.utils.AlarmClockListener;
 import net.sharksystem.utils.Log;
@@ -140,7 +140,6 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     private boolean statusSynchronizing = false;
 
     protected abstract void dataSessionStarted(ConnectionRequest connectionRequest, StreamPair streamPair);
-    protected abstract void dataSessionEnded();
 
     public final void askForSilence(long waitDuration) throws IOException, ASAPHubException {
         if(!this.statusHubConnectorProtocol()) throw new ASAPHubException("wrong status, cannot send silence RQ");
@@ -320,9 +319,10 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
             //os.write(this.syncSequence);
 
             // write sync sequence - which is bytes from 0 .. number. two times
-            for (int i = 0; i < this.numberOfSyncBytes; i++) {
-                os.write(i);
-            }
+            for(int round = 0; round < 2; round++)
+                for (int i = 0; i < this.numberOfSyncBytes; i++) {
+                    os.write(i);
+                }
         } catch (IOException e) {
             Log.writeLogErr(this, this.toString(), "fatal: output stream closed");
             this.fatalError();
@@ -339,16 +339,20 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         private final String id;
         SyncAfterDataSessionThread(String id) { this.id = id; }
         public void run() {
-            int lastInt = -1;
             try {
                 // sync with stream
+                int lastInt = -1;
                 int readInt = -1;
+                boolean inCountUp = false;
+                boolean secondRound = false;
                 do {
                     readInt = SharedChannelConnectorImpl.this.getInputStream().read();
-                    boolean inCountUp = readInt == lastInt+1;
+                    inCountUp = (lastInt > -1 && readInt == lastInt+1) || (readInt == 0 && lastInt == numberOfSyncBytes-1);
+//                    Log.writeLog(this, SharedChannelConnectorImpl.this.toString(),"read " + readInt + " lastInt == " + lastInt + " inCountUp == " + inCountUp + " secondRound == " + secondRound);
+                    if(readInt == 0 && inCountUp) secondRound = true;
+
                     lastInt = readInt;
-                    //Log.writeLog(this, SharedChannelConnectorImpl.this.toString(), "read " + readInt + " inCountUp == " + inCountUp);
-                } while(readInt != numberOfSyncBytes-1); // last byte read
+                } while(readInt != numberOfSyncBytes-1 || !inCountUp || !secondRound); // last byte read
             } catch (IOException e) {
                 // fatal
                 SharedChannelConnectorImpl.this.fatalError();
@@ -367,9 +371,6 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
 
         // relaunch Connector thread
         (new ConnectorThread(this, this.getInputStream())).start();
-
-        // tell sub classes
-        this.dataSessionEnded();
     }
 
     @Override

@@ -5,7 +5,6 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        E2EStreamPairLinkTestVersion2.class,
         HubUsageTests.class
 })
 

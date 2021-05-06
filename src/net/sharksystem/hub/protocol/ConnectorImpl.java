@@ -37,7 +37,10 @@ public abstract class ConnectorImpl implements Connector {
     public void connectorSessionStarted(ConnectorThread connectorThread) {
         Log.writeLog(this, "connector thread running");
         this.connectorThread = connectorThread;
+        this.resumedConnectorProtocol();
     }
+
+    protected abstract void resumedConnectorProtocol();
 
     public void connectorSessionEnded() {
         Log.writeLog(this, this.toString(), "connector thread ended");

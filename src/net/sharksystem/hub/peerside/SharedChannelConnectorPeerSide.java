@@ -74,6 +74,18 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
 
     @Override
     public void disconnectHub() throws ASAPHubException {
+        // create hello pdu
+        HubPDUUnregister hubPDUUnregister = new HubPDUUnregister(localPeerID);
+
+        // introduce yourself to hub
+        try {
+            hubPDUUnregister.sendPDU(this.getOutputStream());
+        } catch (IOException e) {
+            // tell caller
+            throw new ASAPHubException("cannot disconnect - not connected or in data session, try again later");
+        }
+
+        // kill connector thread
         try {
             this.getConnectorThread();
             this.getConnectorThread().kill();
@@ -142,6 +154,11 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
     }
 
     @Override
+    public void unregister(HubPDUUnregister pdu) {
+        this.pduNotHandled(pdu);
+    }
+
+    @Override
     public void connectPeerRQ(HubPDUConnectPeerRQ pdu) {
         this.pduNotHandled(pdu);
     }
@@ -184,9 +201,8 @@ public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl i
     }
 
     @Override
-    protected void dataSessionEnded() {
+    protected void resumedConnectorProtocol() {
         try {
-            this.checkConnected(); // we should be connected again - trigger an exception in case
             this.syncHubInformation();
         } catch (IOException e) {
             Log.writeLogErr(this, this.toString(), "sync problems: " + e.getLocalizedMessage());

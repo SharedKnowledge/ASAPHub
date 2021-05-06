@@ -55,6 +55,10 @@ public class ConnectorThread extends Thread {
                     Log.writeLog(this, this.toString(), "read hub register");
                     this.connector.register((HubPDURegister) hubPDU);
                 }
+                else if (hubPDU instanceof HubPDUUnregister) {
+                    Log.writeLog(this, this.toString(), "read hub unregister");
+                    this.connector.unregister((HubPDUUnregister) hubPDU);
+                }
                 else if (hubPDU instanceof HubPDUConnectPeerRQ) {
                     Log.writeLog(this, this.toString(), "read hub connect peer RQ");
                     this.connector.connectPeerRQ((HubPDUConnectPeerRQ) hubPDU);

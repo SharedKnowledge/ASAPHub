@@ -53,7 +53,7 @@ public class HubUsageTests {
         /// Alice meets Bob
         aliceHubConnector.connectPeer(BOB_ID);
 
-        Thread.sleep(maxTimeInSeconds * 1000 * 3);
+        Thread.sleep(maxTimeInSeconds * 1000);
         System.out.println("************************ back from sleep ****************************");
         //Thread.sleep(Long.MAX_VALUE);
         Assert.assertEquals(1, aliceListener.numberNotifications());
@@ -61,13 +61,16 @@ public class HubUsageTests {
 
         System.out.println("************************ alice connector disconnect ****************************");
         aliceHubConnector.disconnectHub();
-        Thread.sleep(maxTimeInSeconds * 1000 * 1);
+        Thread.sleep(maxTimeInSeconds * 1000);
 
         System.out.println("************************ bob connector sync ****************************");
         bobHubConnector.syncHubInformation();
         Thread.sleep(100);
 
         peerNames = bobHubConnector.getPeerIDs();
+        for(CharSequence name : peerNames) {
+            System.out.println(name);
+        }
         Assert.assertEquals(0, peerNames.size());
     }
 
