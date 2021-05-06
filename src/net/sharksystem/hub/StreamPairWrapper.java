@@ -1,24 +1,23 @@
 package net.sharksystem.hub;
 
+import net.sharksystem.utils.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StreamPairWrapper implements StreamPair {
+public class StreamPairWrapper extends StreamPairListenerManager implements StreamPair {
     private final InputStreamWrapper is;
     private final OutputStreamWrapper os;
     private final String id;
-    private List<StreamPairListener> listenerList = new ArrayList<>();
 
-    public StreamPairWrapper(InputStream is, OutputStream os, StreamPairListener listener, String id) {
+    public StreamPairWrapper(InputStream is, OutputStream os, WrappedStreamPairListener listener, String id) {
         this.is = new InputStreamWrapper(is);
         this.os = new OutputStreamWrapper(os);
         this.id = id;
-        if(listener != null) {
-            this.listenerList.add(listener);
-        }
+        super.addListener(listener);
 
     }
 
@@ -39,24 +38,31 @@ public class StreamPairWrapper implements StreamPair {
     @Override
     public void close() {
         // do not close the streams but prevent any further communication
+        Log.writeLog(this, "closed");
         this.is.closed = true;
         this.os.closed = true;
+        this.notifyAllListenerClosed(this, this.id);
+        /*
         if(!this.listenerList.isEmpty()) {
-            for(StreamPairListener listener : this.listenerList) {
+            for(WrappedStreamPairListener listener : this.listenerList) {
                 listener.notifyClosed(this.id);
             }
         }
+         */
     }
 
     private void notifyAction() {
         if(!this.listenerList.isEmpty()) {
             for(StreamPairListener listener : this.listenerList) {
-                listener.notifyAction(this.id);
+                if(listener instanceof WrappedStreamPairListener) {
+                    WrappedStreamPairListener wrappedListener = (WrappedStreamPairListener) listener;
+                    wrappedListener.notifyAction(this.id);
+                }
             }
         }
     }
 
-    public void addListener(StreamPairListener listener) {
+    public void addListener(WrappedStreamPairListener listener) {
 
     }
 
@@ -70,8 +76,13 @@ public class StreamPairWrapper implements StreamPair {
 
         @Override
         public int read() throws IOException {
-            if(this.closed) throw new IOException("stream closed");
+            if(this.closed) throw new IOException("wrapped stream closed");
             int i = this.is.read();
+            if(this.closed) {
+                Log.writeLog(this, "read sign after already closed " + i);
+                throw new IOException("wrapped stream closed");
+            }
+            // else
             StreamPairWrapper.this.notifyAction();
             return i;
         }
@@ -91,7 +102,7 @@ public class StreamPairWrapper implements StreamPair {
 
         @Override
         public void write(int value) throws IOException {
-            if(this.closed) throw new IOException("stream closed");
+            if(this.closed) throw new IOException("wrapped stream closed");
             this.os.write(value);
             StreamPairWrapper.this.notifyAction();
         }

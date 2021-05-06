@@ -12,6 +12,7 @@ class DataExchangeTester implements Runnable {
     private final OutputStream os;
     private final String id;
     private int rounds;
+    public boolean synced = false;
 
     DataExchangeTester(InputStream is, OutputStream os, int rounds, String id) {
         this.is = is;
@@ -39,10 +40,12 @@ class DataExchangeTester implements Runnable {
                 }
                 value++;
             }
+            System.out.println("synced: " + id);
+            this.synced = true;
             // block
-            System.out.println("blocking (?): " + id);
+            System.out.println("read again - blocking (?): " + id);
             int retVal = this.is.read();
-            System.out.println("back from read(): "  + retVal + " | " + id);
+            System.out.println("back from read after synced: "  + retVal + " | " + id);
         } catch (IOException | ASAPException e) {
             System.out.println("exception data exchange tester - most probably good: " + id + " | "
                     + e.getLocalizedMessage());

@@ -14,7 +14,7 @@ import java.io.OutputStream;
  * Root class for all connector implementation (hub and peer side) using a shared channel.
  */
 public abstract class SharedChannelConnectorImpl extends ConnectorImpl
-        implements AlarmClockListener, StreamPairListener {
+        implements AlarmClockListener, WrappedStreamPairListener {
     public static final int DEFAULT_SILENCE_TIME_OUT_IN_MILLIS = 100;
     public static final int DEFAULT_DATA_CONNECTION_TIME_OUT_IN_MILLIS = 100;
     public static final int DEFAULT_CONNECTION_REQUEST_TIME_OUT_IN_MILLIS = 100;
@@ -95,12 +95,16 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
             case ALARM_CLOCK_DATA_SESSION:
                 Log.writeLog(this, this.toString(), "... ended: data session");
                 this.dataSessionClock = null;
-                this.closeDataSessionStreamPair();
-                //this.dataSessionEnded();
+                if(this.wrappedDataSessionStreamPair != null) {
+                    // this cannot be null...
+                    this.wrappedDataSessionStreamPair.close();
+                    //this.wrappedDataSessionStreamPair = null; do not null it! it is done in sync
+                    this.enterSyncAfterDataSession();
+                }
                 break;
 
             case ALARM_CLOCK_SYNC_TIMEOUT_SESSION:
-                Log.writeLog(this, this.toString(), "... ended: synchrinization time out");
+                Log.writeLog(this, this.toString(), "... ended: synchronization time out");
                 this.syncTimeOutClock = null;
                 Log.writeLog(this, this.toString(), "could not manage to get in sync with other side");
                 this.fatalError();
@@ -257,13 +261,31 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         channelClear.sendPDU(this.getOutputStream());
     }
 
-    private void closeDataSessionStreamPair() {
-        if(this.wrappedDataSessionStreamPair != null) {
-            this.wrappedDataSessionStreamPair.close();
-            this.wrappedDataSessionStreamPair = null;
-        }
-    }
+    /*
+    And here is the challenge:
+    On both sides of the connection was a data session running. This session is ended by
+    a) Peer closed the connection
+    b) time out was fired on either side.
 
+    We have no way to notify hub side about a closed connection - both side have to wait for data session time out.
+    Now, there is a wrapped stream pair on either side. Closes set a flag and will notify reading threads about this
+    closed stream. Most probably there will be a thread blocked in a read on both side. Not in all cases, though.
+
+    A peer application might have closed the stream and stopped reading..
+
+    Moreover... both time out clocks are not in perfect sync of course. It highly unlikely, but an application could
+    send something in the stream when one side already closed the stream and the other did not. That would not be
+    a problem if both time outs fire.  It is a serious problem if one side re-sets its time out but the other side
+    assumes and end of the data session. We cannot recover from this final scenario. We can from the rest, though.
+
+    Here is the sync algorithm: We already have a number of bytes on both sides due to the final CLEAR_CHANNEL PDU.
+    We send those byte arrays twice. It is highly likely that at least the first byte gets lost - the wrapped thread
+    comes back from read and realizes that it job is done. Unfortunately, it has already read the last byte from the
+    input stream.
+
+    In any case, the synchronization process try to figure out at what position it starts with the first series of bytes.
+    We assume to be in sync again if we read the complete second series of bytes.
+     */
     private void enterSyncAfterDataSession() {
         if(!this.statusInDataSession()) {
             Log.writeLogErr(this, this.toString(), "cannot enter sync after data session - not in data session mode");
@@ -295,7 +317,12 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         OutputStream os = this.getOutputStream();
         try {
             Log.writeLog(this, this.toString(), "write sync sequence");
-            os.write(this.syncSequence);
+            //os.write(this.syncSequence);
+
+            // write sync sequence - which is bytes from 0 .. number. two times
+            for (int i = 0; i < this.numberOfSyncBytes; i++) {
+                os.write(i);
+            }
         } catch (IOException e) {
             Log.writeLogErr(this, this.toString(), "fatal: output stream closed");
             this.fatalError();
@@ -306,41 +333,27 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         (new SyncAfterDataSessionThread(this.toString())).start();
     }
 
+    private int numberOfSyncBytes = 20;
+
     private class SyncAfterDataSessionThread extends Thread {
         private final String id;
         SyncAfterDataSessionThread(String id) { this.id = id; }
         public void run() {
-            // read until read whole sync sequence
-            int expectedLength = SharedChannelConnectorImpl.this.syncSequence.length;
-            /*
-            Log.writeLog(this, this.id, "expected sequence / from right to left");
-            ASAPSerialization.printByteArray(SharedChannelConnectorImpl.this.syncSequence);
-            System.out.print("\n");
-             */
-
-            int verifiedBytes = 0;
-            while(verifiedBytes < expectedLength) {
-                Log.writeLog(this, this.id, "verifiedBytes == " + verifiedBytes);
-                try {
-                    int readSign = SharedChannelConnectorImpl.this.getInputStream().read();
-                    if(readSign < 0) throw new IOException("why would I have a -1 and no IOException??");
-
-                    byte readByte = (byte) readSign;
-                    /*
-                    Log.writeLog(this, this.id, "read byte");
-                    ASAPSerialization.printByte(readByte);
-                    System.out.print("\n");
-                     */
-
-                    if(SharedChannelConnectorImpl.this.syncSequence[verifiedBytes] == readByte) verifiedBytes++;
-                    else verifiedBytes = 0; // re-set
-                } catch (IOException e) {
-                    // fatal
-                    SharedChannelConnectorImpl.this.fatalError();
-                    return;
-                }
+            int lastInt = -1;
+            try {
+                // sync with stream
+                int readInt = -1;
+                do {
+                    readInt = SharedChannelConnectorImpl.this.getInputStream().read();
+                    boolean inCountUp = readInt == lastInt+1;
+                    lastInt = readInt;
+                    //Log.writeLog(this, SharedChannelConnectorImpl.this.toString(), "read " + readInt + " inCountUp == " + inCountUp);
+                } while(readInt != numberOfSyncBytes-1); // last byte read
+            } catch (IOException e) {
+                // fatal
+                SharedChannelConnectorImpl.this.fatalError();
+                return;
             }
-
             Log.writeLog(this, this.id, "in sync again");
             SharedChannelConnectorImpl.this.syncedAfterDataSession();
         }
@@ -360,9 +373,8 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     }
 
     @Override
-    public void notifyClosed(String key) {
-        Log.writeLog(this, this.toString(), "data session closed: " + key);
-        this.enterSyncAfterDataSession();
+    public void notifyClosed(StreamPair closedStreamPair, String key) {
+        Log.writeLog(this, this.toString(), "stream closed (" + key +  ")  - wait for time out to stay synced");
     }
 
     @Override

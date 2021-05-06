@@ -54,14 +54,14 @@ public class StreamLink extends Thread {
             Log.writeLog(this, "ioException - most probably connection closed: " + id);
         } finally {
             if(this.closeStreams) {
-                Log.writeLog(this, "close streams: " + id);
+                Log.writeLog(this, "try closing linked streams: " + id);
                 try {this.targetOS.close();}
                 catch (IOException ioException) { Log.writeLog(this, "failed close input stream: " + id); }
                 try {this.sourceIS.close();}
                 catch (IOException ioException) { Log.writeLog(this, "failed close output stream: " + id); }
             }
 
-            Log.writeLog(this, "end connection: " + id);
+            Log.writeLog(this, "end linked streams connection: " + id);
         }
     }
 }

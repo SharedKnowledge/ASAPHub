@@ -2,9 +2,7 @@ package net.sharksystem.hub;
 
 public interface StreamPairListener {
     /** stream was closed
+     * @param closedStreamPair
      * @param key*/
-    void notifyClosed(String key);
-    /** data read or written
-     * @param key*/
-    void notifyAction(String key);
+    void notifyClosed(StreamPair closedStreamPair, String key);
 }

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImpl
-        implements ConnectorInternal, AlarmClockListener, StreamPairListener {
+        implements ConnectorInternal, AlarmClockListener, WrappedStreamPairListener {
 
     private String peerID = null; // represented and connected peer
     private final HubInternal hub;

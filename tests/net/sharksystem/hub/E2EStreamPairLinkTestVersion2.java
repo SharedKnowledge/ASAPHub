@@ -1,7 +1,6 @@
 package net.sharksystem.hub;
 
-import net.sharksystem.hub.protocol.ConnectionRequest;
-import net.sharksystem.hub.protocol.SharedChannelConnectorImpl;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -28,7 +27,7 @@ public class E2EStreamPairLinkTestVersion2 {
     @Test
     public void streamPairStreamLinkTest() throws IOException, InterruptedException {
 
-        StreamPairListenerDummy streamPairListenerDummy = new StreamPairListenerDummy();
+        WrappedStreamPairListenerDummy streamPairListenerDummy = new WrappedStreamPairListenerDummy();
 
         //////////////////////// ALICE CONNECTOR
         /* side Alice: peer side < ---- > connector side  */
@@ -42,13 +41,13 @@ public class E2EStreamPairLinkTestVersion2 {
         OutputStream connectorPeerSideA_OS = socket1.getOutputStream();
         StreamPairWrapper streamPairConnectorPeerSideAlice =
                 new StreamPairWrapper(connectorPeerSideA_IS, connectorPeerSideA_OS,
-                        streamPairListenerDummy, TestConstants.ALICE_ID);
+                        streamPairListenerDummy, TestConstants.ALICE_ID + "(peer side)");
 
         InputStream connectorHubSideA_IS = socketFactory.getInputStream();
         OutputStream connectorHubSideA_OS = socketFactory.getOutputStream();
-        StreamPairWrapper streamPairConnectorHubSideA =
+        StreamPairWrapper streamPairConnectorHubSideAlice =
                 new StreamPairWrapper(connectorHubSideA_IS, connectorHubSideA_OS,
-                        streamPairListenerDummy, TestConstants.ALICE_ID);
+                        streamPairListenerDummy, TestConstants.ALICE_ID + "(hub side)");
 
         //////////////////////// BOB CONNECTOR
         /* side Bob: peer side < ---- > connector side  */
@@ -62,19 +61,23 @@ public class E2EStreamPairLinkTestVersion2 {
         OutputStream connectorPeerSideB_OS = socket1.getOutputStream();
         StreamPairWrapper streamPairConnectorPeerSideBob =
                 new StreamPairWrapper(connectorPeerSideB_IS, connectorPeerSideB_OS,
-                        streamPairListenerDummy, TestConstants.BOB_ID);
+                        streamPairListenerDummy, TestConstants.BOB_ID + "(peer side)");
 
         InputStream connectorHubSideB_IS = socketFactory.getInputStream();
         OutputStream connectorHubSideB_OS = socketFactory.getOutputStream();
-        StreamPairWrapper streamPairConnectorHubSideB =
+        StreamPairWrapper streamPairConnectorHubSideBob =
                 new StreamPairWrapper(connectorHubSideB_IS, connectorHubSideB_OS,
-                        streamPairListenerDummy, TestConstants.BOB_ID);
+                        streamPairListenerDummy, TestConstants.BOB_ID + "(hub side)");
 
         //////////////////////// LINK CONNECTOR HUB SIDE
         StreamPairLink dataLink =
                 new StreamPairLink(
-                        streamPairConnectorHubSideA, TestConstants.ALICE_ID,
-                        streamPairConnectorHubSideB, TestConstants.BOB_ID);
+                        streamPairConnectorHubSideAlice, TestConstants.ALICE_ID,
+                        streamPairConnectorHubSideBob, TestConstants.BOB_ID);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                      run End-to-End data session                                    //
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // simulate protocol
         System.out.println("+++++++++++++++++ simulate protocol ++++++++++++++++++");
@@ -102,11 +105,30 @@ public class E2EStreamPairLinkTestVersion2 {
 
         // wait a moment
         Thread.sleep(1000);
-
-        // close Alice side
-        streamPairConnectorPeerSideAlice.close();
-
+        Assert.assertTrue(aliceDataSession.synced);
+        Assert.assertTrue(bobDataSession.synced);
         System.out.println(streamPairListenerDummy);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                      simulate data session time out                                 //
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        streamPairConnectorPeerSideAlice.close();
+        streamPairConnectorPeerSideBob.close();
+        streamPairConnectorHubSideAlice.close();
+        streamPairConnectorHubSideBob.close();
+
+        // wait a moment
+        System.out.flush();
+        Thread.sleep(10000);
+
+        System.out.println("available (Alice (peer)): " + connectorPeerSideA_IS.available());
+        System.out.println("available (Alice (hub)): " + connectorHubSideA_IS.available());
+        System.out.println("available (Bob (peer)): " + connectorPeerSideB_IS.available());
+        System.out.println("available (Bob (hub)): " + connectorHubSideB_IS.available());
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                             run communication over non wrapped streams                              //
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         System.out.println("******************** ALICE CONNECTOR STILL ALIVE? ********************");
         // connector streams still intact? run session on non wrapped connections
@@ -128,6 +150,8 @@ public class E2EStreamPairLinkTestVersion2 {
 
         // wait a moment
         Thread.sleep(1000);
+        Assert.assertTrue(peerSide.synced);
+        Assert.assertTrue(hubSide.synced);
 
         System.out.println("******************** BOB CONNECTOR STILL ALIVE? ********************");
         peerSide = new DataExchangeTester(
@@ -145,13 +169,15 @@ public class E2EStreamPairLinkTestVersion2 {
 
         // wait a moment
         Thread.sleep(1000);
+        Assert.assertTrue(peerSide.synced);
+        Assert.assertTrue(hubSide.synced);
     }
 
-    class StreamPairListenerDummy implements StreamPairListener {
+    class WrappedStreamPairListenerDummy implements WrappedStreamPairListener {
         public Map<String, Integer> actions =  new HashMap<>();
 
         @Override
-        public void notifyClosed(String key) {
+        public void notifyClosed(StreamPair closedStreamPair, String key) {
             System.out.println("closed: " + key);
         }
 

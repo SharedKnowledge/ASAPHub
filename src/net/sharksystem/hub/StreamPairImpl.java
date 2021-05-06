@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class StreamPairImpl implements StreamPair {
+public class StreamPairImpl extends StreamPairListenerManager implements StreamPair {
     private final InputStream is;
     private final OutputStream os;
     private final CharSequence peerID;
@@ -37,5 +37,7 @@ public class StreamPairImpl implements StreamPair {
         } catch (IOException e) {
             // ignore
         }
+
+        this.notifyAllListenerClosed(this, this.peerID.toString());
     }
 }

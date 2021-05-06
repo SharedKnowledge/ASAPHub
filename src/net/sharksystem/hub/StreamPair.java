@@ -12,4 +12,5 @@ public interface StreamPair {
     /** close connection to peer */
     void close();
 
+    void addListener(StreamPairListener listener);
 }
