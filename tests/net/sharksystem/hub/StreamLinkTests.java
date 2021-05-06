@@ -1,7 +1,5 @@
 package net.sharksystem.hub;
 
-import net.sharksystem.asap.ASAPException;
-import net.sharksystem.asap.utils.ASAPSerialization;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -173,75 +171,4 @@ public class StreamLinkTests {
         two2one.join();
     }
 
-    class DataExchangeTester implements Runnable {
-        private final InputStream is;
-        private final OutputStream os;
-        private final String id;
-        private int rounds;
-
-        DataExchangeTester(InputStream is, OutputStream os, int rounds, String id) {
-            this.is = is;
-            this.os = os;
-            this.rounds = rounds;
-            this.id = id;
-        }
-
-        @Override
-        public void run() {
-            // exchange some example data
-            int value = 0;
-            try {
-                while(this.rounds-- > 0) {
-                    System.out.println("write data: " + value + " | " + id);
-                    ASAPSerialization.writeIntegerParameter(value, this.os);
-                    int retVal = ASAPSerialization.readIntegerParameter(this.is);
-
-                    if(value != retVal) {
-                        System.out.println("data exchange testers are out of sync: "+ id);
-                        break;
-                    }
-                    value++;
-                }
-                // block
-                System.out.println("blocking (?): "+ id);
-                this.is.read();
-                System.out.println("back from read(): "+ id);
-            } catch (IOException | ASAPException e) {
-                System.out.println("exception data exchange tester - most probably good: " + id + " | "
-                        + e.getLocalizedMessage());
-            }
-        }
-    }
-
-    class SocketFactory implements Runnable {
-        private final ServerSocket srv;
-        InputStream is;
-        OutputStream os;
-
-        SocketFactory(ServerSocket srv) {
-            this.srv = srv;
-        }
-
-        @Override
-        public void run() {
-            try {
-                Socket socket = srv.accept();
-                this.is = socket.getInputStream();
-                this.os = socket.getOutputStream();
-                System.out.println("socket created");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public InputStream getInputStream() throws IOException {
-            if(this.is == null) throw new IOException("no socket yet");
-            return this.is;
-        }
-
-        public OutputStream getOutputStream() throws IOException {
-            if(this.os == null) throw new IOException("no socket yet");
-            return this.os;
-        }
-    }
 }
