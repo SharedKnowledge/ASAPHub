@@ -4,6 +4,9 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
+/**
+ * Model class to exchange a list of registered peers.
+ */
 @XmlRootElement(name="registered_peers")
 public class RegisteredPeersModel {
 

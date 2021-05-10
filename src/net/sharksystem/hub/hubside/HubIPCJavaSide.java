@@ -157,7 +157,10 @@ public class HubIPCJavaSide extends HubGenericImpl {
         this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
     }
 
-
+    /**
+     * Starts new Thread, which receives IPC messages from python side.
+     * Calls also appropriate method to process incoming message.
+     */
     public void startReadingThread() {
         Runnable r = () -> {
             try {
@@ -182,6 +185,11 @@ public class HubIPCJavaSide extends HubGenericImpl {
         t.start();
     }
 
+    /**
+     * read message from Python IPC-InputStream until first delimiter.
+     * @return message as String
+     * @throws IOException
+     */
     private String readMessageFromInputStream() throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(this.inputStream, StandardCharsets.UTF_8));
         String message = "";

@@ -2,7 +2,9 @@ package net.sharksystem.hub.hubside.lora_ipc;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-
+/**
+ * Model class for connect requests. Parent class for connect request and connect reply model classes.
+ */
 abstract class ConnectRequest {
 
     protected String sourcePeerID;
