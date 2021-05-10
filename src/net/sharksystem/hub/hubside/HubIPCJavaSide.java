@@ -8,7 +8,6 @@ import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
 import net.sharksystem.hub.hubside.lora_ipc.PeerModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegistrationModel;
-import net.sharksystem.utils.Log;
 
 import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
@@ -18,7 +17,6 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class HubIPCJavaSide extends HubGenericImpl {
     // see documentation of those abstract methods in HubGenericImpl, example implementation e.g. in HubSingleEntity
@@ -34,12 +32,11 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     public HubIPCJavaSide(String host, int port, int messagePort) throws IOException {
         Socket socket = new Socket(host, port);
-        this.outputStream = socket.getOutputStream();
+        this.outputStream = new DataOutputStream(socket.getOutputStream());
         this.inputStream = socket.getInputStream();
         this.connectorInternalMap = new HashMap<>();
         this.host = host;
         this.messagePort = messagePort;
-
     }
 
 
@@ -63,10 +60,6 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     }
 
-    /**
-     * @param peerId              alias for peer connection
-     * @param hubConnectorSession
-     */
     @Override
     public void register(CharSequence peerId, ConnectorInternal hubConnectorSession) {
         this.sendRegistrationMessage(peerId, true);
@@ -80,6 +73,11 @@ public class HubIPCJavaSide extends HubGenericImpl {
         this.connectorInternalMap.remove(peerId);
     }
 
+    /**
+     * helper method to register/unregister a peer
+     * @param peerId peer id of peer to register/unregister
+     * @param register if true a new peer will be registered, else the peer is unregistered
+     */
     private void sendRegistrationMessage(CharSequence peerId, boolean register) {
         try {
             this.sendXMLObject(new RegistrationModel(new PeerModel((String) peerId), register));
@@ -93,11 +91,11 @@ public class HubIPCJavaSide extends HubGenericImpl {
         RegisteredPeersModel registeredPeers = null;
         int attempts = 0;
         try {
-            this.outputStream.write("registeredPeers?".getBytes(StandardCharsets.UTF_8));
+            this.outputStream.write(("registeredPeers?" + this.delimiter).getBytes(StandardCharsets.UTF_8));
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
-        while (this.registeredPeersResponse == null && attempts < 5) {
+        while (this.registeredPeersResponse == null && attempts < 30) {
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
@@ -125,13 +123,23 @@ public class HubIPCJavaSide extends HubGenericImpl {
         return false;
     }
 
+    /**
+     * creates an XML String from a given object and sends it via IPC to Python application
+     * @param object Object which should be converted to XML
+     * @throws IOException if an error occurs while sending
+     */
     private void sendXMLObject(Object object) throws IOException {
         StringWriter sw = new StringWriter();
         JAXB.marshal(object, sw);
-        this.outputStream.write(sw.toString().getBytes(StandardCharsets.UTF_8));
-
+        this.outputStream.write((sw + this.delimiter).getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * creates an instance of a model class from XML
+     * @param xml XML as String
+     * @param classOfObject class of object which should be created from XML
+     * @return object of given class with state defined in XML
+     */
     public Object loadFromXML(String xml, Class<? extends Object> classOfObject) {
         try {
             Unmarshaller unmarshaller = JAXBContext.newInstance(classOfObject).createUnmarshaller();
@@ -141,7 +149,13 @@ public class HubIPCJavaSide extends HubGenericImpl {
         }
     }
 
-    public void process_incoming_connect_request(ConnectRequestModel connectRequest) throws ASAPHubException, IOException {
+    /**
+     * helper method to process an incoming connect request
+     * @param connectRequest ConnectRequestModel which contains the data
+     * @throws ASAPHubException
+     * @throws IOException
+     */
+    private void process_incoming_connect_request(ConnectRequestModel connectRequest) throws ASAPHubException, IOException {
         CharSequence sourcePeerID = connectRequest.getSourcePeerID();
         CharSequence targetPeerID = connectRequest.getTargetPeerID();
         int timeout = connectRequest.getTimeout();
@@ -152,9 +166,14 @@ public class HubIPCJavaSide extends HubGenericImpl {
         this.messageSocket = socket;
         StreamPair multihopStreamPair = new StreamPairImpl(socket.getInputStream(), socket.getOutputStream(),
                 targetPeerID);
+        this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         new StreamPairLink(streamPair,"local", multihopStreamPair, "multihop");
         this.startDataSession(sourcePeerID, targetPeerID, streamPair, timeout);
-        this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
     }
 
     /**
