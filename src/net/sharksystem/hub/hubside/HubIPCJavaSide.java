@@ -27,7 +27,6 @@ public class HubIPCJavaSide extends HubGenericImpl {
     private RegisteredPeersModel registeredPeersResponse;
     private final int messagePort;
     private final String host;
-    private Socket messageSocket;
 
 
     public HubIPCJavaSide(String host, int port, int messagePort) throws IOException {
@@ -163,7 +162,6 @@ public class HubIPCJavaSide extends HubGenericImpl {
         ConnectorInternal connectorInternal = this.connectorInternalMap.get(targetPeerID);
         StreamPair streamPair = connectorInternal.initDataSession(sourcePeerID, targetPeerID, timeout);
         Socket socket = new Socket(this.host, this.messagePort);
-        this.messageSocket = socket;
         StreamPair multihopStreamPair = new StreamPairImpl(socket.getInputStream(), socket.getOutputStream(),
                 targetPeerID);
         this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
@@ -174,6 +172,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
         }
         new StreamPairLink(streamPair,"local", multihopStreamPair, "multihop");
         this.startDataSession(sourcePeerID, targetPeerID, streamPair, timeout);
+        // TODO call connection created??
     }
 
     /**
