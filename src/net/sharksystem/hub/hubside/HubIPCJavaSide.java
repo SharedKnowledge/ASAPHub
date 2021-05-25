@@ -15,6 +15,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -27,10 +28,13 @@ public class HubIPCJavaSide extends HubGenericImpl {
     private RegisteredPeersModel registeredPeersResponse;
     private final int messagePort;
     private final String host;
+    private boolean keepIPCConnectionOpen = false;
+    private Thread readingThread;
+    private Socket socket;
 
 
     public HubIPCJavaSide(String host, int port, int messagePort) throws IOException {
-        Socket socket = new Socket(host, port);
+        this.socket = new Socket(host, port);
         this.outputStream = new DataOutputStream(socket.getOutputStream());
         this.inputStream = socket.getInputStream();
         this.connectorInternalMap = new HashMap<>();
@@ -87,7 +91,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     @Override
     public Set<CharSequence> getRegisteredPeers() {
-        RegisteredPeersModel registeredPeers = null;
+        RegisteredPeersModel registeredPeers;
         int attempts = 0;
         try {
             this.outputStream.write(("registeredPeers?" + this.delimiter).getBytes(StandardCharsets.UTF_8));
@@ -171,6 +175,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
             e.printStackTrace();
         }
         new StreamPairLink(streamPair,"local", multihopStreamPair, "multihop");
+        System.out.println("start data session");
         this.startDataSession(sourcePeerID, targetPeerID, streamPair, timeout);
         // TODO call connection created??
     }
@@ -180,9 +185,10 @@ public class HubIPCJavaSide extends HubGenericImpl {
      * Calls also appropriate method to process incoming message.
      */
     public void startReadingThread() {
+        this.keepIPCConnectionOpen = true;
         Runnable r = () -> {
             try {
-                while (true) {
+                while (this.keepIPCConnectionOpen) {
                     String message = readMessageFromInputStream();
                     RegisteredPeersModel registeredPeers = (RegisteredPeersModel) loadFromXML(message, RegisteredPeersModel.class);
                     if (registeredPeers != null) {
@@ -191,16 +197,20 @@ public class HubIPCJavaSide extends HubGenericImpl {
                     }
                     ConnectRequestModel connectRequestModel = (ConnectRequestModel) loadFromXML(message, ConnectRequestModel.class);
                     if (connectRequestModel != null) {
+                        System.out.println("got connect request from python side");
                         this.process_incoming_connect_request(connectRequestModel);
                     }
                 }
 
-            } catch (IOException | ASAPHubException e) {
+            }catch (SocketException e){
+
+            }
+            catch (IOException | ASAPHubException e) {
                 e.printStackTrace();
             }
         };
-        Thread t = new Thread(r);
-        t.start();
+        this.readingThread = new Thread(r);
+        this.readingThread.start();
     }
 
     /**
@@ -211,7 +221,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
     private String readMessageFromInputStream() throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(this.inputStream, StandardCharsets.UTF_8));
         String message = "";
-        while (true) {
+        while (keepIPCConnectionOpen) {
             String characterAsStr = String.valueOf((char) reader.read());
             if (!characterAsStr.equals(this.delimiter)) {
                 message = message + characterAsStr;
@@ -220,6 +230,13 @@ public class HubIPCJavaSide extends HubGenericImpl {
             }
         }
         return message;
+    }
+
+    public void closeIPCConnection() throws InterruptedException, IOException {
+        this.socket.close();
+
+        this.keepIPCConnectionOpen = false;
+        this.readingThread.join();
     }
 
 }
