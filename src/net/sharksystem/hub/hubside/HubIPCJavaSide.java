@@ -8,6 +8,7 @@ import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
 import net.sharksystem.hub.hubside.lora_ipc.PeerModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegistrationModel;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
@@ -50,17 +51,17 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     @Override
     protected void sendDisconnectRequest(CharSequence sourcePeerID, CharSequence targetPeerID) throws ASAPHubException {
-
+        throw new NotImplementedException();
     }
 
     @Override
     public void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
-
+        // is already called by createDataConnection
     }
 
     @Override
     public void notifyConnectionEnded(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection) throws ASAPHubException {
-
+        throw new NotImplementedException();
     }
 
     @Override
@@ -83,7 +84,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
      */
     private void sendRegistrationMessage(CharSequence peerId, boolean register) {
         try {
-            this.sendXMLObject(new RegistrationModel(new PeerModel((String) peerId), register));
+            this.sendXMLObject(new RegistrationModel((String) peerId, register));
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
@@ -109,9 +110,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
         registeredPeers = this.registeredPeersResponse;
         Set<CharSequence> peers = new HashSet<>();
         if (null != registeredPeers.getRegisteredPeers()) {
-            for (PeerModel peerModel : registeredPeers.getRegisteredPeers()) {
-                peers.add(peerModel.getPeerId());
-            }
+            peers.addAll(registeredPeers.getRegisteredPeers());
         }
         return peers;
     }

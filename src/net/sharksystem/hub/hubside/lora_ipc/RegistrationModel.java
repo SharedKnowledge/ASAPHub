@@ -5,33 +5,32 @@ import javax.xml.bind.annotation.XmlElement;
 /**
  * Model class to register/unregister a peer.
  */
-public class RegistrationModel {
+public class RegistrationModel extends IPCModel {
 
-    private PeerModel peer;
+    final static String IPCMessageType = "Registration";
+
+    private String peerId;
     private boolean register;
 
-    public RegistrationModel(PeerModel peer, boolean register){
-        this.peer = peer;
+    public RegistrationModel(String peerId, boolean register){
+        this.peerId = peerId;
         this.register = register;
     }
 
     public RegistrationModel(){}
 
-    @XmlElement(name="peer")
-    public PeerModel getPeer() {
-        return peer;
+    public String getPeerId() {
+        return peerId;
     }
 
-    public void setPeer(PeerModel peer) {
-        this.peer = peer;
-    }
 
-    @XmlElement(name="register")
     public boolean isRegister() {
         return register;
     }
 
-    public void setRegister(boolean register) {
-        this.register = register;
+    @Override
+    public String getIPCMessage() {
+        return IPCModel.generateIPCMessage(new String[]{IPCMessageType, this.peerId, String.valueOf(this.register)});
     }
+
 }

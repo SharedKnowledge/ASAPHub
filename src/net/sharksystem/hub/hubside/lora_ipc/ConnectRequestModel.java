@@ -1,28 +1,38 @@
 package net.sharksystem.hub.hubside.lora_ipc;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
 /**
  * Model class for connect request, which can be used to create a XML object for IPC.
  */
-@XmlRootElement(name="connection_request")
-public class ConnectRequestModel extends ConnectRequest {
+public class ConnectRequestModel extends IPCModel {
 
-    private int timeout;
+    final static String IPCMessageType = "ConnectRequest";
 
-    public ConnectRequestModel(String sourcePeerID, String targetPeerID, int timeout){
+    private final String sourcePeerID;
+    private final String targetPeerID;
+    private final int timeout;
+
+    public ConnectRequestModel(String sourcePeerID, String targetPeerID, int timeout) {
         this.sourcePeerID = sourcePeerID;
         this.targetPeerID = targetPeerID;
         this.timeout = timeout;
     }
 
-    public ConnectRequestModel(){}
+    public String getSourcePeerID() {
+        return sourcePeerID;
+    }
+
+    public String getTargetPeerID() {
+        return targetPeerID;
+    }
 
     public int getTimeout() {
         return timeout;
     }
 
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
+
+    @Override
+    public String getIPCMessage() {
+        return IPCModel.generateIPCMessage(new String[]{IPCMessageType, this.sourcePeerID, this.targetPeerID,
+                Integer.toString(this.timeout)});
     }
 }

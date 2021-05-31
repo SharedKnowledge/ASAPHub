@@ -1,25 +1,31 @@
 package net.sharksystem.hub.hubside.lora_ipc;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
 /**
  * Model class to exchange a list of registered peers.
  */
-@XmlRootElement(name="registered_peers")
-public class RegisteredPeersModel {
+public class RegisteredPeersModel extends IPCModel {
 
-    @XmlElement(name="peer")
-    public List<PeerModel> getRegisteredPeers() {
-        return registeredPeers;
-    }
+    final static String IPCMessageType = "RegisteredPeers";
 
-    public void setRegisteredPeers(List<PeerModel> registeredPeers) {
+    private final List<String> registeredPeers;
+
+    public RegisteredPeersModel(List<String> registeredPeers){
         this.registeredPeers = registeredPeers;
     }
 
-    private List<PeerModel> registeredPeers;
+    public List<String> getRegisteredPeers() {
+        return registeredPeers;
+    }
 
-
+    @Override
+    public String getIPCMessage() {
+        String[] args = new String[this.registeredPeers.size() +1];
+        args[0] = IPCMessageType;
+        for(int i=0; i< this.registeredPeers.size(); i++){
+            args[i+1] = this.registeredPeers.get(i);
+        }
+        return IPCModel.generateIPCMessage(args);
+    }
 }
