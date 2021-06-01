@@ -5,7 +5,6 @@ import net.sharksystem.hub.StreamPair;
 import net.sharksystem.hub.StreamPairImpl;
 import net.sharksystem.hub.StreamPairLink;
 import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
-import net.sharksystem.hub.hubside.lora_ipc.PeerModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegistrationModel;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;

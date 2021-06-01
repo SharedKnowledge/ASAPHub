@@ -32,6 +32,12 @@ public abstract class IPCModel {
             case RegistrationModel.IPCMessageType:
                 String registerStr = messageValues.get(2);
                 return new RegistrationModel(messageValues.get(1), registerStr.equalsIgnoreCase("true"));
+            case RegisteredPeersModel.IPCMessageType:
+                List<String> registeredPeers = new ArrayList<>();
+                for(int i = 1; i< messageValues.size(); i++){
+                    registeredPeers.add(messageValues.get(i));
+                }
+                return new RegisteredPeersModel(registeredPeers);
         }
         return null;
     }

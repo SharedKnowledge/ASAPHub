@@ -62,6 +62,21 @@ public class IPCModelTest {
     public void getIPCMessageRegisteredPeersModel() {
         List<String> registeredPeers = new ArrayList<>(Arrays.asList("alice", "bob"));
         IPCModel registeredPeersModel = new RegisteredPeersModel(registeredPeers);
-        assertEquals("RegisteredPeers,alice,bob", registeredPeersModel.getIPCMessage());
+         assertEquals("RegisteredPeers,alice,bob", registeredPeersModel.getIPCMessage());
+    }
+
+    @Test
+    public void createRegisteredPeersModelFromString() {
+        RegisteredPeersModel registeredPeersModel = (RegisteredPeersModel) IPCModel.createModelObjectFromIPCString
+                ("RegisteredPeers,alice,bob");
+        assertTrue(registeredPeersModel.getRegisteredPeers().contains("alice"));
+        assertTrue(registeredPeersModel.getRegisteredPeers().contains("bob"));
+    }
+
+    @Test
+    public void createRegisteredPeersModelFromStringEdgeNoPeersRegistered() {
+        RegisteredPeersModel registeredPeersModel = (RegisteredPeersModel) IPCModel.createModelObjectFromIPCString
+                ("RegisteredPeers");
+        assertTrue(registeredPeersModel.getRegisteredPeers().isEmpty());
     }
 }
