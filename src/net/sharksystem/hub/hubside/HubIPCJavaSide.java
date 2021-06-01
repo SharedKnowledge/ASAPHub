@@ -5,6 +5,7 @@ import net.sharksystem.hub.StreamPair;
 import net.sharksystem.hub.StreamPairImpl;
 import net.sharksystem.hub.StreamPairLink;
 import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
+import net.sharksystem.hub.hubside.lora_ipc.IPCModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegistrationModel;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -45,7 +46,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     @Override
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
-        this.sendXMLObject(new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout));
+        this.sendIPCMessage(new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout));
     }
 
     @Override
@@ -83,7 +84,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
      */
     private void sendRegistrationMessage(CharSequence peerId, boolean register) {
         try {
-            this.sendXMLObject(new RegistrationModel((String) peerId, register));
+            this.sendIPCMessage(new RegistrationModel((String) peerId, register));
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
@@ -126,28 +127,11 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     /**
      * creates an XML String from a given object and sends it via IPC to Python application
-     * @param object Object which should be converted to XML
+     * @param ipcModel model object which should be sent to python side
      * @throws IOException if an error occurs while sending
      */
-    private void sendXMLObject(Object object) throws IOException {
-        StringWriter sw = new StringWriter();
-        JAXB.marshal(object, sw);
-        this.outputStream.write((sw + this.delimiter).getBytes(StandardCharsets.UTF_8));
-    }
-
-    /**
-     * creates an instance of a model class from XML
-     * @param xml XML as String
-     * @param classOfObject class of object which should be created from XML
-     * @return object of given class with state defined in XML
-     */
-    public Object loadFromXML(String xml, Class<? extends Object> classOfObject) {
-        try {
-            Unmarshaller unmarshaller = JAXBContext.newInstance(classOfObject).createUnmarshaller();
-            return unmarshaller.unmarshal(new StringReader(xml));
-        } catch (JAXBException e) {
-            return null;
-        }
+    private void sendIPCMessage(IPCModel ipcModel) throws IOException {
+        this.outputStream.write((ipcModel.getIPCMessage() + this.delimiter).getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -188,18 +172,17 @@ public class HubIPCJavaSide extends HubGenericImpl {
             try {
                 while (this.keepIPCConnectionOpen) {
                     String message = readMessageFromInputStream();
-                    RegisteredPeersModel registeredPeers = (RegisteredPeersModel) loadFromXML(message, RegisteredPeersModel.class);
-                    if (registeredPeers != null) {
-                        registeredPeersResponse = registeredPeers;
-                        continue;
-                    }
-                    ConnectRequestModel connectRequestModel = (ConnectRequestModel) loadFromXML(message, ConnectRequestModel.class);
-                    if (connectRequestModel != null) {
-                        System.out.println("got connect request from python side");
-                        this.process_incoming_connect_request(connectRequestModel);
+                    IPCModel receivedModel = IPCModel.createModelObjectFromIPCString(message);
+
+                    if(message != null){
+                        if(receivedModel instanceof RegisteredPeersModel) {
+                            registeredPeersResponse = (RegisteredPeersModel) receivedModel;
+                        }else if(receivedModel instanceof ConnectRequestModel){
+                            System.out.println("got connect request from python side");
+                            this.process_incoming_connect_request((ConnectRequestModel) receivedModel);
+                        }
                     }
                 }
-
             }catch (SocketException e){
 
             }
