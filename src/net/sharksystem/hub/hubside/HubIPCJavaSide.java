@@ -8,12 +8,7 @@ import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
 import net.sharksystem.hub.hubside.lora_ipc.IPCModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegistrationModel;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import javax.xml.bind.JAXB;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -32,6 +27,9 @@ public class HubIPCJavaSide extends HubGenericImpl {
     private boolean keepIPCConnectionOpen = false;
     private Thread readingThread;
     private Socket socket;
+    private ConnectRequestModel sentConnectRequest;
+    private ConnectRequestModel ignoreConnectRequest;
+    private ConnectRequestModel establishedConnection;
 
 
     public HubIPCJavaSide(String host, int port, int messagePort) throws IOException {
@@ -46,29 +44,47 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     @Override
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
-        this.sendIPCMessage(new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout));
+        ConnectRequestModel connectRequest = new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout);
+        this.sentConnectRequest = connectRequest;
+        this.sendIPCMessage(connectRequest);
     }
 
     @Override
     protected void sendDisconnectRequest(CharSequence sourcePeerID, CharSequence targetPeerID) throws ASAPHubException {
-        throw new NotImplementedException();
+        if (establishedConnection == null) {
+            if (this.sentConnectRequest != null) {
+                if (this.sentConnectRequest .getSourcePeerID().contentEquals(sourcePeerID) && this.sentConnectRequest .getTargetPeerID().contentEquals(targetPeerID)) {
+                    this.ignoreConnectRequest = sentConnectRequest;
+                    this.sentConnectRequest = null;
+                }
+            }else{
+                System.err.println("could not withdraw connect request, because no connect request with passed parameter was sent");
+            }
+        }
+        else if(this.establishedConnection.getSourcePeerID().contentEquals(sourcePeerID) && this.establishedConnection.getTargetPeerID().contentEquals(targetPeerID)){
+            // TODO create disconnect request model and send it to python side
+        }else {
+            System.out.println("current connection has another source and target peer id");
+        }
     }
 
     @Override
     public void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
-        // is already called by createDataConnection
+        System.out.println("call createDataConnection");
+        ConnectorInternal connectorInternal = this.connectorInternalMap.get(targetPeerID);
+        StreamPair streamPair = connectorInternal.initDataSession(sourcePeerID, targetPeerID, timeout);
+        this.connectionCreated(sourcePeerID, targetPeerID, streamPair, timeout);
     }
 
     @Override
     public void notifyConnectionEnded(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection) throws ASAPHubException {
-        throw new NotImplementedException();
+        this.connectorInternalMap.get(targetPeerID).notifyConnectionEnded(sourcePeerID, targetPeerID, connection);
     }
 
     @Override
     public void register(CharSequence peerId, ConnectorInternal hubConnectorSession) {
         this.sendRegistrationMessage(peerId, true);
         this.connectorInternalMap.put(peerId, hubConnectorSession);
-
     }
 
     @Override
@@ -79,7 +95,8 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     /**
      * helper method to register/unregister a peer
-     * @param peerId peer id of peer to register/unregister
+     *
+     * @param peerId   peer id of peer to register/unregister
      * @param register if true a new peer will be registered, else the peer is unregistered
      */
     private void sendRegistrationMessage(CharSequence peerId, boolean register) {
@@ -127,6 +144,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     /**
      * creates an XML String from a given object and sends it via IPC to Python application
+     *
      * @param ipcModel model object which should be sent to python side
      * @throws IOException if an error occurs while sending
      */
@@ -136,6 +154,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     /**
      * helper method to process an incoming connect request
+     *
      * @param connectRequest ConnectRequestModel which contains the data
      * @throws ASAPHubException
      * @throws IOException
@@ -144,22 +163,18 @@ public class HubIPCJavaSide extends HubGenericImpl {
         CharSequence sourcePeerID = connectRequest.getSourcePeerID();
         CharSequence targetPeerID = connectRequest.getTargetPeerID();
         int timeout = connectRequest.getTimeout();
-        System.out.println(this.connectorInternalMap);
-        ConnectorInternal connectorInternal = this.connectorInternalMap.get(targetPeerID);
-        StreamPair streamPair = connectorInternal.initDataSession(sourcePeerID, targetPeerID, timeout);
         Socket socket = new Socket(this.host, this.messagePort);
+
         StreamPair multihopStreamPair = new StreamPairImpl(socket.getInputStream(), socket.getOutputStream(),
                 targetPeerID);
+        this.startDataSession(sourcePeerID, targetPeerID, multihopStreamPair, timeout);
+
         this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        new StreamPairLink(streamPair,"local", multihopStreamPair, "multihop");
-        System.out.println("start data session");
-        this.startDataSession(sourcePeerID, targetPeerID, streamPair, timeout);
-        // TODO call connection created??
     }
 
     /**
@@ -174,19 +189,18 @@ public class HubIPCJavaSide extends HubGenericImpl {
                     String message = readMessageFromInputStream();
                     IPCModel receivedModel = IPCModel.createModelObjectFromIPCString(message);
 
-                    if(message != null){
-                        if(receivedModel instanceof RegisteredPeersModel) {
+                    if (message != null) {
+                        if (receivedModel instanceof RegisteredPeersModel) {
                             registeredPeersResponse = (RegisteredPeersModel) receivedModel;
-                        }else if(receivedModel instanceof ConnectRequestModel){
+                        } else if (receivedModel instanceof ConnectRequestModel) {
                             System.out.println("got connect request from python side");
                             this.process_incoming_connect_request((ConnectRequestModel) receivedModel);
                         }
                     }
                 }
-            }catch (SocketException e){
+            } catch (SocketException e) {
 
-            }
-            catch (IOException | ASAPHubException e) {
+            } catch (IOException | ASAPHubException e) {
                 e.printStackTrace();
             }
         };
@@ -196,6 +210,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     /**
      * read message from Python IPC-InputStream until first delimiter.
+     *
      * @return message as String
      * @throws IOException
      */

@@ -9,6 +9,7 @@ import org.junit.runners.MethodSorters;
 import org.mockito.stubbing.Answer;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -71,19 +72,20 @@ public class HubIPCJavaSideIntegrationTest {
         HubIPCJavaSide hubIPCJavaSideA = new HubIPCJavaSide(hostA, ipcPortA, messagePortA);
         HubIPCJavaSide hubIPCJavaSideB = new HubIPCJavaSide(hostB, ipcPortB, messagePortB);
 
-        InputStream inputStreamA = mock(InputStream.class);
+        InputStream inputStreamA = new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8));
+//        InputStream inputStreamA = mock(InputStream.class);
         // send 'hello'
-        when(inputStreamA.read()).thenReturn(104).thenReturn(101).thenReturn(108).thenReturn(108).thenReturn(111)
-                .thenAnswer((Answer) invocation -> {
-                    try {
-                        // make sure stream keeps open before test case ends
-                        Thread.sleep(90000);
-                        return null;
-                    } catch (InterruptedException ie) {
-                        throw new RuntimeException(ie);
-                    }
-
-                }).thenReturn(-1); // after 45 seconds the stream return -1, because there are not any data anymore
+//        when(inputStreamA.read()).thenReturn(104).thenReturn(101).thenReturn(108).thenReturn(108).thenReturn(111);
+//                .thenAnswer((Answer) invocation -> {
+//                    try {
+//                        // make sure stream keeps open before test case ends
+//                        Thread.sleep(90000);
+//                        return null;
+//                    } catch (InterruptedException ie) {
+//                        throw new RuntimeException(ie);
+//                    }
+//
+//                }).thenReturn(-1); // after 45 seconds the stream return -1, because there are not any data anymore
         OutputStream outputStreamA = new ByteArrayOutputStream();
         ConnectorInternal connectorInternalA = new ConnectorInternalLocalStub(inputStreamA, outputStreamA);
 

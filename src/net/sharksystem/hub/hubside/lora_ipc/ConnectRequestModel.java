@@ -35,4 +35,19 @@ public class ConnectRequestModel extends IPCModel {
         return IPCModel.generateIPCMessage(new String[]{IPCMessageType, this.sourcePeerID, this.targetPeerID,
                 Integer.toString(this.timeout)});
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof ConnectRequestModel)) {
+            return false;
+        }
+        ConnectRequestModel connectRequestModelToCompare = (ConnectRequestModel) o;
+
+        return connectRequestModelToCompare.getSourcePeerID().equals(this.sourcePeerID) &&
+                connectRequestModelToCompare.getTargetPeerID().equals(this.targetPeerID) &&
+                connectRequestModelToCompare.getTimeout() == this.timeout;
+    }
 }
