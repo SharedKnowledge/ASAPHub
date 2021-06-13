@@ -70,8 +70,10 @@ public class TCPHub extends HubSingleEntity implements Runnable {
     @Override
     public void run() {
         try {
+            Log.writeLog(this, "TCP Hub started on port: " + this.port);
             while(true) {
                 Socket newConnection = this.serverSocket.accept();
+                Log.writeLog(this, "TCP Hub: new connector");
 
                 // another connector has connected
                 SharedChannelConnectorHubSideImpl hubConnectorSession = new SharedChannelConnectorHubSideImpl(
