@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -126,6 +125,13 @@ public class HubIPCJavaSideIntegrationTest {
         return false;
     }
 
+    /**
+     * helper function for test purposes
+     * @param hubIPCJavaSide
+     * @param peerId
+     * @return
+     * @throws InterruptedException
+     */
     private boolean checkPeerIsNotRegistered(HubIPCJavaSide hubIPCJavaSide, CharSequence peerId) throws InterruptedException {
         for (int i = 0; i < 8; i++) {
             Set<CharSequence> list = hubIPCJavaSide.getRegisteredPeers();
@@ -137,6 +143,10 @@ public class HubIPCJavaSideIntegrationTest {
         return false;
     }
 
+    /**
+     * implementation of an InputStream, which accepts a String as parameter. Stream keeps open, after als
+     * bytes of the String were read.
+     */
     private class StringInputStream extends InputStream {
 
         private String stringToRead;
