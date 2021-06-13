@@ -136,4 +136,28 @@ public class HubIPCJavaSideIntegrationTest {
         }
         return false;
     }
+
+    private class StringInputStream extends InputStream {
+
+        private String stringToRead;
+        private int readPosition = 0;
+
+        public StringInputStream(String stringToRead){
+            this.stringToRead = stringToRead;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if(this.readPosition < this.stringToRead.length()){
+                this.readPosition ++;
+                return stringToRead.charAt(this.readPosition-1);
+            }
+            try {
+                Thread.sleep(100000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return 0;
+        }
+    }
 }
