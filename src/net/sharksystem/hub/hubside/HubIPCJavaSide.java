@@ -3,7 +3,6 @@ package net.sharksystem.hub.hubside;
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.StreamPair;
 import net.sharksystem.hub.StreamPairImpl;
-import net.sharksystem.hub.StreamPairLink;
 import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
 import net.sharksystem.hub.hubside.lora_ipc.IPCModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
@@ -159,7 +158,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
      * @throws ASAPHubException
      * @throws IOException
      */
-    private void process_incoming_connect_request(ConnectRequestModel connectRequest) throws ASAPHubException, IOException {
+    private void processIncomingConnectRequest(ConnectRequestModel connectRequest) throws ASAPHubException, IOException {
         CharSequence sourcePeerID = connectRequest.getSourcePeerID();
         CharSequence targetPeerID = connectRequest.getTargetPeerID();
         int timeout = connectRequest.getTimeout();
@@ -194,7 +193,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
                             registeredPeersResponse = (RegisteredPeersModel) receivedModel;
                         } else if (receivedModel instanceof ConnectRequestModel) {
                             System.out.println("got connect request from python side");
-                            this.process_incoming_connect_request((ConnectRequestModel) receivedModel);
+                            this.processIncomingConnectRequest((ConnectRequestModel) receivedModel);
                         }
                     }
                 }

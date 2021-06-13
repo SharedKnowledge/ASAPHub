@@ -6,7 +6,6 @@ import net.sharksystem.hub.hubside.HubIPCJavaSide;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import org.mockito.stubbing.Answer;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -14,7 +13,6 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
 
 // make sure that tests were executed in correct order
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -31,9 +29,9 @@ public class HubIPCJavaSideIntegrationTest {
 
     @Test
     public void stage01RegisterUnregisterPeers() throws IOException, InterruptedException {
+        // create two HubIPCJavaSide instances to simulate a distributed hub on peer Alice and peer Bob
         HubIPCJavaSide hubIPCJavaSideA = new HubIPCJavaSide(hostA, ipcPortA, messagePortA);
         hubIPCJavaSideA.startReadingThread();
-
         HubIPCJavaSide hubIPCJavaSideB = new HubIPCJavaSide(hostB, ipcPortB, messagePortB);
         hubIPCJavaSideB.startReadingThread();
 
@@ -71,42 +69,23 @@ public class HubIPCJavaSideIntegrationTest {
     public void stage02RegisterPeersAndSendMessage() throws IOException, InterruptedException, ASAPHubException {
         HubIPCJavaSide hubIPCJavaSideA = new HubIPCJavaSide(hostA, ipcPortA, messagePortA);
         HubIPCJavaSide hubIPCJavaSideB = new HubIPCJavaSide(hostB, ipcPortB, messagePortB);
+        hubIPCJavaSideA.startReadingThread();
+        hubIPCJavaSideB.startReadingThread();
 
-        InputStream inputStreamA = new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8));
-//        InputStream inputStreamA = mock(InputStream.class);
-        // send 'hello'
-//        when(inputStreamA.read()).thenReturn(104).thenReturn(101).thenReturn(108).thenReturn(108).thenReturn(111);
-//                .thenAnswer((Answer) invocation -> {
-//                    try {
-//                        // make sure stream keeps open before test case ends
-//                        Thread.sleep(90000);
-//                        return null;
-//                    } catch (InterruptedException ie) {
-//                        throw new RuntimeException(ie);
-//                    }
-//
-//                }).thenReturn(-1); // after 45 seconds the stream return -1, because there are not any data anymore
+        // Alice sends a message to Bob
+        InputStream inputStreamA = new StringInputStream("hello bob");
+        // ByteArrayOutput to capture Alice's received messages
         OutputStream outputStreamA = new ByteArrayOutputStream();
         ConnectorInternal connectorInternalA = new ConnectorInternalLocalStub(inputStreamA, outputStreamA);
 
-        hubIPCJavaSideA.startReadingThread();
-        hubIPCJavaSideB.startReadingThread();
 
         // register peer with peer id 'Alice'
         hubIPCJavaSideA.register("Alice", connectorInternalA);
         assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, "Alice"));
 
-        // make sure stream keeps open before test case ends
-        InputStream inputStreamB = mock(InputStream.class);
-        when(inputStreamB.read()).thenAnswer((Answer) invocation -> {
-            try {
-                Thread.sleep(90000);
-                return null;
-            } catch (InterruptedException ie) {
-                throw new RuntimeException(ie);
-            }
-
-        }).thenReturn(-1).thenReturn(-1);
+        // Bob sends a message to Alice
+        InputStream inputStreamB = new StringInputStream("hello alice");
+        // ByteArrayOutput to capture Bob's received messages
         OutputStream outputStreamB = new ByteArrayOutputStream();
         ConnectorInternal connectorInternalB = new ConnectorInternalLocalStub(inputStreamB, outputStreamB);
 
@@ -119,12 +98,20 @@ public class HubIPCJavaSideIntegrationTest {
 
         // wait until whole message was received
         while (true) {
-            if (outputStreamB.toString().length() > 4) {
+            if (outputStreamB.toString().length() > 8) {
                 break;
             }
         }
         // verify message from Alice was received by Bob
-        assertEquals("hello", outputStreamB.toString());
+        assertEquals("hello bob", outputStreamB.toString());
+
+        while (true) {
+            if (outputStreamA.toString().length() > 10) {
+                break;
+            }
+        }
+        // verify message from Bob was received by Alice
+        assertEquals("hello alice", outputStreamA.toString());
     }
 
 
