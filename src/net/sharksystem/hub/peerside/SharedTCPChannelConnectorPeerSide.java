@@ -1,6 +1,8 @@
 package net.sharksystem.hub.peerside;
 
 import net.sharksystem.hub.ASAPHubException;
+import net.sharksystem.hub.HubConnectorProtocol;
+import net.sharksystem.utils.Log;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -12,6 +14,7 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
 
     public static HubConnector createTCPHubConnector(CharSequence hostName, int port)
             throws IOException, ASAPHubException {
+
         // create TCP connection to hub
         Socket hubSocket = new Socket(hostName.toString(), port);
 
@@ -21,6 +24,8 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
     public SharedTCPChannelConnectorPeerSide(Socket hubSocket, CharSequence hostName, int port)
             throws IOException, ASAPHubException {
         super(hubSocket.getInputStream(), hubSocket.getOutputStream());
+
+        Log.writeLog(this, "connected to hub: " + hostName + ":" + port);
 
         this.hubSocket = hubSocket;
         this.hostName = hostName.toString();

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl implements HubConnector {
+public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl implements HubConnector {
     private NewConnectionListener listener;
     private Collection<CharSequence> peerIDs = new ArrayList<>();
     private CharSequence localPeerID;

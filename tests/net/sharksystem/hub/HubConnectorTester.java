@@ -2,6 +2,7 @@ package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
+import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.NewConnectionListener;
 
 import java.io.IOException;
