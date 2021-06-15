@@ -91,6 +91,7 @@ public class HubIPCJavaSideIntegrationTest {
         // register peer with peer id 'Bob'
         hubIPCJavaSideB.register("Bob", connectorInternalB);
         assertTrue(this.checkPeerRegistered(hubIPCJavaSideB, "Bob"));
+        assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, "Bob"));
 
         // Alice sends a connectionRequest to Bob
         hubIPCJavaSideA.connectionRequest("Alice", "Bob", 60);

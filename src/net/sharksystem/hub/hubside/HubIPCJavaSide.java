@@ -7,6 +7,7 @@ import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
 import net.sharksystem.hub.hubside.lora_ipc.IPCModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
 import net.sharksystem.hub.hubside.lora_ipc.RegistrationModel;
+import net.sharksystem.utils.Log;
 
 import java.io.*;
 import java.net.Socket;
@@ -26,9 +27,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
     private boolean keepIPCConnectionOpen = false;
     private Thread readingThread;
     private Socket socket;
-    private ConnectRequestModel sentConnectRequest;
-    private ConnectRequestModel ignoreConnectRequest;
-    private ConnectRequestModel establishedConnection;
+    private boolean sentConnectRequest = false;
 
 
     public HubIPCJavaSide(String host, int port, int messagePort) throws IOException {
@@ -44,27 +43,26 @@ public class HubIPCJavaSide extends HubGenericImpl {
     @Override
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
         ConnectRequestModel connectRequest = new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout);
-        this.sentConnectRequest = connectRequest;
         this.sendIPCMessage(connectRequest);
     }
 
     @Override
     protected void sendDisconnectRequest(CharSequence sourcePeerID, CharSequence targetPeerID) throws ASAPHubException {
-        if (establishedConnection == null) {
-            if (this.sentConnectRequest != null) {
-                if (this.sentConnectRequest .getSourcePeerID().contentEquals(sourcePeerID) && this.sentConnectRequest .getTargetPeerID().contentEquals(targetPeerID)) {
-                    this.ignoreConnectRequest = sentConnectRequest;
-                    this.sentConnectRequest = null;
-                }
-            }else{
-                System.err.println("could not withdraw connect request, because no connect request with passed parameter was sent");
-            }
-        }
-        else if(this.establishedConnection.getSourcePeerID().contentEquals(sourcePeerID) && this.establishedConnection.getTargetPeerID().contentEquals(targetPeerID)){
-            // TODO create disconnect request model and send it to python side
-        }else {
-            System.out.println("current connection has another source and target peer id");
-        }
+//        if (establishedConnection == null) {
+//            if (this.sentConnectRequest != null) {
+//                if (this.sentConnectRequest .getSourcePeerID().contentEquals(sourcePeerID) && this.sentConnectRequest .getTargetPeerID().contentEquals(targetPeerID)) {
+//                    this.ignoreConnectRequest = sentConnectRequest;
+//                    this.sentConnectRequest = null;
+//                }
+//            }else{
+//                System.err.println("could not withdraw connect request, because no connect request with passed parameter was sent");
+//            }
+//        }
+//        else if(this.establishedConnection.getSourcePeerID().contentEquals(sourcePeerID) && this.establishedConnection.getTargetPeerID().contentEquals(targetPeerID)){
+//            // TODO create disconnect request model and send it to python side
+//        }else {
+//            System.out.println("current connection has another source and target peer id");
+//        }
     }
 
     @Override
@@ -167,13 +165,24 @@ public class HubIPCJavaSide extends HubGenericImpl {
         StreamPair multihopStreamPair = new StreamPairImpl(socket.getInputStream(), socket.getOutputStream(),
                 targetPeerID);
         this.startDataSession(sourcePeerID, targetPeerID, multihopStreamPair, timeout);
-
-        this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
+        if(!this.sentConnectRequest){
+            // only send connect request if instance was not the source of the connect request
+            this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
+        }
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+            throws ASAPHubException, IOException {
+        Log.writeLog(this, "received connection request (" + sourcePeerID + " -> " + targetPeerID + ")");
+        // request comes from hub connector - relay this request to the other side
+        this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
+        this.sentConnectRequest = true;
     }
 
     /**
