@@ -5,7 +5,6 @@ import net.sharksystem.hub.StreamPair;
 import net.sharksystem.hub.StreamPairImpl;
 import net.sharksystem.hub.hubside.lora_ipc.*;
 import net.sharksystem.utils.Log;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.*;
 import java.net.Socket;
@@ -42,6 +41,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
         ConnectRequestModel connectRequest = new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout);
         this.sendIPCMessage(connectRequest);
+        this.sentConnectRequest = true;
     }
 
     @Override
@@ -175,13 +175,9 @@ public class HubIPCJavaSide extends HubGenericImpl {
         this.startDataSession(sourcePeerID, targetPeerID, multihopStreamPair, timeout);
         if (!this.sentConnectRequest) {
             // only send connect request if instance was not the source of the connect request
+            System.out.println("do not send connection request, because connection was initialized by this instance");
             this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
         }
-       /* try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
         this.activeConnection = connectRequest;
     }
 
@@ -206,21 +202,12 @@ public class HubIPCJavaSide extends HubGenericImpl {
         }
     }
 
-    @Override
-    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
-            throws ASAPHubException, IOException {
-        Log.writeLog(this, "received connection request (" + sourcePeerID + " -> " + targetPeerID + ")");
-        // request comes from hub connector - relay this request to the other side
-        this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
-        this.sentConnectRequest = true;
-    }
-
     /**
      * check whether there is an active connection to another peer
      * @return true if connected to another peer, else false
      */
     public boolean hasActiveConnection(){
-        return this.activeConnection == null;
+        return this.activeConnection != null;
     }
 
     /**
