@@ -40,6 +40,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     @Override
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
+        this.sentConnectRequest = true;
         ConnectRequestModel connectRequest = new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout);
         this.sendIPCMessage(connectRequest);
     }
@@ -206,6 +207,8 @@ public class HubIPCJavaSide extends HubGenericImpl {
         }
     }
 
+    /*
+    // that's a copy from an overwritten method. That is not what we do in 21th century
     @Override
     public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
@@ -214,6 +217,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
         this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
         this.sentConnectRequest = true;
     }
+     */
 
     /**
      * check whether there is an active connection to another peer

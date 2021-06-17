@@ -145,9 +145,13 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         this.hub.unregister(this.getPeerID());
     }
 
-    synchronized private void handleExternalConnectionRequestList() throws ASAPHubException, IOException {
+    synchronized private boolean handleExternalConnectionRequestList() throws ASAPHubException, IOException {
         // lets see if we can start another connection
-        Log.writeLog(this, this.toString(), "#entries connection request list: " + this.externalConnectionRequestList.size());
+        Log.writeLog(this, this.toString(), "#entries connection request list: "
+                + this.externalConnectionRequestList.size());
+
+        if(this.externalConnectionRequestList.isEmpty()) return false; // empty  nothing to do
+
         if(this.statusInSilence()) {
             Log.writeLog(this, this.toString(), "in silence mode - ok");
             // we are in the right status - take oldest request
@@ -160,8 +164,9 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
                 }
             }
 
-            if(connectionRequest == null) return; // list empty
+            if(connectionRequest == null) return false; // list empty
 
+            // handle connection request
             Log.writeLog(this, this.toString(), "launch data session by request: " + connectionRequest);
             // init data session
             StreamPair streamPair =
@@ -180,6 +185,12 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
                 Log.writeLog(this, this.toString(), "cannot ask for silence .. not in connector mode");
             }
         }
+        return true;
+    }
+
+    protected void actionWhenBackFromDataSession() {
+        // relaunch Connector thread
+        (new ConnectorThread(this, this.getInputStream())).start();
     }
 
     /**
