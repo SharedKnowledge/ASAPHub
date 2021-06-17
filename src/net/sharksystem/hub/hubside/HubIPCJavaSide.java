@@ -3,11 +3,9 @@ package net.sharksystem.hub.hubside;
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.StreamPair;
 import net.sharksystem.hub.StreamPairImpl;
-import net.sharksystem.hub.hubside.lora_ipc.ConnectRequestModel;
-import net.sharksystem.hub.hubside.lora_ipc.IPCModel;
-import net.sharksystem.hub.hubside.lora_ipc.RegisteredPeersModel;
-import net.sharksystem.hub.hubside.lora_ipc.RegistrationModel;
+import net.sharksystem.hub.hubside.lora_ipc.*;
 import net.sharksystem.utils.Log;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.*;
 import java.net.Socket;
@@ -28,6 +26,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
     private Thread readingThread;
     private Socket socket;
     private boolean sentConnectRequest = false;
+    private ConnectRequestModel activeConnection = null;
 
 
     public HubIPCJavaSide(String host, int port, int messagePort) throws IOException {
@@ -39,7 +38,6 @@ public class HubIPCJavaSide extends HubGenericImpl {
         this.messagePort = messagePort;
     }
 
-
     @Override
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
         ConnectRequestModel connectRequest = new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout);
@@ -48,16 +46,26 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     @Override
     protected void sendDisconnectRequest(CharSequence sourcePeerID, CharSequence targetPeerID) throws ASAPHubException {
-//        if (establishedConnection == null) {
-//            if (this.sentConnectRequest != null) {
-//                if (this.sentConnectRequest .getSourcePeerID().contentEquals(sourcePeerID) && this.sentConnectRequest .getTargetPeerID().contentEquals(targetPeerID)) {
-//                    this.ignoreConnectRequest = sentConnectRequest;
-//                    this.sentConnectRequest = null;
-//                }
-//            }else{
-//                System.err.println("could not withdraw connect request, because no connect request with passed parameter was sent");
-//            }
-//        }
+        if (activeConnection != null) {
+            // there is no connection established yet
+            if (this.activeConnection.getTargetPeerID().contentEquals(sourcePeerID) &&
+                    this.activeConnection.getSourcePeerID().contentEquals(targetPeerID)) {
+                // send disconnect request
+                DisconnectRequestModel disconnectRequest = new DisconnectRequestModel(sourcePeerID.toString(),
+                        targetPeerID.toString());
+                try {
+                    this.sendIPCMessage(disconnectRequest);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            } else {
+                System.out.println("could not send disconnect request, because current connection has another source " +
+                        "and target peer id");
+            }
+        }else{
+            System.out.println("send no disconnect request, because there is no active connection");
+        }
 //        else if(this.establishedConnection.getSourcePeerID().contentEquals(sourcePeerID) && this.establishedConnection.getTargetPeerID().contentEquals(targetPeerID)){
 //            // TODO create disconnect request model and send it to python side
 //        }else {
@@ -165,14 +173,36 @@ public class HubIPCJavaSide extends HubGenericImpl {
         StreamPair multihopStreamPair = new StreamPairImpl(socket.getInputStream(), socket.getOutputStream(),
                 targetPeerID);
         this.startDataSession(sourcePeerID, targetPeerID, multihopStreamPair, timeout);
-        if(!this.sentConnectRequest){
+        if (!this.sentConnectRequest) {
             // only send connect request if instance was not the source of the connect request
             this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
         }
-        try {
+       /* try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }*/
+        this.activeConnection = connectRequest;
+    }
+
+    /**
+     * helper method to process an incoming disconnect request
+     *
+     * @param connectRequest ConnectRequestModel which contains the data
+     * @throws ASAPHubException
+     * @throws IOException
+     */
+    private void processIncomingDisconnectRequest(DisconnectRequestModel connectRequest) throws ASAPHubException, IOException {
+        ConnectorInternal connectorInternal = this.connectorInternalMap.get(connectRequest.getTargetPeerID());
+        CharSequence sourcePeerId = connectRequest.getSourcePeerID();
+        CharSequence targetPeerId = connectRequest.getTargetPeerID();
+
+        if(connectorInternal == null){
+            System.out.println(String.format("could not close connection, because no peer with peer id %s is registered",
+                   targetPeerId));
+        }else{
+            connectorInternal.disconnect(targetPeerId, sourcePeerId);
+            this.activeConnection = null;
         }
     }
 
@@ -183,6 +213,14 @@ public class HubIPCJavaSide extends HubGenericImpl {
         // request comes from hub connector - relay this request to the other side
         this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
         this.sentConnectRequest = true;
+    }
+
+    /**
+     * check whether there is an active connection to another peer
+     * @return true if connected to another peer, else false
+     */
+    public boolean hasActiveConnection(){
+        return this.activeConnection == null;
     }
 
     /**
@@ -203,6 +241,13 @@ public class HubIPCJavaSide extends HubGenericImpl {
                         } else if (receivedModel instanceof ConnectRequestModel) {
                             System.out.println("got connect request from python side");
                             this.processIncomingConnectRequest((ConnectRequestModel) receivedModel);
+                        }
+                        else if (receivedModel instanceof ConnectRequestModel) {
+                            System.out.println("got connect request from python side");
+                            this.processIncomingConnectRequest((ConnectRequestModel) receivedModel);
+                        }else if (receivedModel instanceof DisconnectRequestModel) {
+                            System.out.println("got disconnect request from python side");
+                            this.processIncomingDisconnectRequest((DisconnectRequestModel) receivedModel);
                         }
                     }
                 }

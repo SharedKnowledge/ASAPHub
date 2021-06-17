@@ -23,7 +23,8 @@ public class HubIPCJavaSideIntegrationTest {
     private final int messagePortA = 6100;
     private final int ipcPortB = 6200;
     private final int messagePortB = 6300;
-
+    private final String peerIdA = "Alice";
+    private final String peerIdB = "Bob";
 
 
     @Test
@@ -38,25 +39,25 @@ public class HubIPCJavaSideIntegrationTest {
         ConnectorInternal connectorInternalB = new ConnectorInternalLocalStub(null, null);
 
         // register Alice on first IPC instance
-        hubIPCJavaSideA.register("Alice", connectorInternalA);
+        hubIPCJavaSideA.register(this.peerIdA, connectorInternalA);
         // register Bob on second IPC instance
-        hubIPCJavaSideB.register("Bob", connectorInternalB);
+        hubIPCJavaSideB.register(this.peerIdB, connectorInternalB);
 
         // check whether peerIds are registered on both instances
-        assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, "Alice"));
-        assertTrue(this.checkPeerRegistered(hubIPCJavaSideB, "Alice"));
-        assertTrue(this.checkPeerRegistered(hubIPCJavaSideB, "Bob"));
-        assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, "Bob"));
+        assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, this.peerIdA));
+        assertTrue(this.checkPeerRegistered(hubIPCJavaSideB, this.peerIdA));
+        assertTrue(this.checkPeerRegistered(hubIPCJavaSideB, this.peerIdB));
+        assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, this.peerIdB));
 
         // unregister Alice and Bob
         hubIPCJavaSideA.unregister("Alice");
         hubIPCJavaSideB.unregister("Bob");
 
         // check whether peerIds were unregistered from both instances
-        assertTrue(this.checkPeerIsNotRegistered(hubIPCJavaSideA, "Alice"));
-        assertTrue(this.checkPeerIsNotRegistered(hubIPCJavaSideB, "Alice"));
-        assertTrue(this.checkPeerIsNotRegistered(hubIPCJavaSideB, "Bob"));
-        assertTrue(this.checkPeerIsNotRegistered(hubIPCJavaSideA, "Bob"));
+        assertTrue(this.checkPeerIsNotRegistered(hubIPCJavaSideA, this.peerIdA));
+        assertTrue(this.checkPeerIsNotRegistered(hubIPCJavaSideB, this.peerIdA));
+        assertTrue(this.checkPeerIsNotRegistered(hubIPCJavaSideB, this.peerIdB));
+        assertTrue(this.checkPeerIsNotRegistered(hubIPCJavaSideA, this.peerIdB));
 
         // close connection to IPC instance
         hubIPCJavaSideA.closeIPCConnection();
@@ -80,7 +81,7 @@ public class HubIPCJavaSideIntegrationTest {
 
         // register peer with peer id 'Alice'
         hubIPCJavaSideA.register("Alice", connectorInternalA);
-        assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, "Alice"));
+        assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, this.peerIdA));
 
         // Bob sends a message to Alice
         InputStream inputStreamB = new StringInputStream("hello alice");
@@ -90,11 +91,11 @@ public class HubIPCJavaSideIntegrationTest {
 
         // register peer with peer id 'Bob'
         hubIPCJavaSideB.register("Bob", connectorInternalB);
-        assertTrue(this.checkPeerRegistered(hubIPCJavaSideB, "Bob"));
-        assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, "Bob"));
+        assertTrue(this.checkPeerRegistered(hubIPCJavaSideB, this.peerIdB));
+        assertTrue(this.checkPeerRegistered(hubIPCJavaSideA, this.peerIdB));
 
         // Alice sends a connectionRequest to Bob
-        hubIPCJavaSideA.connectionRequest("Alice", "Bob", 60);
+        hubIPCJavaSideA.connectionRequest(this.peerIdA, this.peerIdB, 60);
 
         // wait until whole message was received
         while (true) {
@@ -112,6 +113,19 @@ public class HubIPCJavaSideIntegrationTest {
         }
         // verify message from Bob was received by Alice
         assertEquals("hello alice", outputStreamA.toString());
+        hubIPCJavaSideA.disconnect(this.peerIdA, this.peerIdB);
+        int attempt = 0;
+        boolean disconnected = false;
+        while(attempt < 3){
+            if(hubIPCJavaSideB.hasActiveConnection()){
+                attempt++;
+                Thread.sleep(1000);
+            }else{
+                disconnected = true;
+                break;
+            }
+        }
+        assertTrue(disconnected);
     }
 
 

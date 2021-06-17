@@ -29,6 +29,8 @@ public abstract class IPCModel {
             case ConnectRequestModel.IPCMessageType:
                 return new ConnectRequestModel(messageValues.get(1), messageValues.get(2),
                         Integer.parseInt(messageValues.get(3)));
+            case DisconnectRequestModel.IPCMessageType:
+                return new DisconnectRequestModel(messageValues.get(1), messageValues.get(2));
             case RegistrationModel.IPCMessageType:
                 String registerStr = messageValues.get(2);
                 return new RegistrationModel(messageValues.get(1), registerStr.equalsIgnoreCase("true"));

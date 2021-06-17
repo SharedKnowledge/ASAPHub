@@ -80,4 +80,18 @@ public class IPCModelTest {
         assertTrue(registeredPeersModel.getRegisteredPeers().isEmpty());
     }
 
+    @Test
+    public void getIPCMessageFromDisconnectRequestModel() {
+        IPCModel connectRequest = new DisconnectRequestModel("alice", "bob");
+        assertEquals("DisconnectRequest,alice,bob", connectRequest.getIPCMessage());
+    }
+
+    @Test
+    public void createDisconnectRequestModelObjectFromString() {
+        DisconnectRequestModel disconnectRequestModel = (DisconnectRequestModel) IPCModel.createModelObjectFromIPCString
+                ("DisconnectRequest,alice,bob");
+        assertEquals("alice", disconnectRequestModel.getSourcePeerID());
+        assertEquals("bob", disconnectRequestModel.getTargetPeerID());
+    }
+
 }
