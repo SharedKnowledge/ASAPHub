@@ -33,6 +33,12 @@ public abstract class ConnectorImpl implements Connector {
         }
     }
 
+    protected void notifyListenerSynced() {
+        for(HubConnectorStatusListener listener : this.statusListener) {
+            listener.notifySynced();
+        }
+    }
+
     public ConnectorImpl(InputStream is, OutputStream os) throws ASAPHubException {
         this.is = is;
         this.os = os;
