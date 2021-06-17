@@ -189,7 +189,14 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     }
 
     protected void actionWhenBackFromDataSession() {
-        // relaunch Connector thread
+        try {
+            if(this.handleExternalConnectionRequestList()) return; // there are pending request
+            // relaunch Connector thread
+        } catch (ASAPHubException | IOException e) {
+            e.printStackTrace();
+        }
+
+        // no pending requests - relaunch connector thread
         (new ConnectorThread(this, this.getInputStream())).start();
     }
 
