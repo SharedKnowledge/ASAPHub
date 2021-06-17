@@ -130,6 +130,11 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         return true;
     }
 
+    protected void actionWhenBackFromDataSession() {
+        // relaunch Connector thread
+        (new ConnectorThread(this, this.getInputStream())).start();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                      listener management                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////////

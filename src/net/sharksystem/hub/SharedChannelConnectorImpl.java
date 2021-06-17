@@ -369,9 +369,10 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         // synchronized again
         this.statusSynchronizing = false;
 
-        // relaunch Connector thread
-        (new ConnectorThread(this, this.getInputStream())).start();
+        this.actionWhenBackFromDataSession();
     }
+
+    protected abstract void actionWhenBackFromDataSession();
 
     @Override
     public void notifyClosed(StreamPair closedStreamPair, String key) {

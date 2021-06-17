@@ -5,6 +5,7 @@ import net.sharksystem.hub.StreamPair;
 import net.sharksystem.hub.StreamPairImpl;
 import net.sharksystem.hub.hubside.lora_ipc.*;
 import net.sharksystem.utils.Log;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.*;
 import java.net.Socket;
@@ -39,9 +40,9 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     @Override
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
+        this.sentConnectRequest = true;
         ConnectRequestModel connectRequest = new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout);
         this.sendIPCMessage(connectRequest);
-        this.sentConnectRequest = true;
     }
 
     @Override
@@ -175,7 +176,6 @@ public class HubIPCJavaSide extends HubGenericImpl {
         this.startDataSession(sourcePeerID, targetPeerID, multihopStreamPair, timeout);
         if (!this.sentConnectRequest) {
             // only send connect request if instance was not the source of the connect request
-            System.out.println("do not send connection request, because connection was initialized by this instance");
             this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
         }
         this.activeConnection = connectRequest;
