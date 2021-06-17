@@ -173,6 +173,7 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         synchronized (this) {
             this.peerIDs = pdu.connectedPeers;
         }
+        this.notifyListenerSynced();
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////

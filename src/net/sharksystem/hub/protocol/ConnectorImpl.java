@@ -1,10 +1,13 @@
 package net.sharksystem.hub.protocol;
 
 import net.sharksystem.hub.ASAPHubException;
+import net.sharksystem.hub.peerside.HubConnectorStatusListener;
 import net.sharksystem.utils.Log;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Root class of all connector implementations.
@@ -14,6 +17,27 @@ public abstract class ConnectorImpl implements Connector {
 
     private final InputStream is;
     private final OutputStream os;
+
+    private Set<HubConnectorStatusListener> statusListener = new HashSet<>();
+    public void addStatusListener(HubConnectorStatusListener listener) {
+        this.statusListener.add(listener);
+    }
+
+    public void removeStatusListener(HubConnectorStatusListener listener) {
+        this.statusListener.remove(listener);
+    }
+
+    private void notifyListenerConnectedAndOpen() {
+        for(HubConnectorStatusListener listener : this.statusListener) {
+            listener.notifyConnectedAndOpen();
+        }
+    }
+
+    protected void notifyListenerSynced() {
+        for(HubConnectorStatusListener listener : this.statusListener) {
+            listener.notifySynced();
+        }
+    }
 
     public ConnectorImpl(InputStream is, OutputStream os) throws ASAPHubException {
         this.is = is;
@@ -38,6 +62,7 @@ public abstract class ConnectorImpl implements Connector {
         Log.writeLog(this, "connector thread running");
         this.connectorThread = connectorThread;
         this.resumedConnectorProtocol();
+        this.notifyListenerConnectedAndOpen();
     }
 
     protected abstract void resumedConnectorProtocol();
