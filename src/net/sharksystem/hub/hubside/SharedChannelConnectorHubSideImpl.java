@@ -1,5 +1,8 @@
 package net.sharksystem.hub.hubside;
 
+import net.sharksystem.streams.StreamPair;
+import net.sharksystem.streams.StreamPairLink;
+import net.sharksystem.streams.WrappedStreamPairListener;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.PeerIDHelper;
 import net.sharksystem.hub.*;

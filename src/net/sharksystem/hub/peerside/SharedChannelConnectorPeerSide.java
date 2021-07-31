@@ -1,5 +1,6 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.streams.StreamPair;
 import net.sharksystem.hub.*;
 import net.sharksystem.hub.protocol.*;
 import net.sharksystem.utils.Log;
@@ -12,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl implements HubConnector {
-    private NewConnectionListener listener;
+    private List<NewConnectionListener> listener = new ArrayList<>();
     private Collection<CharSequence> peerIDs = new ArrayList<>();
     private CharSequence localPeerID;
     private boolean shutdown = false;
@@ -139,8 +140,12 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
     //                                      listener management                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setListener(NewConnectionListener listener) {
-        this.listener = listener;
+    public void addListener(NewConnectionListener listener) {
+        this.listener.add(listener);
+    }
+
+    public void removeListener(NewConnectionListener listener) {
+        this.listener.remove(listener);
     }
 
     public Collection<CharSequence> getPeerIDs() throws IOException {
@@ -194,13 +199,16 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
     @Override
     protected void dataSessionStarted(ConnectionRequest connectionRequest, StreamPair streamPair) {
         Log.writeLog(this, this.toString(), "data session started due to request: " + connectionRequest);
+
         // tell listener
         if(this.listener != null) {
             // make sure not to be blocked by application programmer
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    listener.notifyPeerConnected(streamPair);
+                    for(NewConnectionListener l : listener) {
+                        l.notifyPeerConnected(connectionRequest.targetPeerID, streamPair);
+                    }
                 }
             }).start();
         }

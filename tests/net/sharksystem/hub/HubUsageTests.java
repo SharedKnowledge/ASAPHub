@@ -2,7 +2,6 @@ package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.peerside.HubConnector;
-import net.sharksystem.hub.peerside.SharedChannelConnectorPeerSide;
 import net.sharksystem.hub.hubside.TCPHub;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
 import org.junit.Assert;
@@ -27,7 +26,7 @@ public class HubUsageTests {
 
         HubConnector aliceHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
         HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
-        aliceHubConnector.setListener(aliceListener);
+        aliceHubConnector.addListener(aliceListener);
 
         aliceHubConnector.connectHub(ALICE_ID);
         Thread.sleep(100);
@@ -36,7 +35,7 @@ public class HubUsageTests {
 
         HubConnectorTester bobListener = new HubConnectorTester(BOB_ID);
         HubConnector bobHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
-        bobHubConnector.setListener(bobListener);
+        bobHubConnector.addListener(bobListener);
         bobHubConnector.connectHub(BOB_ID);
         Thread.sleep(100);
 

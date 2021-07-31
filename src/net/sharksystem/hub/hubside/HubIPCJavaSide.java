@@ -1,11 +1,9 @@
 package net.sharksystem.hub.hubside;
 
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.StreamPair;
-import net.sharksystem.hub.StreamPairImpl;
+import net.sharksystem.streams.StreamPair;
+import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.hub.hubside.lora_ipc.*;
-import net.sharksystem.utils.Log;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.*;
 import java.net.Socket;
@@ -171,8 +169,10 @@ public class HubIPCJavaSide extends HubGenericImpl {
         int timeout = connectRequest.getTimeout();
         Socket socket = new Socket(this.host, this.messagePort);
 
-        StreamPair multihopStreamPair = new StreamPairImpl(socket.getInputStream(), socket.getOutputStream(),
+        StreamPair multihopStreamPair =
+                StreamPairImpl.getStreamPairWithSessionID(socket.getInputStream(), socket.getOutputStream(),
                 targetPeerID);
+
         this.startDataSession(sourcePeerID, targetPeerID, multihopStreamPair, timeout);
         if (!this.sentConnectRequest) {
             // only send connect request if instance was not the source of the connect request

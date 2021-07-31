@@ -1,8 +1,8 @@
 package net.sharksystem.hub;
 
+import net.sharksystem.streams.StreamPair;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
-import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.NewConnectionListener;
 
 import java.io.IOException;
@@ -16,7 +16,7 @@ class HubConnectorTester implements NewConnectionListener {
     }
 
     @Override
-    public void notifyPeerConnected(StreamPair streamPair) {
+    public void notifyPeerConnected(CharSequence targetPeerID, StreamPair streamPair) {
         System.out.println("listener of " + peerID + " got notified about a connection ");
         this.numberNofications++;
 

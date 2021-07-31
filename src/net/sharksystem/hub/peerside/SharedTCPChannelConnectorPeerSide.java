@@ -1,7 +1,6 @@
 package net.sharksystem.hub.peerside;
 
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.HubConnectorProtocol;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;

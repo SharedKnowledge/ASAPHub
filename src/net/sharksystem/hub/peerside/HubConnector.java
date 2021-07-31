@@ -69,7 +69,9 @@ public interface HubConnector {
      * @param listener A single listener object. It would overwrite an existing listener.
      * @see #connectPeer(CharSequence)
      */
-    void setListener(NewConnectionListener listener);
+    void addListener(NewConnectionListener listener);
+
+    void removeListener(NewConnectionListener listener);
 
     void addStatusListener(HubConnectorStatusListener listener);
 
