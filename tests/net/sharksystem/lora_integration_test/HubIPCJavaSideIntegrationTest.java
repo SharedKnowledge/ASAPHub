@@ -113,6 +113,7 @@ public class HubIPCJavaSideIntegrationTest {
         }
         // verify message from Bob was received by Alice
         assertEquals("hello alice", outputStreamA.toString());
+        assertTrue(hubIPCJavaSideB.hasActiveConnection());
         hubIPCJavaSideA.disconnect(this.peerIdA, this.peerIdB);
         int attempt = 0;
         boolean disconnected = false;

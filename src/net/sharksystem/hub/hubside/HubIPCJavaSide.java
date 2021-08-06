@@ -178,11 +178,6 @@ public class HubIPCJavaSide extends HubGenericImpl {
             // only send connect request if instance was not the source of the connect request
             this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
         }
-       /* try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
         this.activeConnection = connectRequest;
     }
 
@@ -207,24 +202,12 @@ public class HubIPCJavaSide extends HubGenericImpl {
         }
     }
 
-    /*
-    // that's a copy from an overwritten method. That is not what we do in 21th century
-    @Override
-    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
-            throws ASAPHubException, IOException {
-        Log.writeLog(this, "received connection request (" + sourcePeerID + " -> " + targetPeerID + ")");
-        // request comes from hub connector - relay this request to the other side
-        this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
-        this.sentConnectRequest = true;
-    }
-     */
-
     /**
      * check whether there is an active connection to another peer
      * @return true if connected to another peer, else false
      */
     public boolean hasActiveConnection(){
-        return this.activeConnection == null;
+        return this.activeConnection != null;
     }
 
     /**
