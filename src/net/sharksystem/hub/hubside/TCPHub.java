@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TCPHub extends HubSingleEntity implements Runnable {
+public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
     public static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
     private int maxIdleInMillis = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS * 1000;
 
