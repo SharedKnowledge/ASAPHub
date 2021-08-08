@@ -2,6 +2,7 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.protocol.ConnectorThread;
+import net.sharksystem.utils.Commandline;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -125,6 +126,67 @@ public class TCPHub extends HubSingleEntity implements Runnable {
             }
 
             otherPeers.add(peerB);
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                              command line                                           //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static void main(String[] args) {
+        String usageString = "optional parameters: -port [portnumber] -maxIdleSeconds [seconds]";
+
+        // now get real parameters
+        HashMap<String, String> argumentMap = Commandline.parametersToMap(args,
+                false, usageString);
+
+        int port = DEFAULT_PORT;
+        int maxIdleInSeconds = -1;
+        if(argumentMap != null) {
+            Set<String> keys = argumentMap.keySet();
+            if(keys.contains("-help") || keys.contains("-?")) {
+                System.out.println(usageString);
+                System.exit(0);
+            }
+
+            // port defined
+            String portString = argumentMap.get("-port");
+            if(portString != null) {
+                try {
+                    port = Integer.parseInt(portString);
+                } catch (RuntimeException re) {
+                    System.err.println("port number must be a numeric: " + portString);
+                    System.exit(0);
+                }
+            }
+
+            // max idle in seconds?
+            String maxIdleInSecondsString = argumentMap.get("-maxIdleInSeconds");
+            if(maxIdleInSecondsString != null) {
+                try {
+                    maxIdleInSeconds = Integer.parseInt(maxIdleInSecondsString);
+                } catch (RuntimeException re) {
+                    System.err.println("maxIdleInSeconds must be a numeric: " + maxIdleInSecondsString);
+                    System.exit(0);
+                }
+
+            }
+        }
+
+        // create TCPHub
+        try {
+            TCPHub tcpHub = new TCPHub(port);
+            if(maxIdleInSeconds > 0) {
+                tcpHub.setMaxIdleConnectionInSeconds(maxIdleInSeconds);
+            }
+
+            System.out.println("start TCP hub on port " + tcpHub.port
+                    + " with maxIdleInSeconds: " + tcpHub.maxIdleInMillis / 1000);
+
+            tcpHub.run();
+        } catch (IOException e) {
+            System.err.println("cannot launch TCPHub: " + e.getLocalizedMessage());
+            e.printStackTrace();
         }
     }
 }
