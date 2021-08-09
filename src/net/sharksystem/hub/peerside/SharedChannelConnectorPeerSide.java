@@ -210,6 +210,14 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         this.notifyListenerSynced();
     }
 
+    @Override
+    public void newConnectionReply(HubPDUConnectPeerNewConnectionRPLY pdu) {
+        // TODO: create a new socket and launch ASAP connection
+    }
+
+    @Override
+    public void newConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) { this.pduNotHandled(pdu); }
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                       connector status changes                                          //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////

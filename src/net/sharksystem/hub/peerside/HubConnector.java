@@ -77,4 +77,5 @@ public interface HubConnector {
 
     boolean isShutdown();
 
+    void setTimeOutInMillis(int millis);
 }

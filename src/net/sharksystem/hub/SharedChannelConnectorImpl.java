@@ -23,15 +23,11 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         super(is, os);
     }
 
-    public int getTimeOutSilenceChannel() {
-        return this.getTimeoutInMillis();
-    }
+    public int getTimeOutSilenceChannel()  { return this.getTimeoutInMillis(); }
     public int getTimeOutDataConnection() {
         return this.getTimeoutInMillis();
     }
-    public int getTimeOutConnectionRequest() {
-        return this.getTimeoutInMillis();
-    }
+    public int getTimeOutConnectionRequest() { return this.getTimeoutInMillis() * 2; }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                         status management                                           //

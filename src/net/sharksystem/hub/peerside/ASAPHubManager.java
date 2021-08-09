@@ -10,4 +10,6 @@ public interface ASAPHubManager {
 
     void removeHub(HubConnector hub);
 
+    void setTimeOutInMillis(int millis);
+
 }

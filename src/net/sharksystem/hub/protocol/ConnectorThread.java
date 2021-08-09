@@ -63,6 +63,14 @@ public class ConnectorThread extends Thread {
                 else if (hubPDU instanceof HubPDUConnectPeerRQ) {
                     Log.writeLog(this, this.toString(), "read hub connect peer RQ");
                     this.connector.connectPeerRQ((HubPDUConnectPeerRQ) hubPDU);
+                }
+                else if (hubPDU instanceof HubPDUConnectPeerNewTCPSocketRQ) {
+                    Log.writeLog(this, this.toString(), "read hub new connection request");
+                    this.connector.newConnectionRequest((HubPDUConnectPeerNewTCPSocketRQ) hubPDU);
+                }
+                else if (hubPDU instanceof HubPDUConnectPeerNewConnectionRPLY) {
+                        Log.writeLog(this, this.toString(), "read hub new connection reply");
+                        this.connector.newConnectionReply((HubPDUConnectPeerNewConnectionRPLY) hubPDU);
                 } else {
                     Log.writeLog(this, this.toString(), "got unknown / unsupported PDU type: "
                         + hubPDU.getClass().getSimpleName());

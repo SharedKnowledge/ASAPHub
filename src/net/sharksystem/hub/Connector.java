@@ -101,4 +101,16 @@ public interface Connector {
 
     int DEFAULT_TIMEOUT_IN_MILLIS = 1000;
     void setTimeOutInMillis(int milliseconds);
+
+    /**
+     * Called from hub - asks peer side to open a new connection with given parameter to initiate a new peer encounter
+     * @param hubPDU
+     */
+    void newConnectionReply(HubPDUConnectPeerNewConnectionRPLY hubPDU);
+
+    /**
+     * send from peer side to hub side. Asks to provide a new server socket to initiate a new peer encounter.
+     * @param hubPDU
+     */
+    void newConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU);
 }

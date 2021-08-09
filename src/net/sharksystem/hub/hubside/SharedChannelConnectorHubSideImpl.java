@@ -327,13 +327,23 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     }
 
     @Override
+    public void newConnectionReply(HubPDUConnectPeerNewConnectionRPLY hubPDU) {
+        this.pduNotHandled(hubPDU);
+    }
+
+    @Override
+    public void newConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU) {
+        // TODO create a new server socket.. answer with HubPDUConnectPeerNewConnectionRPLY
+    }
+
+    @Override
     public void connectPeerRQ(HubPDUConnectPeerRQ pdu) {
         // received connection request from peer side - tell hub
         Log.writeLog(this, this.toString(), "received connection RQ from peer side - tell hub");
         try {
             this.hub.connectionRequest(this.peerID, pdu.peerID, this.getTimeOutConnectionRequest());
         } catch (ASAPHubException | IOException e) {
-            Log.writeLogErr(this, this.toString(), "connection RQ failed woith hub: " + e.getLocalizedMessage());
+            Log.writeLogErr(this, this.toString(), "connection RQ failed with hub: " + e.getLocalizedMessage());
         }
     }
 

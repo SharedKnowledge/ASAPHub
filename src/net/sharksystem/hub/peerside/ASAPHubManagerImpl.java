@@ -14,6 +14,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     private final ASAPEncounterManager asapEncounterManager;
     private final int waitIntervalInSeconds;
     private List<HubConnector> hubs = new ArrayList<>();
+    private int timeoutInMillis;
 
     public ASAPHubManagerImpl(ASAPEncounterManager asapEncounterManager) {
         this(asapEncounterManager, DEFAULT_WAIT_INTERVAL_IN_SECONDS);
@@ -36,17 +37,23 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
         hub.removeListener(this);
     }
 
+    public void setTimeOutInMillis(int millis) {
+        this.timeoutInMillis = millis;
+    }
+
     @Override
     public void run() {
+        Log.writeLog(this, "Hub manager thread running");
         for(;;) {
             long startTime = System.currentTimeMillis();
             List<HubConnector> removeHub = new ArrayList<>();
 
+            Log.writeLog(this, "start a new round");
             // start another round
             for(HubConnector hubConnector : this.hubs) {
                 Collection<CharSequence> peerIDs = null;
                 try {
-                    //hubConnector.setTimeoutInSeconds(this.waitIntervalInSeconds);
+                    hubConnector.setTimeOutInMillis(this.timeoutInMillis);
                     hubConnector.syncHubInformation();
                     peerIDs = hubConnector.getPeerIDs();
                 } catch (IOException e) {
@@ -56,6 +63,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
                     removeHub.add(hubConnector);
                 }
 
+                Log.writeLog(this, "got peerIDs: " + peerIDs);
                 if(peerIDs != null && !peerIDs.isEmpty()) {
                     for(CharSequence peerID : peerIDs) {
                         if(this.asapEncounterManager.shouldCreateConnectionToPeer(

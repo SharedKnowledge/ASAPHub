@@ -26,10 +26,9 @@ public class HubManagerTests {
         CharSequence host = "localhost";
         TCPHub hub = new TCPHub(specificPort);
 
-        int maxTimeInSeconds = Connector.DEFAULT_TIMEOUT_IN_MILLIS / 1000;
-        maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
+        int maxTimeOutMillis = Connector.DEFAULT_TIMEOUT_IN_MILLIS;
 
-        hub.setMaxIdleConnectionInSeconds(maxTimeInSeconds);
+        hub.setMaxIdleConnectionInSeconds(maxTimeOutMillis);
         new Thread(hub).start();
 
         Set formats = new HashSet();
@@ -55,18 +54,19 @@ public class HubManagerTests {
         aliceHubConnector.connectHub(ALICE);
         bobHubConnector.connectHub(BOB);
 
-        // give it soem time
-        Thread.sleep(1000);
+        // give it some time
+        Thread.sleep(maxTimeOutMillis*2);
 
         // add to hub manager
         ASAPEncounterManagerImpl asapEncounterManager = new ASAPEncounterManagerImpl(alicePeer);
         ASAPHubManagerImpl asapASAPHubManager = new ASAPHubManagerImpl(asapEncounterManager);
+        asapASAPHubManager.setTimeOutInMillis(maxTimeOutMillis);
         asapASAPHubManager.addHub(aliceHubConnector);
 
         // start hub manager
         new Thread(asapASAPHubManager).start();
 
-        Thread.sleep(1000);
+        Thread.sleep(maxTimeOutMillis*2);
         //Thread.sleep(Long.MAX_VALUE);
     }
 }
