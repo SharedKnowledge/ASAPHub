@@ -99,6 +99,6 @@ public interface Connector {
 
     void unregister(HubPDUUnregister hubPDU);
 
-    int DEFAULT_TIMEOUT_IN_MILLIS = 100;
+    int DEFAULT_TIMEOUT_IN_MILLIS = 1000;
     void setTimeOutInMillis(int milliseconds);
 }

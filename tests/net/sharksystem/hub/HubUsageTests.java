@@ -63,6 +63,7 @@ public class HubUsageTests {
         System.out.println("************************ alice connector disconnect ****************************");
         aliceHubConnector.disconnectHub();
         Thread.sleep(maxTimeInSeconds * 1000);
+        Thread.sleep(maxTimeInSeconds * 1000);
 
         System.out.println("************************ bob connector sync ****************************");
         bobHubConnector.syncHubInformation();

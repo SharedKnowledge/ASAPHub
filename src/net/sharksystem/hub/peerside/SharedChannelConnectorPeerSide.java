@@ -17,6 +17,7 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
     private Collection<CharSequence> peerIDs = new ArrayList<>();
     private CharSequence localPeerID;
     private boolean shutdown = false;
+    private HubPDUUnregister pendingDisconnectPDU = null;
 
     public SharedChannelConnectorPeerSide(InputStream is, OutputStream os) throws ASAPHubException {
         super(is, os);
@@ -84,24 +85,21 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         // create hello pdu
         HubPDUUnregister hubPDUUnregister = new HubPDUUnregister(localPeerID);
 
-//        try {
-//            hubPDUUnregister.sendPDU(this.getOutputStream());
-            this.sendPDU(hubPDUUnregister);
-            /*
-        } catch (IOException e) {
-            // tell caller
-            throw new ASAPHubException("cannot disconnect - not connected or in data session, try again later");
+        boolean pendingDisconnect = true;
+
+        if(this.sendPDU(hubPDUUnregister)) {
+            // kill connector thread
+            try {
+                this.getConnectorThread().kill();
+                pendingDisconnect = false;
+            }
+            catch(ASAPHubException e) {
+                Log.writeLog(this, this.toString(), "no connector thread running - cannot call disconnect");
+            }
         }
 
-             */
-
-        // kill connector thread
-        try {
-            this.getConnectorThread();
-            this.getConnectorThread().kill();
-        }
-        catch(ASAPHubException e) {
-            Log.writeLog(this, this.toString(), "no connector thread running - cannot call disconnect");
+        if(pendingDisconnect) {
+            this.pendingDisconnectPDU = hubPDUUnregister;
         }
     }
 
@@ -137,19 +135,29 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
             synchronized (this.getOutputStream()) {
                 pdu.sendPDU(this.getOutputStream());
             }
+            return true;
         }
         catch(IOException ioe) {
             Log.writeLog(this, this.toString(), "cannot send PDU: " + ioe.getLocalizedMessage());
             return false;
         }
-
-        return true;
     }
 
     protected void actionWhenBackFromDataSession() {
-        // relaunch Connector thread
+        Log.writeLog(this, this.toString(), "back from data session");
+        if(this.pendingDisconnectPDU != null) {
+            Log.writeLog(this, this.toString(), "send pending disconnect pdu");
+            try {
+                this.pendingDisconnectPDU.sendPDU(this.getOutputStream());
+                return;
+            } catch (IOException e) {
+                Log.writeLog(this, this.toString(), "cannot send pending PDU: " + e.getLocalizedMessage());
+            }
+        }
+
+        Log.writeLog(this, this.toString(), "restart connector session thread");
+        // relaunch Connector thread if no pending disconnect or failed to send pud (for whatever reason)
         this.startConnectorSession();
-//        (new ConnectorThread(this, this.getInputStream())).start();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
