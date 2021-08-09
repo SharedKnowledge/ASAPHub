@@ -9,4 +9,5 @@ public interface ASAPHubManager {
     void addHub(HubConnector hub);
 
     void removeHub(HubConnector hub);
+
 }

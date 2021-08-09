@@ -12,8 +12,8 @@ import java.util.List;
 
 public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnectionListener {
     private final ASAPEncounterManager asapEncounterManager;
-    private final long waitIntervalInMillis;
-    private List<HubConnector> hubs;
+    private final int waitIntervalInSeconds;
+    private List<HubConnector> hubs = new ArrayList<>();
 
     public ASAPHubManagerImpl(ASAPEncounterManager asapEncounterManager) {
         this(asapEncounterManager, DEFAULT_WAIT_INTERVAL_IN_SECONDS);
@@ -21,7 +21,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
 
     public ASAPHubManagerImpl(ASAPEncounterManager asapEncounterManager,  int waitIntervalInSeconds) {
         this.asapEncounterManager = asapEncounterManager;
-        this.waitIntervalInMillis = waitIntervalInSeconds * 1000;
+        this.waitIntervalInSeconds = waitIntervalInSeconds;
     }
 
     @Override
@@ -46,10 +46,13 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
             for(HubConnector hubConnector : this.hubs) {
                 Collection<CharSequence> peerIDs = null;
                 try {
+                    //hubConnector.setTimeoutInSeconds(this.waitIntervalInSeconds);
+                    hubConnector.syncHubInformation();
                     peerIDs = hubConnector.getPeerIDs();
                 } catch (IOException e) {
                     // io on this hub - removeHub it later and go ahead
-                    Log.writeLog(this, "problems with hub - remove it");
+                    Log.writeLog(this, "problems with hub - remove it: " + e);
+                    e.printStackTrace();
                     removeHub.add(hubConnector);
                 }
 
@@ -76,7 +79,9 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
             Log.writeLog(this, "made a round through all hubs. Took (in ms): " + duration);
 
             try {
-                Thread.sleep(this.waitIntervalInMillis - duration);
+                long sleepingTime = this.waitIntervalInSeconds*1000 - duration;
+                Log.writeLog(this, "wait before next round (in ms): " + sleepingTime);
+                Thread.sleep(sleepingTime);
             } catch (InterruptedException e) {
                 // ignore
             }

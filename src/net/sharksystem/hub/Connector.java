@@ -1,4 +1,6 @@
-package net.sharksystem.hub.protocol;
+package net.sharksystem.hub;
+
+import net.sharksystem.hub.protocol.*;
 
 /**
  * A connector reacts on received hub connector protocol data units (PDUs). There are two side:

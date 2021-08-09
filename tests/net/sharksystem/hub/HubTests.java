@@ -4,6 +4,7 @@ import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.hubside.TCPHub;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
+import org.junit.Test;
 
 import java.io.IOException;
 
@@ -11,6 +12,7 @@ import static net.sharksystem.hub.TestConstants.ALICE_ID;
 
 public class HubTests {
 
+    @Test
     public void usage() throws IOException, InterruptedException, ASAPException {
         int specificPort = 6907;
         CharSequence host = "localhost";
@@ -24,5 +26,19 @@ public class HubTests {
         aliceHubConnector.addListener(aliceListener);
 
         aliceHubConnector.connectHub(ALICE_ID);
+    }
+
+    @Test
+    public void remoteAccess() throws IOException, InterruptedException, ASAPException {
+        int specificPort = TCPHub.DEFAULT_PORT;
+        CharSequence host = "asaphub.f4.htw-berlin.de";
+
+        HubConnector aliceHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
+        HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
+        aliceHubConnector.addListener(aliceListener);
+
+        aliceHubConnector.connectHub(ALICE_ID);
+
+        Thread.sleep(Long.MAX_VALUE);
     }
 }

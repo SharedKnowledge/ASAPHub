@@ -5,7 +5,6 @@ import net.sharksystem.hub.protocol.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-// TODO
 public class MultipleChannelsConnectorImpl extends ConnectorImpl {
     public MultipleChannelsConnectorImpl(InputStream is, OutputStream os) throws ASAPHubException {
         super(is, os);
@@ -13,17 +12,17 @@ public class MultipleChannelsConnectorImpl extends ConnectorImpl {
 
     @Override
     public void silentRQ(HubPDUSilentRQ pdu) {
-
+        this.pduNotHandled(pdu);
     }
 
     @Override
     public void silentRPLY(HubPDUSilentRPLY pdu) {
-
+        this.pduNotHandled(pdu);
     }
 
     @Override
     public void channelClear(HubPDUChannelClear pdu) {
-
+        this.pduNotHandled(pdu);
     }
 
     @Override

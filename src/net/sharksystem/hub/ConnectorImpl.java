@@ -1,7 +1,8 @@
-package net.sharksystem.hub.protocol;
+package net.sharksystem.hub;
 
-import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.peerside.HubConnectorStatusListener;
+import net.sharksystem.hub.protocol.ConnectorThread;
+import net.sharksystem.hub.protocol.HubPDU;
 import net.sharksystem.utils.Log;
 
 import java.io.InputStream;
@@ -19,6 +20,8 @@ public abstract class ConnectorImpl implements Connector {
     private final OutputStream os;
 
     private Set<HubConnectorStatusListener> statusListener = new HashSet<>();
+    private int timeoutInSeconds;
+
     public void addStatusListener(HubConnectorStatusListener listener) {
         this.statusListener.add(listener);
     }
@@ -52,7 +55,6 @@ public abstract class ConnectorImpl implements Connector {
     public InputStream getInputStream() {
         return this.is;
     }
-
 
     protected void pduNotHandled(HubPDU pdu) {
         Log.writeLog(this, "pdu is not handled in this implementation: " + pdu);

@@ -70,21 +70,30 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
 
     @Override
     public void run() {
-        try {
-            Log.writeLog(this, "TCP Hub started on port: " + this.port);
-            while(true) {
-                Socket newConnection = this.serverSocket.accept();
-                Log.writeLog(this, "TCP Hub: new connector");
+        Log.writeLog(this, "TCP Hub started on port: " + this.port);
+        while(true) {
+            Socket newConnection = null;
+            try {
+                newConnection = this.serverSocket.accept();
+            }
+            catch(IOException ioe) {
+                Log.writeLog(this, "exception when going to accept TCP connections - fatal, give up: "
+                        + ioe.getLocalizedMessage());
+                return;
+            }
 
+            Log.writeLog(this, "TCP Hub: new TCP connection - launch hub connector session");
+
+            try {
                 // another connector has connected
                 SharedChannelConnectorHubSideImpl hubConnectorSession = new SharedChannelConnectorHubSideImpl(
-                        newConnection.getInputStream(),newConnection.getOutputStream(), this);
+                        newConnection.getInputStream(), newConnection.getOutputStream(), this);
 
                 (new ConnectorThread(hubConnectorSession, newConnection.getInputStream())).start();
+            } catch (IOException | ASAPException e) {
+                // gone
+                Log.writeLog(this, "hub connector session ended: " + e.getLocalizedMessage());
             }
-        } catch (IOException | ASAPException e) {
-            // gone
-            Log.writeLog(this, "TCP Hub died: " + e.getLocalizedMessage());
         }
     }
 
@@ -142,6 +151,7 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
 
         int port = DEFAULT_PORT;
         int maxIdleInSeconds = -1;
+
         if(argumentMap != null) {
             Set<String> keys = argumentMap.keySet();
             if(keys.contains("-help") || keys.contains("-?")) {
@@ -169,7 +179,6 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
                     System.err.println("maxIdleInSeconds must be a numeric: " + maxIdleInSecondsString);
                     System.exit(0);
                 }
-
             }
         }
 

@@ -18,16 +18,17 @@ import java.io.OutputStream;
  */
 public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         implements AlarmClockListener, WrappedStreamPairListener {
-    public static final int DEFAULT_SILENCE_TIME_OUT_IN_MILLIS = 100;
-    public static final int DEFAULT_DATA_CONNECTION_TIME_OUT_IN_MILLIS = 100;
-    public static final int DEFAULT_CONNECTION_REQUEST_TIME_OUT_IN_MILLIS = 100;
 
-    private int timeOutSilenceChannel = DEFAULT_SILENCE_TIME_OUT_IN_MILLIS;
-    private int timeOutDataConnection = DEFAULT_DATA_CONNECTION_TIME_OUT_IN_MILLIS;
-    private int timeOutConnectionRequest = DEFAULT_CONNECTION_REQUEST_TIME_OUT_IN_MILLIS;
+    private int timeOutSilenceChannel;
+    private int timeOutDataConnection;
+    private int timeOutConnectionRequest;
 
     public SharedChannelConnectorImpl(InputStream is, OutputStream os) throws ASAPHubException {
         super(is, os);
+
+        this.timeOutDataConnection = 100;
+        this.timeOutSilenceChannel = 100;
+        this.timeOutConnectionRequest = 100;
     }
 
     public int getTimeOutSilenceChannel() {

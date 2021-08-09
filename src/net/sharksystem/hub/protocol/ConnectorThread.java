@@ -1,6 +1,7 @@
 package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
+import net.sharksystem.hub.Connector;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;

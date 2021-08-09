@@ -76,4 +76,5 @@ public interface HubConnector {
     void addStatusListener(HubConnectorStatusListener listener);
 
     boolean isShutdown();
+
 }
