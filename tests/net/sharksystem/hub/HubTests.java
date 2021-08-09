@@ -18,7 +18,9 @@ public class HubTests {
         CharSequence host = "localhost";
         TCPHub hub = new TCPHub(specificPort);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
-        hub.setMaxIdleConnectionInSeconds(TestConstants.maxTimeInSeconds);
+        int maxTimeInSeconds = Connector.DEFAULT_TIMEOUT_IN_MILLIS / 1000;
+        maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
+        hub.setMaxIdleConnectionInSeconds(maxTimeInSeconds);
         new Thread(hub).start();
 
         HubConnector aliceHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);

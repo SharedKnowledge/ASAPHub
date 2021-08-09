@@ -98,4 +98,7 @@ public interface Connector {
     boolean isHubSide();
 
     void unregister(HubPDUUnregister hubPDU);
+
+    int DEFAULT_TIMEOUT_IN_MILLIS = 100;
+    void setTimeOutInMillis(int milliseconds);
 }

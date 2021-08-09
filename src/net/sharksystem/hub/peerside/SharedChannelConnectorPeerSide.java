@@ -70,7 +70,13 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
         // start management protocol
         Log.writeLog(this, this.toString(), "start hub protocol engine");
-        (new ConnectorThread(this, this.getInputStream())).start();
+        this.startConnectorSession();
+    }
+
+    private void startConnectorSession() {
+        ConnectorThread connectorThread = new ConnectorThread(this, this.getInputStream());
+        connectorThread.start();
+        this.connectorSessionStarted(connectorThread);
     }
 
     @Override
@@ -78,13 +84,16 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         // create hello pdu
         HubPDUUnregister hubPDUUnregister = new HubPDUUnregister(localPeerID);
 
-        // introduce yourself to hub
-        try {
-            hubPDUUnregister.sendPDU(this.getOutputStream());
+//        try {
+//            hubPDUUnregister.sendPDU(this.getOutputStream());
+            this.sendPDU(hubPDUUnregister);
+            /*
         } catch (IOException e) {
             // tell caller
             throw new ASAPHubException("cannot disconnect - not connected or in data session, try again later");
         }
+
+             */
 
         // kill connector thread
         try {
@@ -120,12 +129,18 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         }
     }
 
-    private boolean sendPDU(HubPDU pdu) throws IOException {
+    private boolean sendPDU(HubPDU pdu)  {
         if(!this.statusHubConnectorProtocol()) return false;
 
-        this.checkConnected();
-        synchronized (this.getOutputStream()) {
-            pdu.sendPDU(this.getOutputStream());
+        try {
+            this.checkConnected();
+            synchronized (this.getOutputStream()) {
+                pdu.sendPDU(this.getOutputStream());
+            }
+        }
+        catch(IOException ioe) {
+            Log.writeLog(this, this.toString(), "cannot send PDU: " + ioe.getLocalizedMessage());
+            return false;
         }
 
         return true;
@@ -133,7 +148,8 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
     protected void actionWhenBackFromDataSession() {
         // relaunch Connector thread
-        (new ConnectorThread(this, this.getInputStream())).start();
+        this.startConnectorSession();
+//        (new ConnectorThread(this, this.getInputStream())).start();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////

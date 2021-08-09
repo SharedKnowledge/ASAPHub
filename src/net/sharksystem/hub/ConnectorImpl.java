@@ -20,7 +20,7 @@ public abstract class ConnectorImpl implements Connector {
     private final OutputStream os;
 
     private Set<HubConnectorStatusListener> statusListener = new HashSet<>();
-    private int timeoutInSeconds;
+    private int timeoutInMillis = DEFAULT_TIMEOUT_IN_MILLIS;
 
     public void addStatusListener(HubConnectorStatusListener listener) {
         this.statusListener.add(listener);
@@ -40,6 +40,14 @@ public abstract class ConnectorImpl implements Connector {
         for(HubConnectorStatusListener listener : this.statusListener) {
             listener.notifySynced();
         }
+    }
+
+    public void setTimeOutInMillis(int millis) {
+        this.timeoutInMillis = millis;
+    }
+
+    public int getTimeoutInMillis() {
+        return timeoutInMillis;
     }
 
     public ConnectorImpl(InputStream is, OutputStream os) throws ASAPHubException {

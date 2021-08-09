@@ -19,26 +19,18 @@ import java.io.OutputStream;
 public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         implements AlarmClockListener, WrappedStreamPairListener {
 
-    private int timeOutSilenceChannel;
-    private int timeOutDataConnection;
-    private int timeOutConnectionRequest;
-
     public SharedChannelConnectorImpl(InputStream is, OutputStream os) throws ASAPHubException {
         super(is, os);
-
-        this.timeOutDataConnection = 100;
-        this.timeOutSilenceChannel = 100;
-        this.timeOutConnectionRequest = 100;
     }
 
     public int getTimeOutSilenceChannel() {
-        return this.timeOutSilenceChannel;
+        return this.getTimeoutInMillis();
     }
     public int getTimeOutDataConnection() {
-        return this.timeOutDataConnection;
+        return this.getTimeoutInMillis();
     }
     public int getTimeOutConnectionRequest() {
-        return this.timeOutConnectionRequest;
+        return this.getTimeoutInMillis();
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
