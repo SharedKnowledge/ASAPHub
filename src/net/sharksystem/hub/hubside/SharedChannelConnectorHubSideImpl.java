@@ -143,6 +143,10 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
 
     }
 
+    protected void connectionLost() {
+        this.getHub().unregister(this.getPeerID());
+    }
+
     @Override
     protected void shutdown() {
         this.hub.unregister(this.getPeerID());

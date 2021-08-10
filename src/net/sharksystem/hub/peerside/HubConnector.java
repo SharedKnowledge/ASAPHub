@@ -1,7 +1,6 @@
 package net.sharksystem.hub.peerside;
 
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.HubConnectorProtocol;
 import net.sharksystem.hub.hubside.Hub;
 
 import java.io.IOException;
@@ -78,4 +77,8 @@ public interface HubConnector {
     boolean isShutdown();
 
     void setTimeOutInMillis(int millis);
+
+    void prepareBlockUntilReceived(byte pduCommand);
+    void blockUntilReceived(byte hubStatusReply);
+
 }

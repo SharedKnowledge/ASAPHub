@@ -80,8 +80,9 @@ public interface Connector {
 
     /**
      * Called from connector engine - connection is closed
+     * @param unregister
      */
-    void connectorSessionEnded();
+    void connectorSessionEnded(boolean unregister);
 
     /**
      * called when the connector thread was created.
@@ -113,4 +114,6 @@ public interface Connector {
      * @param hubPDU
      */
     void newConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU);
+
+    void notifyPDUReceived(HubPDU hubPDU);
 }

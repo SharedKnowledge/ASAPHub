@@ -2,6 +2,8 @@ package net.sharksystem.hub.peerside;
 
 import net.sharksystem.asap.ASAPEncounterManager;
 import net.sharksystem.asap.EncounterConnectionType;
+import net.sharksystem.hub.protocol.HubPDU;
+import net.sharksystem.hub.protocol.HubPDUHubStatusRPLY;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.utils.Log;
 
@@ -50,11 +52,32 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
 
             Log.writeLog(this, "start a new round");
             // start another round
+
+            // first - sync status
+            for(HubConnector hubConnector : this.hubs) {
+                try {
+                    hubConnector.prepareBlockUntilReceived(HubPDU.HUB_STATUS_REPLY);
+                    hubConnector.syncHubInformation();
+                } catch (IOException e) {
+                    // io on this hub - removeHub it later and go ahead
+                    Log.writeLog(this, "problems with hub - remove it: " + e);
+                    e.printStackTrace();
+                    removeHub.add(hubConnector);
+                }
+            }
+
+            for(HubConnector r : removeHub) {
+                this.removeHub(r);
+            }
+
+            removeHub = new ArrayList<>();
+
+            // wait a moment for reply
             for(HubConnector hubConnector : this.hubs) {
                 Collection<CharSequence> peerIDs = null;
                 try {
                     hubConnector.setTimeOutInMillis(this.timeoutInMillis);
-                    hubConnector.syncHubInformation();
+                    hubConnector.blockUntilReceived(HubPDU.HUB_STATUS_REPLY);
                     peerIDs = hubConnector.getPeerIDs();
                 } catch (IOException e) {
                     // io on this hub - removeHub it later and go ahead

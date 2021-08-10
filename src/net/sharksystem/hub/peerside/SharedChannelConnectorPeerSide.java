@@ -53,6 +53,10 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
     }
 
+    protected void connectionLost() {
+        Log.writeLog(this, "lost connection to hub permanently - should do something?");
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                   mapping API - protocol engine                                //
     ////////////////////////////////////////////////////////////////////////////////////////////////////

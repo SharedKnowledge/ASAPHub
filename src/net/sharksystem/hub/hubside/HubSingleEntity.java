@@ -27,13 +27,13 @@ public abstract class HubSingleEntity extends HubGenericImpl {
     @Override
     public void register(CharSequence peerID, ConnectorInternal hubConnectorSession) {
         this.hubSessions.put(peerID, hubConnectorSession);
-        Log.writeLog(this, "new peer registered - now: " + this.hubSessions.values());
+        Log.writeLog(this, "peer registered - now: " + this.hubSessions.values());
     }
 
     @Override
     public void unregister(CharSequence peerID) {
         this.hubSessions.remove(peerID);
-        Log.writeLog(this, "new peer unregistered - now: " + this.hubSessions.values());
+        Log.writeLog(this, "peer unregistered - now: " + this.hubSessions.values());
     }
 
 

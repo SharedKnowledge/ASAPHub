@@ -25,12 +25,19 @@ public class ConnectorThread extends Thread {
     }
 
     public void run() {
+        /* this thread can be shut down to give space to data stream. It can also break down
+        in that case - connection got lost - maybe peer is to be unregistered..
+         */
+        boolean noRecovery = false;
+
         try {
             this.connector.connectorSessionStarted(this);
             Log.writeLog(this, this.toString(),"connector engine started");
 
             while (this.again) {
                 HubPDU hubPDU = HubPDU.readPDU(this.is);
+
+                this.connector.notifyPDUReceived(hubPDU);
 
                 if (hubPDU instanceof HubPDUHubStatusRQ) {
                     Log.writeLog(this, this.toString(), "read hub status RQ");
@@ -77,12 +84,13 @@ public class ConnectorThread extends Thread {
                 }
             }
         } catch (IOException | ASAPException e) {
-            Log.writeLog(this, this.connector.toString(),"connection lost to: ");
+            Log.writeLog(this, this.connector.toString(),"connection lost - no recovery expected");
+            noRecovery = true; // connection lost
         } catch (ClassCastException e) {
             Log.writeLog(this, this.connector.toString(),"wrong pdu class - crazy: " + e.getLocalizedMessage());
         } finally {
             Log.writeLog(this, this.connector.toString(), "hub session ended");
-            this.connector.connectorSessionEnded();
+            this.connector.connectorSessionEnded(noRecovery);
         }
     }
 

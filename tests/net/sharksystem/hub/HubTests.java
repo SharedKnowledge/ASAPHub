@@ -31,10 +31,16 @@ public class HubTests {
     }
 
     @Test
-    public void remoteAccess() throws IOException, InterruptedException, ASAPException {
-        int specificPort = TCPHub.DEFAULT_PORT;
-        CharSequence host = "asaphub.f4.htw-berlin.de";
+    public void localAccess() throws IOException, InterruptedException, ASAPException {
+        this.doConnect(TCPHub.DEFAULT_PORT, "localhost");
+    }
 
+    @Test
+    public void remoteAccess() throws IOException, InterruptedException, ASAPException {
+        this.doConnect(TCPHub.DEFAULT_PORT, "asaphub.f4.htw-berlin.de");
+    }
+
+    private void doConnect(int specificPort, CharSequence host) throws ASAPHubException, IOException, InterruptedException {
         HubConnector aliceHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
         HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
         aliceHubConnector.addListener(aliceListener);

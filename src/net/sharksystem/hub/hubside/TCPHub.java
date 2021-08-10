@@ -192,10 +192,31 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
             System.out.println("start TCP hub on port " + tcpHub.port
                     + " with maxIdleInSeconds: " + tcpHub.maxIdleInMillis / 1000);
 
+            Thread statusPrinter = new StatusPrinter(tcpHub);
+            statusPrinter.start();
             tcpHub.run();
         } catch (IOException e) {
             System.err.println("cannot launch TCPHub: " + e.getLocalizedMessage());
             e.printStackTrace();
+        }
+    }
+
+    private static class StatusPrinter extends Thread {
+        private final TCPHub tcpHub;
+
+        StatusPrinter(TCPHub tcpHub) {
+            this.tcpHub = tcpHub;
+        }
+
+        public void run() {
+            for (; ; ) {
+                System.out.println("registered peers: " + this.tcpHub.getRegisteredPeers());
+                try {
+                    Thread.sleep(30000);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
         }
     }
 }
