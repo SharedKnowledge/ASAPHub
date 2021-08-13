@@ -19,6 +19,8 @@ public abstract class HubConnectorDescription {
         return this.type;
     }
 
+    public abstract String getTypeString();
+
     public static HubConnectorDescription createHubConnectorDescription(byte[] serializedDescription)
             throws IOException, ASAPException {
 

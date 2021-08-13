@@ -40,6 +40,10 @@ public class TCPHubConnectorDescription extends HubConnectorDescription {
         this.port = port;
     }
 
+    public String getTypeString() {
+        return "TCP";
+    }
+
     public byte[] serialize() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // type
@@ -73,6 +77,6 @@ public class TCPHubConnectorDescription extends HubConnectorDescription {
     }
 
     public String toString() {
-        return "TCPHubConnector: " + this.getHostName() + ":" + this.getPort();
+        return this.getHostName() + ":" + this.getPort();
     }
 }
