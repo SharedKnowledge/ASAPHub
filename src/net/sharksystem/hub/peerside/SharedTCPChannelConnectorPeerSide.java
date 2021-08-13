@@ -30,4 +30,8 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
         this.hostName = hostName.toString();
         this.port = port;
     }
+
+    public String toString() {
+        return "TCPConnector: " + this.hostName + ":" + this.port;
+    }
 }

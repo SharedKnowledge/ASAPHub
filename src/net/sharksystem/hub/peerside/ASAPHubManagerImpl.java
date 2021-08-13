@@ -74,6 +74,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
 
             // wait a moment for reply
             for(HubConnector hubConnector : this.hubs) {
+                Log.writeLog(this, "check " + hubConnector.toString());
                 Collection<CharSequence> peerIDs = null;
                 try {
                     hubConnector.setTimeOutInMillis(this.timeoutInMillis);

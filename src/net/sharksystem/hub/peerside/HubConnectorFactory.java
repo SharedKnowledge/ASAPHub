@@ -8,10 +8,16 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 public class HubConnectorFactory {
-    public static HubConnector createTCPHubConnector(CharSequence hostName, int port)
+    public static HubConnector createHubConnector(HubConnectorDescription hcd)
             throws IOException, ASAPHubException {
 
-        return SharedTCPChannelConnectorPeerSide.createTCPHubConnector(hostName, port);
+        switch (hcd.getType()) {
+            case HubConnectorDescription.TCP:
+                TCPHubConnectorDescription tcHcd = (TCPHubConnectorDescription) hcd;
+                return SharedTCPChannelConnectorPeerSide.createTCPHubConnector(tcHcd.getHostName(), tcHcd.getPort());
+
+            default: throw new ASAPHubException("unknown hub connector protocol type: " + hcd.getType());
+        }
     }
 
     public static HubConnectorDescription createHubConnectorByDescription(byte[] description)
