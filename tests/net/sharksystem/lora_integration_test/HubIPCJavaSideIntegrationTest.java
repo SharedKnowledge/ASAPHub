@@ -18,8 +18,8 @@ import static org.junit.Assert.assertTrue;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class HubIPCJavaSideIntegrationTest {
 
-    private final String hostA = "localhost";
-    private final String hostB = "localhost";
+    private final String hostA = "192.168.178.201";
+    private final String hostB = "192.168.178.200";
     private final int ipcPortA = 6000;
     private final int messagePortA = 6100;
     private final int ipcPortB = 6200;
