@@ -1,5 +1,8 @@
 package net.sharksystem.hub;
 
+import net.sharksystem.streams.StreamPair;
+import net.sharksystem.streams.StreamPairWrapper;
+import net.sharksystem.streams.WrappedStreamPairListener;
 import net.sharksystem.asap.utils.Helper;
 import net.sharksystem.hub.protocol.*;
 import net.sharksystem.utils.AlarmClock;
@@ -15,27 +18,16 @@ import java.io.OutputStream;
  */
 public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         implements AlarmClockListener, WrappedStreamPairListener {
-    public static final int DEFAULT_SILENCE_TIME_OUT_IN_MILLIS = 100;
-    public static final int DEFAULT_DATA_CONNECTION_TIME_OUT_IN_MILLIS = 100;
-    public static final int DEFAULT_CONNECTION_REQUEST_TIME_OUT_IN_MILLIS = 100;
-
-    private int timeOutSilenceChannel = DEFAULT_SILENCE_TIME_OUT_IN_MILLIS;
-    private int timeOutDataConnection = DEFAULT_DATA_CONNECTION_TIME_OUT_IN_MILLIS;
-    private int timeOutConnectionRequest = DEFAULT_CONNECTION_REQUEST_TIME_OUT_IN_MILLIS;
 
     public SharedChannelConnectorImpl(InputStream is, OutputStream os) throws ASAPHubException {
         super(is, os);
     }
 
-    public int getTimeOutSilenceChannel() {
-        return this.timeOutSilenceChannel;
-    }
+    public int getTimeOutSilenceChannel()  { return this.getTimeoutInMillis(); }
     public int getTimeOutDataConnection() {
-        return this.timeOutDataConnection;
+        return this.getTimeoutInMillis();
     }
-    public int getTimeOutConnectionRequest() {
-        return this.timeOutConnectionRequest;
-    }
+    public int getTimeOutConnectionRequest() { return this.getTimeoutInMillis() * 2; }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                         status management                                           //

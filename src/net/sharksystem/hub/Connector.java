@@ -1,4 +1,6 @@
-package net.sharksystem.hub.protocol;
+package net.sharksystem.hub;
+
+import net.sharksystem.hub.protocol.*;
 
 /**
  * A connector reacts on received hub connector protocol data units (PDUs). There are two side:
@@ -78,8 +80,9 @@ public interface Connector {
 
     /**
      * Called from connector engine - connection is closed
+     * @param unregister
      */
-    void connectorSessionEnded();
+    void connectorSessionEnded(boolean unregister);
 
     /**
      * called when the connector thread was created.
@@ -96,4 +99,21 @@ public interface Connector {
     boolean isHubSide();
 
     void unregister(HubPDUUnregister hubPDU);
+
+    int DEFAULT_TIMEOUT_IN_MILLIS = 1000;
+    void setTimeOutInMillis(int milliseconds);
+
+    /**
+     * Called from hub - asks peer side to open a new connection with given parameter to initiate a new peer encounter
+     * @param hubPDU
+     */
+    void newConnectionReply(HubPDUConnectPeerNewConnectionRPLY hubPDU);
+
+    /**
+     * send from peer side to hub side. Asks to provide a new server socket to initiate a new peer encounter.
+     * @param hubPDU
+     */
+    void newConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU);
+
+    void notifyPDUReceived(HubPDU hubPDU);
 }

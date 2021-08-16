@@ -1,6 +1,7 @@
 package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
+import net.sharksystem.hub.Connector;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -24,12 +25,19 @@ public class ConnectorThread extends Thread {
     }
 
     public void run() {
+        /* this thread can be shut down to give space to data stream. It can also break down
+        in that case - connection got lost - maybe peer is to be unregistered..
+         */
+        boolean noRecovery = false;
+
         try {
             this.connector.connectorSessionStarted(this);
             Log.writeLog(this, this.toString(),"connector engine started");
 
             while (this.again) {
                 HubPDU hubPDU = HubPDU.readPDU(this.is);
+
+                this.connector.notifyPDUReceived(hubPDU);
 
                 if (hubPDU instanceof HubPDUHubStatusRQ) {
                     Log.writeLog(this, this.toString(), "read hub status RQ");
@@ -62,18 +70,27 @@ public class ConnectorThread extends Thread {
                 else if (hubPDU instanceof HubPDUConnectPeerRQ) {
                     Log.writeLog(this, this.toString(), "read hub connect peer RQ");
                     this.connector.connectPeerRQ((HubPDUConnectPeerRQ) hubPDU);
+                }
+                else if (hubPDU instanceof HubPDUConnectPeerNewTCPSocketRQ) {
+                    Log.writeLog(this, this.toString(), "read hub new connection request");
+                    this.connector.newConnectionRequest((HubPDUConnectPeerNewTCPSocketRQ) hubPDU);
+                }
+                else if (hubPDU instanceof HubPDUConnectPeerNewConnectionRPLY) {
+                        Log.writeLog(this, this.toString(), "read hub new connection reply");
+                        this.connector.newConnectionReply((HubPDUConnectPeerNewConnectionRPLY) hubPDU);
                 } else {
                     Log.writeLog(this, this.toString(), "got unknown / unsupported PDU type: "
                         + hubPDU.getClass().getSimpleName());
                 }
             }
         } catch (IOException | ASAPException e) {
-            Log.writeLog(this, this.connector.toString(),"connection lost to: ");
+            Log.writeLog(this, this.connector.toString(),"connection lost - no recovery expected");
+            noRecovery = true; // connection lost
         } catch (ClassCastException e) {
             Log.writeLog(this, this.connector.toString(),"wrong pdu class - crazy: " + e.getLocalizedMessage());
         } finally {
             Log.writeLog(this, this.connector.toString(), "hub session ended");
-            this.connector.connectorSessionEnded();
+            this.connector.connectorSessionEnded(noRecovery);
         }
     }
 

@@ -2,7 +2,6 @@ package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.peerside.HubConnector;
-import net.sharksystem.hub.peerside.SharedChannelConnectorPeerSide;
 import net.sharksystem.hub.hubside.TCPHub;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
 import org.junit.Assert;
@@ -18,6 +17,8 @@ public class HubUsageTests {
 
     @Test
     public void usage() throws IOException, InterruptedException, ASAPException {
+        int maxTimeInSeconds = Connector.DEFAULT_TIMEOUT_IN_MILLIS / 1000;
+        maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
         int specificPort = 6907;
         CharSequence host = "localhost";
         TCPHub hub = new TCPHub(specificPort);
@@ -27,7 +28,7 @@ public class HubUsageTests {
 
         HubConnector aliceHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
         HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
-        aliceHubConnector.setListener(aliceListener);
+        aliceHubConnector.addListener(aliceListener);
 
         aliceHubConnector.connectHub(ALICE_ID);
         Thread.sleep(100);
@@ -36,7 +37,7 @@ public class HubUsageTests {
 
         HubConnectorTester bobListener = new HubConnectorTester(BOB_ID);
         HubConnector bobHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
-        bobHubConnector.setListener(bobListener);
+        bobHubConnector.addListener(bobListener);
         bobHubConnector.connectHub(BOB_ID);
         Thread.sleep(100);
 
@@ -62,10 +63,11 @@ public class HubUsageTests {
         System.out.println("************************ alice connector disconnect ****************************");
         aliceHubConnector.disconnectHub();
         Thread.sleep(maxTimeInSeconds * 1000);
+        Thread.sleep(maxTimeInSeconds * 1000);
 
         System.out.println("************************ bob connector sync ****************************");
         bobHubConnector.syncHubInformation();
-        Thread.sleep(100);
+        Thread.sleep(maxTimeInSeconds * 1000);
 
         peerNames = bobHubConnector.getPeerIDs();
         for(CharSequence name : peerNames) {

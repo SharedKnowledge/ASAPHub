@@ -1,8 +1,8 @@
 package net.sharksystem.lora_integration_test;
 
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.StreamPair;
-import net.sharksystem.hub.StreamPairImpl;
+import net.sharksystem.streams.StreamPair;
+import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.hub.hubside.ConnectorInternal;
 
 import java.io.IOException;
@@ -41,6 +41,6 @@ public class ConnectorInternalLocalStub implements ConnectorInternal {
 
     @Override
     public StreamPair initDataSession(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
-        return new StreamPairImpl(this.inputStream, this.outputStream, "test");
+        return StreamPairImpl.getStreamPairWithSessionID(this.inputStream, this.outputStream, "test");
     }
 }

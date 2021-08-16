@@ -1,7 +1,6 @@
 package net.sharksystem.hub.peerside;
 
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.HubConnectorProtocol;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -30,5 +29,9 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
         this.hubSocket = hubSocket;
         this.hostName = hostName.toString();
         this.port = port;
+    }
+
+    public String toString() {
+        return "TCPConnector: " + this.hostName + ":" + this.port;
     }
 }

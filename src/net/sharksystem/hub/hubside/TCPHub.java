@@ -2,6 +2,7 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.protocol.ConnectorThread;
+import net.sharksystem.utils.Commandline;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -12,7 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TCPHub extends HubSingleEntity implements Runnable {
+public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
     public static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
     private int maxIdleInMillis = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS * 1000;
 
@@ -69,21 +70,30 @@ public class TCPHub extends HubSingleEntity implements Runnable {
 
     @Override
     public void run() {
-        try {
-            Log.writeLog(this, "TCP Hub started on port: " + this.port);
-            while(true) {
-                Socket newConnection = this.serverSocket.accept();
-                Log.writeLog(this, "TCP Hub: new connector");
+        Log.writeLog(this, "TCP Hub started on port: " + this.port);
+        while(true) {
+            Socket newConnection = null;
+            try {
+                newConnection = this.serverSocket.accept();
+            }
+            catch(IOException ioe) {
+                Log.writeLog(this, "exception when going to accept TCP connections - fatal, give up: "
+                        + ioe.getLocalizedMessage());
+                return;
+            }
 
+            Log.writeLog(this, "TCP Hub: new TCP connection - launch hub connector session");
+
+            try {
                 // another connector has connected
                 SharedChannelConnectorHubSideImpl hubConnectorSession = new SharedChannelConnectorHubSideImpl(
-                        newConnection.getInputStream(),newConnection.getOutputStream(), this);
+                        newConnection.getInputStream(), newConnection.getOutputStream(), this);
 
                 (new ConnectorThread(hubConnectorSession, newConnection.getInputStream())).start();
+            } catch (IOException | ASAPException e) {
+                // gone
+                Log.writeLog(this, "hub connector session ended: " + e.getLocalizedMessage());
             }
-        } catch (IOException | ASAPException e) {
-            // gone
-            Log.writeLog(this, "TCP Hub died: " + e.getLocalizedMessage());
         }
     }
 
@@ -125,6 +135,88 @@ public class TCPHub extends HubSingleEntity implements Runnable {
             }
 
             otherPeers.add(peerB);
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                              command line                                           //
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static void main(String[] args) {
+        String usageString = "optional parameters: -port [portnumber] -maxIdleSeconds [seconds]";
+
+        // now get real parameters
+        HashMap<String, String> argumentMap = Commandline.parametersToMap(args,
+                false, usageString);
+
+        int port = DEFAULT_PORT;
+        int maxIdleInSeconds = -1;
+
+        if(argumentMap != null) {
+            Set<String> keys = argumentMap.keySet();
+            if(keys.contains("-help") || keys.contains("-?")) {
+                System.out.println(usageString);
+                System.exit(0);
+            }
+
+            // port defined
+            String portString = argumentMap.get("-port");
+            if(portString != null) {
+                try {
+                    port = Integer.parseInt(portString);
+                } catch (RuntimeException re) {
+                    System.err.println("port number must be a numeric: " + portString);
+                    System.exit(0);
+                }
+            }
+
+            // max idle in seconds?
+            String maxIdleInSecondsString = argumentMap.get("-maxIdleInSeconds");
+            if(maxIdleInSecondsString != null) {
+                try {
+                    maxIdleInSeconds = Integer.parseInt(maxIdleInSecondsString);
+                } catch (RuntimeException re) {
+                    System.err.println("maxIdleInSeconds must be a numeric: " + maxIdleInSecondsString);
+                    System.exit(0);
+                }
+            }
+        }
+
+        // create TCPHub
+        try {
+            TCPHub tcpHub = new TCPHub(port);
+            if(maxIdleInSeconds > 0) {
+                tcpHub.setMaxIdleConnectionInSeconds(maxIdleInSeconds);
+            }
+
+            System.out.println("start TCP hub on port " + tcpHub.port
+                    + " with maxIdleInSeconds: " + tcpHub.maxIdleInMillis / 1000);
+
+            Thread statusPrinter = new StatusPrinter(tcpHub);
+            statusPrinter.start();
+            tcpHub.run();
+        } catch (IOException e) {
+            System.err.println("cannot launch TCPHub: " + e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static class StatusPrinter extends Thread {
+        private final TCPHub tcpHub;
+
+        StatusPrinter(TCPHub tcpHub) {
+            this.tcpHub = tcpHub;
+        }
+
+        public void run() {
+            for (; ; ) {
+                System.out.println("registered peers: " + this.tcpHub.getRegisteredPeers());
+                try {
+                    Thread.sleep(30000);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
         }
     }
 }

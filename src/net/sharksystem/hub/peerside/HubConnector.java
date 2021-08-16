@@ -1,7 +1,6 @@
 package net.sharksystem.hub.peerside;
 
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.HubConnectorProtocol;
 import net.sharksystem.hub.hubside.Hub;
 
 import java.io.IOException;
@@ -69,9 +68,17 @@ public interface HubConnector {
      * @param listener A single listener object. It would overwrite an existing listener.
      * @see #connectPeer(CharSequence)
      */
-    void setListener(NewConnectionListener listener);
+    void addListener(NewConnectionListener listener);
+
+    void removeListener(NewConnectionListener listener);
 
     void addStatusListener(HubConnectorStatusListener listener);
 
     boolean isShutdown();
+
+    void setTimeOutInMillis(int millis);
+
+    void prepareBlockUntilReceived(byte pduCommand);
+    void blockUntilReceived(byte hubStatusReply);
+
 }

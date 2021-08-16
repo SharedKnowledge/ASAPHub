@@ -1,12 +1,15 @@
-package net.sharksystem.hub.protocol;
+package net.sharksystem.hub;
 
-import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.peerside.HubConnectorStatusListener;
+import net.sharksystem.hub.protocol.ConnectorThread;
+import net.sharksystem.hub.protocol.HubPDU;
 import net.sharksystem.utils.Log;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -19,6 +22,8 @@ public abstract class ConnectorImpl implements Connector {
     private final OutputStream os;
 
     private Set<HubConnectorStatusListener> statusListener = new HashSet<>();
+    private int timeoutInMillis = DEFAULT_TIMEOUT_IN_MILLIS;
+
     public void addStatusListener(HubConnectorStatusListener listener) {
         this.statusListener.add(listener);
     }
@@ -39,6 +44,14 @@ public abstract class ConnectorImpl implements Connector {
         }
     }
 
+    public void setTimeOutInMillis(int millis) {
+        this.timeoutInMillis = millis;
+    }
+
+    public int getTimeoutInMillis() {
+        return timeoutInMillis;
+    }
+
     public ConnectorImpl(InputStream is, OutputStream os) throws ASAPHubException {
         this.is = is;
         this.os = os;
@@ -53,7 +66,6 @@ public abstract class ConnectorImpl implements Connector {
         return this.is;
     }
 
-
     protected void pduNotHandled(HubPDU pdu) {
         Log.writeLog(this, "pdu is not handled in this implementation: " + pdu);
     }
@@ -67,10 +79,17 @@ public abstract class ConnectorImpl implements Connector {
 
     protected abstract void resumedConnectorProtocol();
 
-    public void connectorSessionEnded() {
+    public void connectorSessionEnded(boolean noRecovery) {
         Log.writeLog(this, this.toString(), "connector thread ended");
         this.connectorThread = null;
+
+        if(noRecovery) this.connectionLost();
     }
+
+    /**
+     * Permanent lost of connection
+     */
+    abstract protected void connectionLost();
 
     protected ConnectorThread getConnectorThread() throws ASAPHubException {
         if(this.connectorThread == null) throw new ASAPHubException("no connector thread");
@@ -78,6 +97,47 @@ public abstract class ConnectorImpl implements Connector {
     }
 
     public abstract CharSequence getPeerID();
+
+    Set<Byte> blockedCommands = new HashSet<>();
+    List<Thread> blockedThreads = new ArrayList<>();
+
+    public void notifyPDUReceived(HubPDU hubPDU) {
+//        Log.writeLog(this, "remove block: " + hubPDU.getCommand() + " | " + this.blockedCommands);
+        this.blockedCommands.remove(hubPDU.getCommand());
+//        Log.writeLog(this, "removed block: " + this.blockedCommands);
+
+
+        for(Thread blockedThread : this.blockedThreads) {
+            blockedThread.interrupt();
+        }
+    }
+
+    public void prepareBlockUntilReceived(byte pduCommand) {
+//        Log.writeLog(this, "prepare block: " + pduCommand);
+        this.blockedCommands.add(pduCommand);
+//        Log.writeLog(this, "added block: " + this.blockedCommands);
+    }
+
+    public void blockUntilReceived(byte pduCommand) {
+        Log.writeLog(this, "block: " + pduCommand);
+        for(;;) {
+            if (this.blockedCommands.contains(pduCommand)) {
+                // block
+                try {
+                    this.blockedThreads.add(Thread.currentThread());
+                    Log.writeLog(this, "wait: " + pduCommand);
+                    Thread.sleep(this.timeoutInMillis);
+                    Log.writeLog(this, "leave after timeout: " + pduCommand);
+                    return;
+                } catch (InterruptedException e) {
+                    // woke up - do it again
+                }
+            } else {
+                Log.writeLog(this, "leave: " + pduCommand);
+                return; // leave
+            }
+        }
+    }
 
     private String idString = null;
     protected String getID() {

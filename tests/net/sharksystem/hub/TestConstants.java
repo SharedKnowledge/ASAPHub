@@ -11,6 +11,4 @@ public interface TestConstants {
     String DAVID_ID = "45";
     String DAVID_NAME = "David";
     int DEFAULT_PORT = 7777;
-
-    int maxTimeInSeconds = 1;
 }

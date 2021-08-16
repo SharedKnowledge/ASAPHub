@@ -1,5 +1,6 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.streams.StreamPair;
 import net.sharksystem.hub.*;
 import net.sharksystem.hub.protocol.*;
 import net.sharksystem.utils.Log;
@@ -12,10 +13,11 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnectorImpl implements HubConnector {
-    private NewConnectionListener listener;
+    private List<NewConnectionListener> listener = new ArrayList<>();
     private Collection<CharSequence> peerIDs = new ArrayList<>();
     private CharSequence localPeerID;
     private boolean shutdown = false;
+    private HubPDUUnregister pendingDisconnectPDU = null;
 
     public SharedChannelConnectorPeerSide(InputStream is, OutputStream os) throws ASAPHubException {
         super(is, os);
@@ -51,6 +53,10 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
     }
 
+    protected void connectionLost() {
+        Log.writeLog(this, "lost connection to hub permanently - should do something?");
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                   mapping API - protocol engine                                //
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,7 +75,13 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
         // start management protocol
         Log.writeLog(this, this.toString(), "start hub protocol engine");
-        (new ConnectorThread(this, this.getInputStream())).start();
+        this.startConnectorSession();
+    }
+
+    private void startConnectorSession() {
+        ConnectorThread connectorThread = new ConnectorThread(this, this.getInputStream());
+        connectorThread.start();
+        this.connectorSessionStarted(connectorThread);
     }
 
     @Override
@@ -77,21 +89,21 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         // create hello pdu
         HubPDUUnregister hubPDUUnregister = new HubPDUUnregister(localPeerID);
 
-        // introduce yourself to hub
-        try {
-            hubPDUUnregister.sendPDU(this.getOutputStream());
-        } catch (IOException e) {
-            // tell caller
-            throw new ASAPHubException("cannot disconnect - not connected or in data session, try again later");
+        boolean pendingDisconnect = true;
+
+        if(this.sendPDU(hubPDUUnregister)) {
+            // kill connector thread
+            try {
+                this.getConnectorThread().kill();
+                pendingDisconnect = false;
+            }
+            catch(ASAPHubException e) {
+                Log.writeLog(this, this.toString(), "no connector thread running - cannot call disconnect");
+            }
         }
 
-        // kill connector thread
-        try {
-            this.getConnectorThread();
-            this.getConnectorThread().kill();
-        }
-        catch(ASAPHubException e) {
-            Log.writeLog(this, this.toString(), "no connector thread running - cannot call disconnect");
+        if(pendingDisconnect) {
+            this.pendingDisconnectPDU = hubPDUUnregister;
         }
     }
 
@@ -119,28 +131,49 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         }
     }
 
-    private boolean sendPDU(HubPDU pdu) throws IOException {
+    private boolean sendPDU(HubPDU pdu)  {
         if(!this.statusHubConnectorProtocol()) return false;
 
-        this.checkConnected();
-        synchronized (this.getOutputStream()) {
-            pdu.sendPDU(this.getOutputStream());
+        try {
+            this.checkConnected();
+            synchronized (this.getOutputStream()) {
+                pdu.sendPDU(this.getOutputStream());
+            }
+            return true;
         }
-
-        return true;
+        catch(IOException ioe) {
+            Log.writeLog(this, this.toString(), "cannot send PDU: " + ioe.getLocalizedMessage());
+            return false;
+        }
     }
 
     protected void actionWhenBackFromDataSession() {
-        // relaunch Connector thread
-        (new ConnectorThread(this, this.getInputStream())).start();
+        Log.writeLog(this, this.toString(), "back from data session");
+        if(this.pendingDisconnectPDU != null) {
+            Log.writeLog(this, this.toString(), "send pending disconnect pdu");
+            try {
+                this.pendingDisconnectPDU.sendPDU(this.getOutputStream());
+                return;
+            } catch (IOException e) {
+                Log.writeLog(this, this.toString(), "cannot send pending PDU: " + e.getLocalizedMessage());
+            }
+        }
+
+        Log.writeLog(this, this.toString(), "restart connector session thread");
+        // relaunch Connector thread if no pending disconnect or failed to send pud (for whatever reason)
+        this.startConnectorSession();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                      listener management                                       //
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setListener(NewConnectionListener listener) {
-        this.listener = listener;
+    public void addListener(NewConnectionListener listener) {
+        this.listener.add(listener);
+    }
+
+    public void removeListener(NewConnectionListener listener) {
+        this.listener.remove(listener);
     }
 
     public Collection<CharSequence> getPeerIDs() throws IOException {
@@ -181,6 +214,14 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         this.notifyListenerSynced();
     }
 
+    @Override
+    public void newConnectionReply(HubPDUConnectPeerNewConnectionRPLY pdu) {
+        // TODO: create a new socket and launch ASAP connection
+    }
+
+    @Override
+    public void newConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) { this.pduNotHandled(pdu); }
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                       connector status changes                                          //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,13 +235,16 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
     @Override
     protected void dataSessionStarted(ConnectionRequest connectionRequest, StreamPair streamPair) {
         Log.writeLog(this, this.toString(), "data session started due to request: " + connectionRequest);
+
         // tell listener
         if(this.listener != null) {
             // make sure not to be blocked by application programmer
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    listener.notifyPeerConnected(streamPair);
+                    for(NewConnectionListener l : listener) {
+                        l.notifyPeerConnected(connectionRequest.targetPeerID, streamPair);
+                    }
                 }
             }).start();
         }
