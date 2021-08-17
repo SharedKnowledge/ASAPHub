@@ -2,7 +2,6 @@ package net.sharksystem.hub.protocol;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
-import net.sharksystem.hub.ASAPHubException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +13,7 @@ public abstract class HubPDU {
     public static final byte CONNECT_PEER_REPLY = 2;
     static final byte HUB_STATUS_REQUEST = 3;
     public static final byte HUB_STATUS_REPLY = 4;
-    static final byte CONNECT_PEER_NEW_TCP_SOCKET_REQUEST = 5;
+    static final byte OPEN_NEW_TCP_SOCKET_RQ = 5;
     public static final byte SILENT_REQUEST = 6;
     static final byte SILENT_REPLY = 7;
     public static final byte CHANNEL_CLEAR = 8;
@@ -34,10 +33,9 @@ public abstract class HubPDU {
             case HUB_REGISTER: return new HubPDURegister(is);
             case HUB_UNREGISTER: return new HubPDUUnregister(is);
             case CONNECT_PEER_REQUEST: return new HubPDUConnectPeerRQ(is);
-            case CONNECT_PEER_REPLY: return new HubPDUConnectPeerNewConnectionRPLY(is);
             case HUB_STATUS_REQUEST: return new HubPDUHubStatusRQ(is);
             case HUB_STATUS_REPLY: return new HubPDUHubStatusRPLY(is);
-            case CONNECT_PEER_NEW_TCP_SOCKET_REQUEST: return new HubPDUConnectPeerNewConnectionRPLY(is);
+            case OPEN_NEW_TCP_SOCKET_RQ: return new HubPDUConnectPeerNewTCPSocketRQ(is);
             case SILENT_REQUEST: return new HubPDUSilentRQ(is);
             case SILENT_REPLY: return new HubPDUSilentRPLY(is);
             case CHANNEL_CLEAR: return new HubPDUChannelClear(is);

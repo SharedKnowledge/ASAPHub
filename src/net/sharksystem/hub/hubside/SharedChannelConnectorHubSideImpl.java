@@ -179,8 +179,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         if(connectionRequest == null) return false; // list empty
 
         if(connectionRequest.newConnection) {
-            Log.writeLog(this, this.toString(), "setup new connection to answer connectRQ - NOT YET IMPLEMENTED");
-            return false;
+            return this.initDataSessionOnNewConnection(connectionRequest);
         } else {
             Log.writeLog(this, this.toString(), "setup data connection on shared channel");
             if (this.statusInSilence()) {
@@ -210,6 +209,11 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
             }
             return true;
         }
+    }
+
+    protected boolean initDataSessionOnNewConnection(ConnectionRequest connectionRequest) throws IOException {
+        Log.writeLog(this, this.toString(), "new connections are not supported in this class");
+        return false;
     }
 
     protected void actionWhenBackFromDataSession() {
@@ -348,13 +352,8 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     }
 
     @Override
-    public void newConnectionReply(HubPDUConnectPeerNewConnectionRPLY hubPDU) {
+    public void openNewConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU) {
         this.pduNotHandled(hubPDU);
-    }
-
-    @Override
-    public void newConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU) {
-        // TODO create a new server socket.. answer with HubPDUConnectPeerNewConnectionRPLY
     }
 
     @Override

@@ -220,12 +220,10 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
     }
 
     @Override
-    public void newConnectionReply(HubPDUConnectPeerNewConnectionRPLY pdu) {
+    public void openNewConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) {
         // TODO: create a new socket and launch ASAP connection
+        Log.writeLog(this, "asked to open a new connection - NOT YET IMPLEMENTED");
     }
-
-    @Override
-    public void newConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) { this.pduNotHandled(pdu); }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                       connector status changes                                          //

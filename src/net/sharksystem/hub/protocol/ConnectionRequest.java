@@ -25,6 +25,7 @@ public class ConnectionRequest {
         sb.append(" | ");
         sb.append("until: ");
         sb.append(DateTimeHelper.long2ExactTimeString(this.until));
+        sb.append(" | ");
         sb.append("newConnection: ");
         sb.append(this.newConnection);
 

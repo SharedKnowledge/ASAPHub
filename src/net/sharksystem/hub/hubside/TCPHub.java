@@ -1,6 +1,7 @@
 package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPException;
+import net.sharksystem.hub.Connector;
 import net.sharksystem.hub.protocol.ConnectorThread;
 import net.sharksystem.utils.Commandline;
 import net.sharksystem.utils.Log;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
     public static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
+    private final boolean newConnection;
     private int maxIdleInMillis = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS * 1000;
 
     private final int port;
@@ -28,9 +30,14 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
     }
 
     public TCPHub(int port) throws IOException {
+        this(port, false);
+    }
+
+    public TCPHub(int port, boolean newConnection) throws IOException {
         this.port = port;
         this.nextPort = port+1;
         this.serverSocket = new ServerSocket(this.port);
+        this.newConnection = newConnection;
     }
 
     public void setPortRange(int minPort, int maxPort) throws ASAPException {
@@ -48,7 +55,7 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
         this.maxIdleInMillis = maxIdleInSeconds * 1000;
     }
 
-    private synchronized ServerSocket getServerSocket() throws IOException {
+    synchronized ServerSocket getServerSocket() throws IOException {
         if(this.minPort == 0 || this.maxPort == 0) {
             return new ServerSocket(0);
         }
@@ -85,10 +92,16 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
             Log.writeLog(this, "new TCP connection - launch hub connector session");
 
             try {
-                // another connector has connected
-                SharedChannelConnectorHubSideImpl hubConnectorSession = new SharedChannelConnectorHubSideImpl(
-                        newConnection.getInputStream(), newConnection.getOutputStream(), this);
-
+                Connector hubConnectorSession;
+                if(this.newConnection) {
+                    hubConnectorSession =
+                            new MultipleTCPChannelsConnectorHubSideImpl(
+                                    newConnection.getInputStream(), newConnection.getOutputStream(), this);
+                } else {
+                    // another connector has connected
+                    hubConnectorSession = new SharedChannelConnectorHubSideImpl(
+                            newConnection.getInputStream(), newConnection.getOutputStream(), this);
+                }
                 (new ConnectorThread(hubConnectorSession, newConnection.getInputStream())).start();
             } catch (IOException | ASAPException e) {
                 // gone

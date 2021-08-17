@@ -32,7 +32,8 @@ public class ConnectorThread extends Thread {
 
         try {
             this.connector.connectorSessionStarted(this);
-            Log.writeLog(this, this.toString(),"connector engine started");
+            Log.writeLog(this, this.toString(),"connector engine started with "
+                            + this.connector.getClass().getSimpleName());
 
             while (this.again) {
                 HubPDU hubPDU = HubPDU.readPDU(this.is);
@@ -73,11 +74,7 @@ public class ConnectorThread extends Thread {
                 }
                 else if (hubPDU instanceof HubPDUConnectPeerNewTCPSocketRQ) {
                     Log.writeLog(this, this.toString(), "read hub new connection request");
-                    this.connector.newConnectionRequest((HubPDUConnectPeerNewTCPSocketRQ) hubPDU);
-                }
-                else if (hubPDU instanceof HubPDUConnectPeerNewConnectionRPLY) {
-                        Log.writeLog(this, this.toString(), "read hub new connection reply");
-                        this.connector.newConnectionReply((HubPDUConnectPeerNewConnectionRPLY) hubPDU);
+                    this.connector.openNewConnectionRequest((HubPDUConnectPeerNewTCPSocketRQ) hubPDU);
                 } else {
                     Log.writeLog(this, this.toString(), "got unknown / unsupported PDU type: "
                         + hubPDU.getClass().getSimpleName());

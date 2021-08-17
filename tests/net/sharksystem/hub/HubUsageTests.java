@@ -30,7 +30,7 @@ public class HubUsageTests {
         maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
         int specificPort = 6907;
         CharSequence host = "localhost";
-        TCPHub hub = new TCPHub(specificPort);
+        TCPHub hub = new TCPHub(specificPort, newConnection);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
         hub.setMaxIdleConnectionInSeconds(maxTimeInSeconds);
         new Thread(hub).start();
