@@ -32,6 +32,12 @@ public abstract class HubSingleEntity extends HubGenericImpl {
     }
 
     @Override
+    public void register(CharSequence peerID, ConnectorInternal hubConnectorSession, boolean canCreateTCPConnections) {
+        this.hubSessions.put(peerID, hubConnectorSession);
+        Log.writeLog(this, "peer registered - now: " + this.hubSessions.values());
+    }
+
+    @Override
     public void unregister(CharSequence peerID) {
         this.hubSessions.remove(peerID);
         Log.writeLog(this, "peer unregistered - now: " + this.hubSessions.values());
@@ -51,7 +57,7 @@ public abstract class HubSingleEntity extends HubGenericImpl {
     }
 
     /**
-     * A data session came to end end. This method can called as a result of a break down in the hub, loss of connection
+     * A data session ended. This method can called as a result of a break down in the hub, loss of connection
      * with hub connector. There is actually no need to call it - a broken data connection will result sooner or later
      * in an IOException.
      * @param sourcePeerID

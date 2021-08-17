@@ -25,12 +25,12 @@ public class HubUsageTests {
         this.runUsageTest(true);
     }
 
-    public void runUsageTest(boolean newConnection) throws IOException, InterruptedException, ASAPException {
+    public void runUsageTest(boolean canCreateTCPConnections) throws IOException, InterruptedException, ASAPException {
         int maxTimeInSeconds = Connector.DEFAULT_TIMEOUT_IN_MILLIS / 1000;
         maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
         int specificPort = 6907;
         CharSequence host = "localhost";
-        TCPHub hub = new TCPHub(specificPort, newConnection);
+        TCPHub hub = new TCPHub(specificPort, canCreateTCPConnections);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
         hub.setMaxIdleConnectionInSeconds(maxTimeInSeconds);
         new Thread(hub).start();
@@ -39,7 +39,7 @@ public class HubUsageTests {
         HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
         aliceHubConnector.addListener(aliceListener);
 
-        aliceHubConnector.connectHub(ALICE_ID);
+        aliceHubConnector.connectHub(ALICE_ID, canCreateTCPConnections);
         Thread.sleep(100);
         Collection<CharSequence> peerNames = aliceHubConnector.getPeerIDs();
         Assert.assertEquals(0, peerNames.size());
@@ -47,7 +47,7 @@ public class HubUsageTests {
         HubConnectorTester bobListener = new HubConnectorTester(BOB_ID);
         HubConnector bobHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
         bobHubConnector.addListener(bobListener);
-        bobHubConnector.connectHub(BOB_ID);
+        bobHubConnector.connectHub(BOB_ID, canCreateTCPConnections);
         Thread.sleep(100);
 
         peerNames = bobHubConnector.getPeerIDs();
@@ -61,7 +61,7 @@ public class HubUsageTests {
 //        bobHubConnector.syncHubInformation();
 
         /// Alice meets Bob
-        aliceHubConnector.connectPeer(BOB_ID, newConnection);
+        aliceHubConnector.connectPeer(BOB_ID);
         //Thread.sleep(Long.MAX_VALUE);
 
         Thread.sleep(maxTimeInSeconds * 1000);

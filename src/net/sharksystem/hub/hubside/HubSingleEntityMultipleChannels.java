@@ -1,6 +1,7 @@
 package net.sharksystem.hub.hubside;
 
 import net.sharksystem.hub.ASAPHubException;
+import net.sharksystem.utils.Log;
 
 import java.io.IOException;
 
@@ -33,6 +34,7 @@ public class HubSingleEntityMultipleChannels extends HubSingleEntity {
     @Override
     protected void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
+        Log.writeLog(this, "create data connection on initiator side");
 
     }
 

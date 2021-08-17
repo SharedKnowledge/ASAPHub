@@ -12,6 +12,8 @@ public interface HubInternal extends ConnectionEstablisher {
      */
     void register(CharSequence peerId, ConnectorInternal hubConnectorSession);
 
+    void register(CharSequence peerId, ConnectorInternal hubConnectorSession, boolean canCreateTCPConnections);
+
     /**
      * unregister a peer
      * @param peerId alias for peer connection

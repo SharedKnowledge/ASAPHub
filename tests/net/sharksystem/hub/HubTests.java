@@ -40,12 +40,12 @@ public class HubTests {
         this.doConnect(TCPHub.DEFAULT_PORT, "asaphub.f4.htw-berlin.de");
     }
 
-    private void doConnect(int specificPort, CharSequence host) throws ASAPHubException, IOException, InterruptedException {
+    private void doConnect(int specificPort, CharSequence host) throws ASAPException, IOException, InterruptedException {
         HubConnector aliceHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
         HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
         aliceHubConnector.addListener(aliceListener);
 
-        aliceHubConnector.connectHub(ALICE_ID);
+        aliceHubConnector.connectHub(ALICE_ID, false);
 
         Thread.sleep(Long.MAX_VALUE);
     }

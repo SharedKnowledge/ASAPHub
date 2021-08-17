@@ -48,4 +48,9 @@ public class ConnectorInternalLocalStub implements ConnectorInternal {
     public StreamPair initDataSession(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
         return StreamPairImpl.getStreamPairWithSessionID(this.inputStream, this.outputStream, "test");
     }
+
+    @Override
+    public boolean canEstablishTCPConnections() {
+        return false;
+    }
 }

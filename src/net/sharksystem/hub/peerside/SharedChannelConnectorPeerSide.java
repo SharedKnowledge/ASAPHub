@@ -1,5 +1,6 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.PeerIDHelper;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.hub.*;
@@ -62,14 +63,20 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
     //                                   mapping API - protocol engine                                //
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void connectHub(CharSequence localPeerID) throws IOException, ASAPHubException {
+    public void connectHub(CharSequence localPeerID) throws IOException, ASAPException {
+        this.connectHub(localPeerID, false);
+    }
+
+    public void connectHub(CharSequence localPeerID, boolean canCreateTCPConnections)
+            throws IOException, ASAPException {
+
         if(isConnected()) {
             throw new ASAPHubException("already connected - disconnect first");
         }
 
         this.localPeerID = localPeerID;
         // create hello pdu
-        HubPDURegister hubPDURegister = new HubPDURegister(localPeerID);
+        HubPDURegister hubPDURegister = new HubPDURegister(localPeerID, canCreateTCPConnections);
 
         // introduce yourself to hub
         hubPDURegister.sendPDU(this.getOutputStream());
@@ -118,11 +125,7 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
     @Override
     public void connectPeer(CharSequence peerID) throws IOException {
-        this.connectPeer(peerID, false);
-    }
-
-    public void connectPeer(CharSequence peerID, boolean newConnection) throws IOException {
-        HubPDUConnectPeerRQ connectRQ = new HubPDUConnectPeerRQ(peerID, newConnection);
+        HubPDUConnectPeerRQ connectRQ = new HubPDUConnectPeerRQ(peerID);
         if(!this.sendPDU(connectRQ)) {
             synchronized (this) {
                 for(HubPDUConnectPeerRQ otherRQ : this.connectRQList) {
@@ -221,8 +224,7 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
     @Override
     public void openNewConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) {
-        // TODO: create a new socket and launch ASAP connection
-        Log.writeLog(this, "asked to open a new connection - NOT YET IMPLEMENTED");
+        this.pduNotHandled(pdu);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////

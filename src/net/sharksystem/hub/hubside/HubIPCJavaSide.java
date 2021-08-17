@@ -92,6 +92,11 @@ public class HubIPCJavaSide extends HubGenericImpl {
     }
 
     @Override
+    public void register(CharSequence peerId, ConnectorInternal hubConnectorSession, boolean canCreateTCPConnections) {
+        this.register(peerId, hubConnectorSession);
+    }
+
+    @Override
     public void unregister(CharSequence peerId) {
         this.sendRegistrationMessage(peerId, false);
         this.connectorInternalMap.remove(peerId);

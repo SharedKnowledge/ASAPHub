@@ -74,11 +74,14 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity {
 
         Log.writeLog(this, "createDataConnection");
         ConnectorInternal targetConnector = this.getConnector(targetPeerID);
-        Log.writeLog(this, "found connector to " + targetPeerID);
-        // ask for data connection - can fail and produce exceptions
-        StreamPair streamPair = targetConnector.initDataSession(sourcePeerID, targetPeerID, timeout);
-        Log.writeLog(this, "got data connection (stream pair) " + targetPeerID);
-
-        this.connectionCreated(sourcePeerID, targetPeerID, streamPair, timeout);
+        if(targetConnector.canEstablishTCPConnections()) {
+            Log.writeLog(this, "create Data Connection with new tcp socket - NOT YET IMPLEMENTED " + targetPeerID);
+        } else {
+            Log.writeLog(this, "found connector to " + targetPeerID);
+            // ask for data connection - can fail and produce exceptions
+            StreamPair streamPair = targetConnector.initDataSession(sourcePeerID, targetPeerID, timeout);
+            Log.writeLog(this, "got data connection (stream pair) " + targetPeerID);
+            this.connectionCreated(sourcePeerID, targetPeerID, streamPair, timeout);
+        }
     }
 }

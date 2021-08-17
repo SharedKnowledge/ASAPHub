@@ -1,5 +1,6 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.hubside.Hub;
 
@@ -46,15 +47,6 @@ public interface HubConnector {
     void connectPeer(CharSequence peerID) throws IOException;
 
     /**
-     * Ask hub to open a new connection to another peer.
-     * @param peerID remote peer id
-     * @param newConnection true: this peer is able to create a new TCP connection. False: it will share
-     *                               this established connection.
-     * @throws IOException
-     */
-    void connectPeer(CharSequence peerID, boolean newConnection) throws IOException;
-
-    /**
      * Peers' side connects and registers itself with the hub.
      * There a no address information of the hub in this call. Those protocol specific information are meant
      * to be defined with the e.g. contractor of an implementation of this interface. In any case, it is assumed
@@ -63,7 +55,9 @@ public interface HubConnector {
      * @param localPeerID a name under which this peer registers itself on the hub
      * @throws IOException communication problem, cannot connect to hub
      */
-    void connectHub(CharSequence localPeerID) throws IOException, ASAPHubException;
+    void connectHub(CharSequence localPeerID) throws IOException, ASAPException;
+
+    void connectHub(CharSequence localPeerID, boolean canCreateTCPConnections) throws IOException, ASAPException;
 
     /**
      * Disconnect from hub. Leaves communication channel open.

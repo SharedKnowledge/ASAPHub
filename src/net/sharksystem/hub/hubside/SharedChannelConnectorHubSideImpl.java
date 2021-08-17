@@ -178,8 +178,9 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
 
         if(connectionRequest == null) return false; // list empty
 
-        if(connectionRequest.newConnection) {
-            return this.initDataSessionOnNewConnection(connectionRequest);
+        if(this.canEstablishTCPConnections() && connectionRequest.newConnection) {
+            return this.initDataSessionOnNewConnection(connectionRequest,
+                    this.getTimeOutConnectionRequest(), this.getTimeOutDataConnection());
         } else {
             Log.writeLog(this, this.toString(), "setup data connection on shared channel");
             if (this.statusInSilence()) {
@@ -211,7 +212,8 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         }
     }
 
-    protected boolean initDataSessionOnNewConnection(ConnectionRequest connectionRequest) throws IOException {
+    protected boolean initDataSessionOnNewConnection(ConnectionRequest connectionRequest,
+                                 int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
         Log.writeLog(this, this.toString(), "new connections are not supported in this class");
         return false;
     }
@@ -364,7 +366,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
             this.hub.connectionRequest(
                     this.peerID, pdu.peerID,
                     this.getTimeOutConnectionRequest(),
-                    pdu.getNewConnection());
+                    this.canEstablishTCPConnections());
 
         } catch (ASAPHubException | IOException e) {
             Log.writeLogErr(this, this.toString(), "connection RQ failed with hub: " + e.getLocalizedMessage());
@@ -388,6 +390,11 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     @Override
     public void hubStatusRPLY(HubPDUHubStatusRPLY pdu) {
         this.pduNotHandled(pdu);
+    }
+
+    @Override
+    public boolean canEstablishTCPConnections() {
+        return false;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////

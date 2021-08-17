@@ -30,4 +30,7 @@ public class HubPDUConnectPeerNewTCPSocketRQ extends HubPDU {
         ASAPSerialization.writeIntegerParameter(this.port, os);
     }
 
+    public int getPort() { return this.port;}
+    public CharSequence getPeerID() { return this.peerID;}
+
 }
