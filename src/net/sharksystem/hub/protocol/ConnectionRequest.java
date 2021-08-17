@@ -6,11 +6,13 @@ public class ConnectionRequest {
     public final CharSequence sourcePeerID;
     public final CharSequence targetPeerID;
     public final long until;
+    public final boolean newConnection;
 
-    public ConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, long until) {
+    public ConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, long until, boolean newConnection) {
         this.sourcePeerID = sourcePeerID;
         this.targetPeerID = targetPeerID;
         this.until = until;
+        this.newConnection = newConnection;
     }
 
     public String toString() {
@@ -23,6 +25,8 @@ public class ConnectionRequest {
         sb.append(" | ");
         sb.append("until: ");
         sb.append(DateTimeHelper.long2ExactTimeString(this.until));
+        sb.append("newConnection: ");
+        sb.append(this.newConnection);
 
         return sb.toString();
     }

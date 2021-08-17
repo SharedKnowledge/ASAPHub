@@ -227,7 +227,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
                 new ConnectionRequest(
                         pdu.sourcePeerID,
                         pdu.targetPeerID,
-                        System.currentTimeMillis() + pdu.maxIdleInMillis),
+                        System.currentTimeMillis() + pdu.maxIdleInMillis, false),
                 (int) pdu.maxIdleInMillis
         );
     }
@@ -409,7 +409,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
             throws ASAPHubException, IOException {
 
         return this.initDataSession(
-            new ConnectionRequest(sourcePeerID, targetPeerID, System.currentTimeMillis() + timeout),
+            new ConnectionRequest(sourcePeerID, targetPeerID, System.currentTimeMillis() + timeout, false),
                 timeout);
     }
 

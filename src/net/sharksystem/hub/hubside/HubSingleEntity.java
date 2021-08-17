@@ -4,6 +4,7 @@ import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.utils.Log;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -63,4 +64,14 @@ public abstract class HubSingleEntity extends HubGenericImpl {
             throws ASAPHubException {
         this.getConnector(targetPeerID).notifyConnectionEnded(sourcePeerID, targetPeerID, connection);
     }
+
+    // implement a default to hide Lora from this new method
+    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
+                                  boolean newConnection) throws ASAPHubException, IOException {
+
+        this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout, newConnection);
+    }
+
+    protected abstract void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
+                                                  boolean newConnection) throws ASAPHubException, IOException;
 }

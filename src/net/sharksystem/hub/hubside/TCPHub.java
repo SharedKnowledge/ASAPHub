@@ -70,7 +70,7 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
 
     @Override
     public void run() {
-        Log.writeLog(this, "TCP Hub started on port: " + this.port);
+        Log.writeLog(this, "started on port: " + this.port);
         while(true) {
             Socket newConnection = null;
             try {
@@ -82,7 +82,7 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
                 return;
             }
 
-            Log.writeLog(this, "TCP Hub: new TCP connection - launch hub connector session");
+            Log.writeLog(this, "new TCP connection - launch hub connector session");
 
             try {
                 // another connector has connected

@@ -36,6 +36,19 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity {
         targetConnector.connectionRequest(sourcePeerID, targetPeerID, timeout);
     }
 
+    protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
+                                         boolean newConnection)
+            throws ASAPHubException, IOException {
+
+        ConnectorInternal targetConnector = this.getConnector(targetPeerID);
+        // an exception would have been thrown in case there is no such connector
+        Log.writeLog(this, "got connector for " + targetPeerID);
+
+        // asked connector to establish a connection - it will try and call hub back and asks for a data session
+        Log.writeLog(this, "create connection request ("  + sourcePeerID + " -> " + targetPeerID + ")");
+        targetConnector.connectionRequest(sourcePeerID, targetPeerID, timeout, newConnection);
+    }
+
     /**
      * Method is called on the hub by a connector and asks to disconnect to another peer via its connector. In a
      * decentralized system like this - look for a registered connector and relay the request. source and target

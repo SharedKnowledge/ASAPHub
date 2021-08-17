@@ -5,6 +5,7 @@ import net.sharksystem.hub.protocol.ConnectorThread;
 import net.sharksystem.hub.protocol.HubPDU;
 import net.sharksystem.utils.Log;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -138,6 +139,18 @@ public abstract class ConnectorImpl implements Connector {
             }
         }
     }
+
+    // implement a default
+    /*
+    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+            throws ASAPHubException, IOException {
+        this.connectionRequest(sourcePeerID, targetPeerID, timeout, false);
+    }
+
+    public abstract void connectionRequest(
+            CharSequence sourcePeerID, CharSequence targetPeerID, int timeout, boolean newConnection) throws ASAPHubException, IOException;
+
+     */
 
     private String idString = null;
     protected String getID() {

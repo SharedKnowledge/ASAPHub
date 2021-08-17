@@ -78,7 +78,8 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
      * @throws IOException
      */
     @Override
-    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
+                                  int timeout, boolean newConnection)
             throws ASAPHubException, IOException {
 
         if(localCall(sourcePeerID, targetPeerID)) {
@@ -87,10 +88,16 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         } else {
             // remember call
             this.externalConnectionRequestList.add(
-                    new ConnectionRequest(sourcePeerID, targetPeerID, System.currentTimeMillis() + timeout));
+                    new ConnectionRequest(
+                            sourcePeerID, targetPeerID,System.currentTimeMillis() + timeout, newConnection));
 
             this.handleExternalConnectionRequestList();
         }
+    }
+
+    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+            throws ASAPHubException, IOException {
+        this.connectionRequest(sourcePeerID, targetPeerID, timeout, false);
     }
 
     void connectionRequest(CharSequence targetPeerID) throws ASAPHubException, IOException {
@@ -159,40 +166,50 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
 
         if(this.externalConnectionRequestList.isEmpty()) return false; // empty  nothing to do
 
-        if(this.statusInSilence()) {
-            Log.writeLog(this, this.toString(), "in silence mode - ok");
-            // we are in the right status - take oldest request
-            ConnectionRequest connectionRequest = null;
-            while(connectionRequest == null && !this.externalConnectionRequestList.isEmpty()) {
-                connectionRequest = this.externalConnectionRequestList.remove(0);
-                if(connectionRequest.until < System.currentTimeMillis()) {
-                    Log.writeLog(this, this.toString(), "discard connection request - timed out");
-                    connectionRequest = null;
-                }
-            }
-
-            if(connectionRequest == null) return false; // list empty
-
-            // handle connection request
-            Log.writeLog(this, this.toString(), "launch data session by request: " + connectionRequest);
-            // init data session
-            StreamPair streamPair =
-                    this.initDataSession(connectionRequest, this.getTimeOutDataConnection());
-
-            // tell hub
-            Log.writeLog(this, this.toString(), "tell hub about newly created data session: " + connectionRequest);
-            this.hub.startDataSession(this.getPeerID(), connectionRequest.sourcePeerID,
-                    streamPair, this.getTimeOutDataConnection());
-        } else {
-            Log.writeLog(this, this.toString(), "not in silence mode - ask for silence");
-            // not in silence - should we asked for silence
-            if(this.statusHubConnectorProtocol()) { // we are in protocol status - change it
-                this.askForSilence(this.getTimeOutSilenceChannel());
-            } else {
-                Log.writeLog(this, this.toString(), "cannot ask for silence .. not in connector mode");
+        // remove outdated requests
+        ConnectionRequest connectionRequest = null;
+        while(connectionRequest == null && !this.externalConnectionRequestList.isEmpty()) {
+            connectionRequest = this.externalConnectionRequestList.remove(0);
+            if(connectionRequest.until < System.currentTimeMillis()) {
+                Log.writeLog(this, this.toString(), "discard connection request - timed out");
+                connectionRequest = null;
             }
         }
-        return true;
+
+        if(connectionRequest == null) return false; // list empty
+
+        if(connectionRequest.newConnection) {
+            Log.writeLog(this, this.toString(), "setup new connection to answer connectRQ - NOT YET IMPLEMENTED");
+            return false;
+        } else {
+            Log.writeLog(this, this.toString(), "setup data connection on shared channel");
+            if (this.statusInSilence()) {
+                Log.writeLog(this, this.toString(), "in silence mode - ok");
+                // we are in the right status - take the oldest request
+
+                // handle connection request
+                Log.writeLog(this, this.toString(), "launch data session by request: " + connectionRequest);
+                // init data session
+                StreamPair streamPair =
+                        this.initDataSession(connectionRequest, this.getTimeOutDataConnection());
+
+                // tell hub
+                Log.writeLog(this, this.toString(), "tell hub about newly created data session: " + connectionRequest);
+                this.hub.startDataSession(this.getPeerID(), connectionRequest.sourcePeerID,
+                        streamPair, this.getTimeOutDataConnection());
+            } else {
+                Log.writeLog(this, this.toString(), "not in silence mode - ask for silence");
+                // not in silence - should we asked for silence
+                if (this.statusHubConnectorProtocol()) { // we are in protocol status - change it
+                    // put request back
+                    this.externalConnectionRequestList.add(connectionRequest);
+                    this.askForSilence(this.getTimeOutSilenceChannel());
+                } else {
+                    Log.writeLog(this, this.toString(), "cannot ask for silence .. not in connector mode");
+                }
+            }
+            return true;
+        }
     }
 
     protected void actionWhenBackFromDataSession() {
@@ -345,7 +362,11 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         // received connection request from peer side - tell hub
         Log.writeLog(this, this.toString(), "received connection RQ from peer side - tell hub");
         try {
-            this.hub.connectionRequest(this.peerID, pdu.peerID, this.getTimeOutConnectionRequest());
+            this.hub.connectionRequest(
+                    this.peerID, pdu.peerID,
+                    this.getTimeOutConnectionRequest(),
+                    pdu.getNewConnection());
+
         } catch (ASAPHubException | IOException e) {
             Log.writeLogErr(this, this.toString(), "connection RQ failed with hub: " + e.getLocalizedMessage());
         }

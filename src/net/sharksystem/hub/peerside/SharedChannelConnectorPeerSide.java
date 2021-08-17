@@ -1,5 +1,6 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.asap.utils.PeerIDHelper;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.hub.*;
 import net.sharksystem.hub.protocol.*;
@@ -117,12 +118,16 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
     @Override
     public void connectPeer(CharSequence peerID) throws IOException {
-        HubPDUConnectPeerRQ connectRQ = new HubPDUConnectPeerRQ(peerID);
+        this.connectPeer(peerID, false);
+    }
+
+    public void connectPeer(CharSequence peerID, boolean newConnection) throws IOException {
+        HubPDUConnectPeerRQ connectRQ = new HubPDUConnectPeerRQ(peerID, newConnection);
         if(!this.sendPDU(connectRQ)) {
             synchronized (this) {
                 for(HubPDUConnectPeerRQ otherRQ : this.connectRQList) {
-                    if(otherRQ.peerID.toString().equalsIgnoreCase(peerID.toString())) {
-                        Log.writeLog(this, this.toString(), "there is already a connect request to " + peerID);
+                    if(PeerIDHelper.sameID(peerID, otherRQ.peerID)) {
+                        Log.writeLog(this, this.toString(), "already existing connect request to " + peerID);
                         return;
                     }
                 }

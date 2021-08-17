@@ -8,7 +8,8 @@ import java.io.IOException;
 public class HubSingleEntityMultipleChannels extends HubSingleEntity {
 
     /**
-     * A peer asked for a connection request to another peer. Ask
+     * A peer asked for a connection request to another peer. This is a single entity implementation. Remote peer
+     * connector is in this process. Ask this process to provide a data connection and come back later.
      * @param sourcePeerID
      * @param targetPeerID
      * @param timeout
@@ -18,6 +19,8 @@ public class HubSingleEntityMultipleChannels extends HubSingleEntity {
     @Override
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
+
+        // ask target connector to provide a data connection
 
     }
 
@@ -30,6 +33,11 @@ public class HubSingleEntityMultipleChannels extends HubSingleEntity {
     @Override
     protected void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
+
+    }
+
+    @Override
+    protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout, boolean newConnection) throws ASAPHubException, IOException {
 
     }
 }

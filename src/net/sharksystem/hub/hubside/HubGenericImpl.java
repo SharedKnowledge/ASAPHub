@@ -28,6 +28,12 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
         this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
     }
 
+    // implement a default to hide Lora from this new method
+    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
+                                  boolean newConnection) throws ASAPHubException, IOException {
+        this.connectionRequest(sourcePeerID, targetPeerID, timeout);
+    }
+
     /**
      * Send a connection request to hub connector target side.
      * @param sourcePeerID

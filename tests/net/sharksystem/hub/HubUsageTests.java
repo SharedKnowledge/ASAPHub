@@ -16,7 +16,16 @@ public class HubUsageTests {
     String ROOT_FOLDER = TestConstants.ROOT_DIRECTORY + HubUsageTests.class.getSimpleName() + "/";
 
     @Test
-    public void usage() throws IOException, InterruptedException, ASAPException {
+    public void usageSharedConnection() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(false);
+    }
+
+    @Test
+    public void usageNewConnection() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(true);
+    }
+
+    public void runUsageTest(boolean newConnection) throws IOException, InterruptedException, ASAPException {
         int maxTimeInSeconds = Connector.DEFAULT_TIMEOUT_IN_MILLIS / 1000;
         maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
         int specificPort = 6907;
@@ -49,10 +58,11 @@ public class HubUsageTests {
         peerNames = aliceHubConnector.getPeerIDs();
         Assert.assertEquals(1, peerNames.size());
 
-        bobHubConnector.syncHubInformation();
+//        bobHubConnector.syncHubInformation();
 
         /// Alice meets Bob
-        aliceHubConnector.connectPeer(BOB_ID);
+        aliceHubConnector.connectPeer(BOB_ID, newConnection);
+        //Thread.sleep(Long.MAX_VALUE);
 
         Thread.sleep(maxTimeInSeconds * 1000);
         System.out.println("************************ back from sleep ****************************");

@@ -52,7 +52,11 @@ public interface ConnectionEstablisher {
      * @param targetPeerID peer ID to which a communication is to be established
      * @throws ASAPHubException if there is no such peer registered
      */
-    void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException;
+    void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
+            throws ASAPHubException, IOException;
+
+    void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout, boolean newConnection)
+            throws ASAPHubException, IOException;
 
     /**
      * An existing connection is terminated. Connection requests are discarded. Nothing happens otherwise.

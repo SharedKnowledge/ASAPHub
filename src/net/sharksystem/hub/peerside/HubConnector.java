@@ -38,9 +38,21 @@ public interface HubConnector {
     /**
      * Hub is asked to establish a connection to a peer. It is an asynchronous call. A listener is called
      * when a connection was established. Most probably, a new channel (e.g. TCP channel) is created.
+     *
+     * The established connection is used for data communication.
+     *
      * @throws IOException communication problem, e.g. not connected to a hub
      */
     void connectPeer(CharSequence peerID) throws IOException;
+
+    /**
+     * Ask hub to open a new connection to another peer.
+     * @param peerID remote peer id
+     * @param newConnection true: this peer is able to create a new TCP connection. False: it will share
+     *                               this established connection.
+     * @throws IOException
+     */
+    void connectPeer(CharSequence peerID, boolean newConnection) throws IOException;
 
     /**
      * Peers' side connects and registers itself with the hub.
