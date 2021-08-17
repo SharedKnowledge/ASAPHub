@@ -1,6 +1,8 @@
 package net.sharksystem.hub;
 
+import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.hub.peerside.HubConnectorStatusListener;
+import net.sharksystem.hub.protocol.ConnectionRequest;
 import net.sharksystem.hub.protocol.ConnectorThread;
 import net.sharksystem.hub.protocol.HubPDU;
 import net.sharksystem.utils.Log;

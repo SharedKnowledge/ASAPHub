@@ -1,5 +1,6 @@
 package net.sharksystem.hub;
 
+import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.streams.StreamPairWrapper;
 import net.sharksystem.streams.WrappedStreamPairListener;

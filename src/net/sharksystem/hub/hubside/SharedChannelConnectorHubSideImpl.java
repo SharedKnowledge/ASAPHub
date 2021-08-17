@@ -1,5 +1,6 @@
 package net.sharksystem.hub.hubside;
 
+import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.streams.StreamPairLink;
 import net.sharksystem.streams.WrappedStreamPairListener;
@@ -13,6 +14,7 @@ import net.sharksystem.utils.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -179,43 +181,48 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         if(connectionRequest == null) return false; // list empty
 
         if(this.canEstablishTCPConnections() && connectionRequest.newConnection) {
-            return this.initDataSessionOnNewConnection(connectionRequest,
-                    this.getTimeOutConnectionRequest(), this.getTimeOutDataConnection());
-        } else {
-            Log.writeLog(this, this.toString(), "setup data connection on shared channel");
-            if (this.statusInSilence()) {
-                Log.writeLog(this, this.toString(), "in silence mode - ok");
-                // we are in the right status - take the oldest request
+            try {
+                return this.initDataSessionOnNewConnection(connectionRequest,
+                        this.getTimeOutConnectionRequest(), this.getTimeOutDataConnection());
+            } catch (RuntimeException e) {
+                Log.writeLog(this, "not yet implemented? Go ahead and try shared channel: "
+                        + e.getLocalizedMessage());
 
-                // handle connection request
-                Log.writeLog(this, this.toString(), "launch data session by request: " + connectionRequest);
-                // init data session
-                StreamPair streamPair =
-                        this.initDataSession(connectionRequest, this.getTimeOutDataConnection());
-
-                // tell hub
-                Log.writeLog(this, this.toString(), "tell hub about newly created data session: " + connectionRequest);
-                this.hub.startDataSession(this.getPeerID(), connectionRequest.sourcePeerID,
-                        streamPair, this.getTimeOutDataConnection());
-            } else {
-                Log.writeLog(this, this.toString(), "not in silence mode - ask for silence");
-                // not in silence - should we asked for silence
-                if (this.statusHubConnectorProtocol()) { // we are in protocol status - change it
-                    // put request back
-                    this.externalConnectionRequestList.add(connectionRequest);
-                    this.askForSilence(this.getTimeOutSilenceChannel());
-                } else {
-                    Log.writeLog(this, this.toString(), "cannot ask for silence .. not in connector mode");
-                }
             }
-            return true;
         }
+        Log.writeLog(this, this.toString(), "setup data connection on shared channel");
+        if (this.statusInSilence()) {
+            Log.writeLog(this, this.toString(), "in silence mode - ok");
+            // we are in the right status - take the oldest request
+
+            // handle connection request
+            Log.writeLog(this, this.toString(), "launch data session by request: " + connectionRequest);
+            // init data session
+            StreamPair streamPair =
+                    this.initDataSession(connectionRequest, this.getTimeOutDataConnection());
+
+            // tell hub
+            Log.writeLog(this, this.toString(), "tell hub about newly created data session: " + connectionRequest);
+            this.hub.startDataSession(this.getPeerID(), connectionRequest.sourcePeerID,
+                    streamPair, this.getTimeOutDataConnection());
+        } else {
+            Log.writeLog(this, this.toString(), "not in silence mode - ask for silence");
+            // not in silence - should we asked for silence
+            if (this.statusHubConnectorProtocol()) { // we are in protocol status - change it
+                // put request back
+                this.externalConnectionRequestList.add(connectionRequest);
+                this.askForSilence(this.getTimeOutSilenceChannel());
+            } else {
+                Log.writeLog(this, this.toString(), "cannot ask for silence .. not in connector mode");
+            }
+        }
+        return true;
     }
 
-    protected boolean initDataSessionOnNewConnection(ConnectionRequest connectionRequest,
-                                 int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
-        Log.writeLog(this, this.toString(), "new connections are not supported in this class");
-        return false;
+    protected boolean initDataSessionOnNewConnection(
+            ConnectionRequest connectionRequest, int timeOutConnectionRequest, int timeOutDataConnection)
+            throws IOException {
+        throw new SharkNotSupportedException("new connections are not supported in this class");
     }
 
     protected void actionWhenBackFromDataSession() {
