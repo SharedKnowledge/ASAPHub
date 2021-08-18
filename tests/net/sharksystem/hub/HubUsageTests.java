@@ -15,6 +15,11 @@ import static net.sharksystem.hub.TestConstants.*;
 public class HubUsageTests {
     String ROOT_FOLDER = TestConstants.ROOT_DIRECTORY + HubUsageTests.class.getSimpleName() + "/";
 
+    static int portNumber = 6907;
+    static int getPort() {
+        return portNumber++;
+    }
+
     @Test
     public void usageSharedConnection() throws IOException, InterruptedException, ASAPException {
         this.runUsageTest(false);
@@ -28,7 +33,7 @@ public class HubUsageTests {
     public void runUsageTest(boolean canCreateTCPConnections) throws IOException, InterruptedException, ASAPException {
         int maxTimeInSeconds = Connector.DEFAULT_TIMEOUT_IN_MILLIS / 1000;
         maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
-        int specificPort = 6907;
+        int specificPort = getPort();
         CharSequence host = "localhost";
         TCPHub hub = new TCPHub(specificPort, canCreateTCPConnections);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall

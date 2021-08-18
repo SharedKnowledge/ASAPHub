@@ -2,6 +2,7 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPPeer;
 import net.sharksystem.hub.ASAPHubException;
+import net.sharksystem.streams.IdleStreamPairCloser;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.streams.StreamPairLink;
 import net.sharksystem.utils.Log;
@@ -30,7 +31,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
     public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
                           int timeout, boolean newConnection) throws ASAPHubException, IOException {
         Log.writeLog(this, "received connection request ("
-                + sourcePeerID + " -> " + targetPeerID + ")" + "newConnection: " + newConnection);
+                + sourcePeerID + " -> " + targetPeerID + ") | " + "newConnection = " + newConnection);
 
         // request comes from hub connector - relay this request to the other side
         this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout, newConnection);
@@ -96,6 +97,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
         private final CharSequence sourcePeerID;
         private final CharSequence targetPeerID;
         private final StreamPair connection;
+        private final int timeout;
 
         DataSessionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
                            StreamPair connection, int timeout) {
@@ -103,6 +105,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             this.targetPeerID = targetPeerID;
             this.connection = connection;
             this.until = System.currentTimeMillis() + timeout;
+            this.timeout = timeout;
         }
     }
 
@@ -116,6 +119,11 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             throws ASAPHubException, IOException;
 
     void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection) {
+        this.connectionCreated(sourcePeerID, targetPeerID, connection, false);
+    }
+
+    void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection,
+                           boolean addIdleStreamPairCloser) {
 
         Log.writeLog(this, "connection created called");
         DataSessionRequest dataSessionRequest = null;
@@ -142,6 +150,12 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             Log.writeLog(this, "found fitting data session in list");
             try {
                 Log.writeLog(this, "create data link");
+                if(addIdleStreamPairCloser) {
+                    Log.writeLog(this, "add idle stream pair closer");
+                    int timeout = dataSessionRequest.timeout;
+                    IdleStreamPairCloser.getIdleStreamsCloser(connection, timeout).start();
+                    IdleStreamPairCloser.getIdleStreamsCloser(dataSessionRequest.connection, timeout).start();
+                }
                 StreamPairLink dataLink =
                         new StreamPairLink(dataSessionRequest.connection, sourcePeerID, connection, targetPeerID);
             } catch (IOException e) {

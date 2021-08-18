@@ -1,6 +1,7 @@
 package net.sharksystem.hub.hubside;
 
 import net.sharksystem.hub.ASAPHubException;
+import net.sharksystem.streams.IdleStreamPairCloser;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.utils.Log;
 
@@ -77,7 +78,7 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity implements New
      */
     @Override
     public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair streamPair) {
-        Log.writeLog(this, "new connection created: " + sourcePeerID + "--> " + targetPeerID);
-        this.connectionCreated(sourcePeerID, targetPeerID, streamPair);
+        Log.writeLog(this, "got notified: new connection created: " + sourcePeerID + " --> " + targetPeerID);
+        this.connectionCreated(targetPeerID, sourcePeerID, streamPair, true);
     }
 }

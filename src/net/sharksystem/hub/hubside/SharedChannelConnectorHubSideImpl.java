@@ -91,7 +91,9 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
                                   int timeout, boolean newConnection)
             throws ASAPHubException, IOException {
 
+        Log.writeLog(this, this.toString(), "connection request: " + sourcePeerID + " --> " + targetPeerID);
         if(localCall(sourcePeerID, targetPeerID)) {
+            Log.writeLog(this, this.toString(), "local call");
             // relay to hub
             this.connectionRequest(targetPeerID);
         } else {
