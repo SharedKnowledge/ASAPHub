@@ -1,5 +1,7 @@
 package net.sharksystem.hub.hubside;
 
+import com.sun.security.ntlm.Server;
+import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.protocol.ConnectionRequest;
@@ -28,24 +30,11 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
 
     protected boolean initDataSessionOnNewConnection(ConnectionRequest connectionRequest,
                                  int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
-        // now it gets messy - needs to be cleaned up sometimes
-        HubInternal hub = this.getHub();
-        if(!(hub instanceof TCPHub)) {
-            Log.writeLog(this, "need TCPHub to work - FATAL");
-            return false;
-        }
 
-        TCPHub tcpHub = (TCPHub) hub;
-        ServerSocket srvSocket = null;
-        try {
-            srvSocket = tcpHub.getServerSocket();
-        } catch (IOException e) {
-            Log.writeLog(this, "failed to get a new server socket");
-            return false;
-        }
-
+        ServerSocket srvSocket = this.getServerSocket();
         int localPort = srvSocket.getLocalPort();
-        (new NewConnectionCreator(srvSocket, this, connectionRequest,
+        (new NewConnectionCreator(srvSocket, this,
+                connectionRequest.sourcePeerID, connectionRequest.targetPeerID,
                 timeOutConnectionRequest, timeOutDataConnection)).start();
 
         // tell peer side connector to connect to server socket
@@ -58,14 +47,43 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
         return true;
     }
 
+    private ServerSocket getServerSocket() throws IOException {
+        HubInternal hub = this.getHub();
+        // now it gets messy - needs to be cleaned up sometimes
+        if(!(hub instanceof TCPHub)) {
+            throw new IOException("need TCPHub to work - FATAL");
+        }
+
+        TCPHub tcpHub = (TCPHub) hub;
+        ServerSocket srvSocket = null;
+        try {
+            return tcpHub.getServerSocket();
+        } catch (IOException e) {
+            throw new IOException("failed to get a new server socket");
+        }
+    }
+
     // called as result of a new connection request - peer has created a new data connection
     @Override
-    public void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair streamPair) {
+    public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair streamPair) {
         // tell hub - we have a new data connection and are eager to be connected with other peer
         try {
-            this.getHub().startDataSession(sourcePeerID, targetPeerID, streamPair, this.getTimeOutDataConnection());
+            this.getHub().startDataSession(targetPeerID, sourcePeerID, streamPair, this.getTimeOutDataConnection());
         } catch (ASAPHubException | IOException e) {
             Log.writeLog(this,"could not create data connection: " + e.getLocalizedMessage());
         }
     }
+
+
+    @Override
+    public void createNewConnection(NewConnectionCreatorListener listener,
+                            CharSequence sourcePeerID, CharSequence targetPeerID,
+                            int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
+
+        (new NewConnectionCreator(this.getServerSocket(), listener,
+                sourcePeerID, targetPeerID,
+                timeOutConnectionRequest, timeOutDataConnection)
+            ).start();
+    }
+
 }

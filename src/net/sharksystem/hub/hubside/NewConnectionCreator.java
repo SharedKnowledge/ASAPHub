@@ -1,6 +1,5 @@
 package net.sharksystem.hub.hubside;
 
-import net.sharksystem.hub.protocol.ConnectionRequest;
 import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.utils.AlarmClock;
 import net.sharksystem.utils.AlarmClockListener;
@@ -13,15 +12,18 @@ import java.net.Socket;
 class NewConnectionCreator extends Thread implements AlarmClockListener {
     private final ServerSocket srv;
     private final NewConnectionCreatorListener listener;
-    private final ConnectionRequest connectionRequest;
     private final int timeOutConnectionRequest;
     private final int timeOutDataConnection;
+    private final CharSequence sourcePeerID;
+    private final CharSequence targetPeerID;
 
-    NewConnectionCreator(ServerSocket srv, NewConnectionCreatorListener listener, ConnectionRequest connectionRequest,
+    NewConnectionCreator(ServerSocket srv, NewConnectionCreatorListener listener,
+                         CharSequence sourcePeerID, CharSequence targetPeerID,
                          int timeOutConnectionRequest, int timeOutDataConnection) {
         this.srv = srv;
         this.listener = listener;
-        this.connectionRequest = connectionRequest;
+        this.sourcePeerID = sourcePeerID;
+        this.targetPeerID = targetPeerID;
         this.timeOutConnectionRequest = timeOutConnectionRequest;
         this.timeOutDataConnection = timeOutDataConnection;
     }
@@ -35,9 +37,7 @@ class NewConnectionCreator extends Thread implements AlarmClockListener {
             alarmClock.kill();
             Log.writeLog(this, "new connection initiated from peer side - setup data connection");
 
-            this.listener.connectionCreated(
-                    this.connectionRequest.sourcePeerID,
-                    this.connectionRequest.targetPeerID,
+            this.listener.newConnectionCreated(this.sourcePeerID, this.targetPeerID,
                     StreamPairImpl.getStreamPair(newSocket.getInputStream(), newSocket.getOutputStream()));
 
         } catch (IOException e) {

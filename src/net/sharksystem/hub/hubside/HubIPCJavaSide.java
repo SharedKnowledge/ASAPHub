@@ -77,7 +77,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
         System.out.println("call createDataConnection");
         ConnectorInternal connectorInternal = this.connectorInternalMap.get(targetPeerID);
         StreamPair streamPair = connectorInternal.initDataSession(sourcePeerID, targetPeerID, timeout);
-        this.connectionCreated(sourcePeerID, targetPeerID, streamPair, timeout);
+        this.connectionCreated(sourcePeerID, targetPeerID, streamPair);
     }
 
     @Override

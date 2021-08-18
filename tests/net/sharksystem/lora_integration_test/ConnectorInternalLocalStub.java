@@ -1,6 +1,8 @@
 package net.sharksystem.lora_integration_test;
 
+import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.hub.ASAPHubException;
+import net.sharksystem.hub.hubside.NewConnectionCreatorListener;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.hub.hubside.ConnectorInternal;
@@ -52,5 +54,12 @@ public class ConnectorInternalLocalStub implements ConnectorInternal {
     @Override
     public boolean canEstablishTCPConnections() {
         return false;
+    }
+
+    @Override
+    public void createNewConnection(NewConnectionCreatorListener listener,
+                                    CharSequence sourcePeerID, CharSequence targetPeerID,
+                                    int timeOutConnectionRequest, int timeOutDataConnection) {
+        throw new SharkNotSupportedException("cannot create new connections in this implementation");
     }
 }

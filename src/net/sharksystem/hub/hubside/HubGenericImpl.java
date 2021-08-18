@@ -113,8 +113,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
     protected abstract void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException;
 
-    void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID,
-                                  StreamPair connection, int timeout) {
+    void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection) {
 
         Log.writeLog(this, "connection created called");
         DataSessionRequest dataSessionRequest = null;

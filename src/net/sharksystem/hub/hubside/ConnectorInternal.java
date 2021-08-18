@@ -10,4 +10,8 @@ public interface ConnectorInternal extends ConnectionEstablisher {
             throws ASAPHubException, IOException;
 
     boolean canEstablishTCPConnections();
+
+    void createNewConnection(NewConnectionCreatorListener listener,
+                             CharSequence sourcePeerID, CharSequence targetPeerID,
+                             int timeOutConnectionRequest, int timeOutDataConnection) throws IOException;
 }

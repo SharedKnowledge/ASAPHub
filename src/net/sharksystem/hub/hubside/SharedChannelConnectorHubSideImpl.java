@@ -60,6 +60,13 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
 
     }
 
+    @Override
+    public void createNewConnection(NewConnectionCreatorListener listener,
+                                    CharSequence sourcePeerID, CharSequence targetPeerID,
+                                    int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
+        throw new SharkNotSupportedException("cannot create new connections in this implementation");
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                     connection establisher interface to hub and connector peer side                  //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
