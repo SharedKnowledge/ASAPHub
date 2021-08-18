@@ -28,9 +28,31 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
         return true;
     }
 
+    private boolean createNewConnectionWithMyPeer(NewConnectionCreatorListener listener,
+                              CharSequence sourcePeerID, CharSequence targetPeerID,
+                              int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
+        ServerSocket srvSocket = this.getServerSocket();
+        int localPort = srvSocket.getLocalPort();
+        (new NewConnectionCreator(srvSocket, listener,
+                sourcePeerID, targetPeerID, timeOutConnectionRequest, timeOutDataConnection)).start();
+
+        // tell peer side connector to connect to server socket
+        HubPDUConnectPeerNewTCPSocketRQ newConnectionRQ = new HubPDUConnectPeerNewTCPSocketRQ(
+                targetPeerID, localPort);
+
+        Log.writeLog(this, this.toString(),"ask my peer to connect to port: " + localPort);
+        newConnectionRQ.sendPDU(this.getOutputStream());
+
+        return true;
+    }
+
     protected boolean initDataSessionOnNewConnection(ConnectionRequest connectionRequest,
                                  int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
+        return this.createNewConnectionWithMyPeer(this,
+                connectionRequest.sourcePeerID, connectionRequest.targetPeerID,
+                timeOutConnectionRequest, timeOutDataConnection);
 
+        /*
         ServerSocket srvSocket = this.getServerSocket();
         int localPort = srvSocket.getLocalPort();
         (new NewConnectionCreator(srvSocket, this,
@@ -41,10 +63,30 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
         HubPDUConnectPeerNewTCPSocketRQ newConnectionRQ = new HubPDUConnectPeerNewTCPSocketRQ(
                 connectionRequest.targetPeerID, localPort);
 
-        Log.writeLog(this, "ask my peer to connect to port: " + localPort);
+        Log.writeLog(this, this.toString(),"ask my peer to connect to port: " + localPort);
         newConnectionRQ.sendPDU(this.getOutputStream());
 
         return true;
+         */
+    }
+
+    /**
+     * Called from hub if the other side has already set up a data connection
+     * @param listener most probably the hub
+     * @param sourcePeerID
+     * @param targetPeerID
+     * @param timeOutConnectionRequest
+     * @param timeOutDataConnection
+     * @throws IOException
+     */
+    @Override
+    public void createNewConnection(NewConnectionCreatorListener listener,
+                                    CharSequence sourcePeerID, CharSequence targetPeerID,
+                                    int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
+
+        Log.writeLog(this, this.toString(), "create new connection called");
+        this.createNewConnectionWithMyPeer(listener, sourcePeerID, targetPeerID,
+                timeOutConnectionRequest, timeOutDataConnection);
     }
 
     private ServerSocket getServerSocket() throws IOException {
@@ -70,20 +112,7 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
         try {
             this.getHub().startDataSession(targetPeerID, sourcePeerID, streamPair, this.getTimeOutDataConnection());
         } catch (ASAPHubException | IOException e) {
-            Log.writeLog(this,"could not create data connection: " + e.getLocalizedMessage());
+            Log.writeLog(this, this.toString(),"could not create data connection: " + e.getLocalizedMessage());
         }
     }
-
-
-    @Override
-    public void createNewConnection(NewConnectionCreatorListener listener,
-                            CharSequence sourcePeerID, CharSequence targetPeerID,
-                            int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
-
-        (new NewConnectionCreator(this.getServerSocket(), listener,
-                sourcePeerID, targetPeerID,
-                timeOutConnectionRequest, timeOutDataConnection)
-            ).start();
-    }
-
 }

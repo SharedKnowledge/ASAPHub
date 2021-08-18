@@ -71,13 +71,6 @@ public abstract class HubSingleEntity extends HubGenericImpl {
         this.getConnector(targetPeerID).notifyConnectionEnded(sourcePeerID, targetPeerID, connection);
     }
 
-    // implement a default to hide Lora from this new method
-    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
-                                  boolean newConnection) throws ASAPHubException, IOException {
-
-        this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout, newConnection);
-    }
-
     protected abstract void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
                                                   boolean newConnection) throws ASAPHubException, IOException;
 }

@@ -20,19 +20,6 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity implements New
      * @param timeout
      * @throws ASAPHubException
      */
-    @Override
-    protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
-            throws ASAPHubException, IOException {
-
-        ConnectorInternal targetConnector = this.getConnector(targetPeerID);
-        // an exception would have been thrown in case there is no such connector
-        Log.writeLog(this, "got connector for " + targetPeerID);
-
-        // asked connector to establish a connection - it will try and call hub back and asks for a data session
-        Log.writeLog(this, "create connection request ("  + sourcePeerID + " -> " + targetPeerID + ")");
-        targetConnector.connectionRequest(sourcePeerID, targetPeerID, timeout);
-    }
-
     protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
                                          boolean newConnection)
             throws ASAPHubException, IOException {
@@ -74,16 +61,23 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity implements New
         if(targetConnector.canEstablishTCPConnections()) {
             targetConnector.createNewConnection(this, sourcePeerID, targetPeerID, timeout, timeout);
         } else {
-            Log.writeLog(this, "found connector to " + targetPeerID);
+            Log.writeLog(this,"found connector to " + targetPeerID);
             // ask for data connection - can fail and produce exceptions
             StreamPair streamPair = targetConnector.initDataSession(sourcePeerID, targetPeerID, timeout);
-            Log.writeLog(this, "got data connection (stream pair) " + targetPeerID);
+            Log.writeLog(this,"got data connection (stream pair) " + targetPeerID);
             this.connectionCreated(sourcePeerID, targetPeerID, streamPair);
         }
     }
 
+    /**
+     * Callback from multichannel version - we have a data connection
+     * @param sourcePeerID
+     * @param targetPeerID
+     * @param streamPair
+     */
     @Override
     public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair streamPair) {
+        Log.writeLog(this, "new connection created");
         this.connectionCreated(sourcePeerID, targetPeerID, streamPair);
     }
 }

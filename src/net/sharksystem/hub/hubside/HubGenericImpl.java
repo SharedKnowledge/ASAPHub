@@ -18,20 +18,22 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
      * @param timeout
      * @throws ASAPHubException
      * @throws IOException
-     * @see HubGenericImpl#sendConnectionRequest(CharSequence, CharSequence, int)
      */
     @Override
     public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
-        Log.writeLog(this, "received connection request (" + sourcePeerID + " -> " + targetPeerID + ")");
-        // request comes from hub connector - relay this request to the other side
-        this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
+
+        this.connectionRequest(sourcePeerID, targetPeerID, timeout, false);
     }
 
-    // implement a default to hide Lora from this new method
-    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
-                                  boolean newConnection) throws ASAPHubException, IOException {
-        this.connectionRequest(sourcePeerID, targetPeerID, timeout);
+    @Override
+    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
+                          int timeout, boolean newConnection) throws ASAPHubException, IOException {
+        Log.writeLog(this, "received connection request ("
+                + sourcePeerID + " -> " + targetPeerID + ")" + "newConnection: " + newConnection);
+
+        // request comes from hub connector - relay this request to the other side
+        this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout, newConnection);
     }
 
     /**
@@ -40,8 +42,9 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
      * @param targetPeerID
      * @param timeout
      */
-    protected abstract void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
-            throws ASAPHubException, IOException;
+    protected abstract void sendConnectionRequest(
+            CharSequence sourcePeerID,CharSequence targetPeerID, int timeout, boolean newConnection)
+                throws ASAPHubException, IOException;
 
     /**
      * Called from connector and asks hub to withdraw a connection request or disconnect from a peer. This implementation
@@ -108,7 +111,6 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
      * @param sourcePeerID
      * @param targetPeerID
      * @param timeout
-     * @see HubGenericImpl#connectionCreated(CharSequence, CharSequence, StreamPair, int)
      */
     protected abstract void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException;

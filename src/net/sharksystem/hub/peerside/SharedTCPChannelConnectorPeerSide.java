@@ -25,7 +25,7 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
             throws IOException, ASAPHubException {
         super(hubSocket.getInputStream(), hubSocket.getOutputStream());
 
-        Log.writeLog(this, "connected to hub: " + hostName + ":" + port);
+        Log.writeLog(this, this.toString(),"connected to hub: " + hostName + ":" + port);
 
         this.hubSocket = hubSocket;
         this.hostName = hostName.toString();
@@ -34,19 +34,19 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
 
     @Override
     public void openNewConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) {
-        // TODO: create a new socket and launch ASAP connection
-        Log.writeLog(this, "asked to open a new connection");
+        Log.writeLog(this, this.toString(),"asked to open a new connection to " + pdu.peerID);
 
         try {
             Socket newPeerSocket = new Socket(this.hostName, pdu.getPort());
-            Log.writeLog(this, "connected");
+            Log.writeLog(this, this.toString(), "connected");
+//            this.dataSessionStarted();
         } catch (IOException e) {
-            Log.writeLog(this, "could not establish new TCP connection for new peer encounter");
+            Log.writeLog(this, this.toString(),"could not establish new TCP connection for new peer encounter");
         }
 
     }
 
     public String toString() {
-        return "TCPConnector: " + this.hostName + ":" + this.port;
+        return this.getPeerID() + " | " + this.hostName + ":" + this.port;
     }
 }

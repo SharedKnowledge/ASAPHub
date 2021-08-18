@@ -37,7 +37,8 @@ public class HubIPCJavaSide extends HubGenericImpl {
     }
 
     @Override
-    protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
+    protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
+                             int timeout, boolean newConnection) throws ASAPHubException, IOException {
         this.sentConnectRequest = true;
         ConnectRequestModel connectRequest = new ConnectRequestModel(sourcePeerID.toString(), targetPeerID.toString(), timeout);
         this.sendIPCMessage(connectRequest);
@@ -78,6 +79,11 @@ public class HubIPCJavaSide extends HubGenericImpl {
         ConnectorInternal connectorInternal = this.connectorInternalMap.get(targetPeerID);
         StreamPair streamPair = connectorInternal.initDataSession(sourcePeerID, targetPeerID, timeout);
         this.connectionCreated(sourcePeerID, targetPeerID, streamPair);
+    }
+
+    @Override
+    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout, boolean newConnection) throws ASAPHubException, IOException {
+        this.connectionRequest(sourcePeerID, targetPeerID, timeout);
     }
 
     @Override
@@ -181,7 +187,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
         this.startDataSession(sourcePeerID, targetPeerID, multihopStreamPair, timeout);
         if (!this.sentConnectRequest) {
             // only send connect request if instance was not the source of the connect request
-            this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout);
+            this.sendConnectionRequest(targetPeerID, sourcePeerID, timeout, false);
         }
         this.activeConnection = connectRequest;
     }
