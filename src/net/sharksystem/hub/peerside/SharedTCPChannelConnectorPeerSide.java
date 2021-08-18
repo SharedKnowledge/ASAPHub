@@ -1,7 +1,9 @@
 package net.sharksystem.hub.peerside;
 
 import net.sharksystem.hub.ASAPHubException;
+import net.sharksystem.hub.protocol.ConnectionRequest;
 import net.sharksystem.hub.protocol.HubPDUConnectPeerNewTCPSocketRQ;
+import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -33,13 +35,14 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
     }
 
     @Override
-    public void openNewConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) {
+    public void openNewTCPConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) {
         Log.writeLog(this, this.toString(),"asked to open a new connection to " + pdu.peerID);
 
         try {
             Socket newPeerSocket = new Socket(this.hostName, pdu.getPort());
             Log.writeLog(this, this.toString(), "connected");
-//            this.dataSessionStarted();
+            this.dataSessionStarted(pdu.getPeerID(),
+                    StreamPairImpl.getStreamPair(newPeerSocket.getInputStream(), newPeerSocket.getOutputStream()));
         } catch (IOException e) {
             Log.writeLog(this, this.toString(),"could not establish new TCP connection for new peer encounter");
         }

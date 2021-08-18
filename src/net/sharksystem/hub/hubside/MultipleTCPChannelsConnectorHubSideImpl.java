@@ -1,7 +1,5 @@
 package net.sharksystem.hub.hubside;
 
-import com.sun.security.ntlm.Server;
-import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.protocol.ConnectionRequest;
@@ -49,25 +47,8 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
     protected boolean initDataSessionOnNewConnection(ConnectionRequest connectionRequest,
                                  int timeOutConnectionRequest, int timeOutDataConnection) throws IOException {
         return this.createNewConnectionWithMyPeer(this,
-                connectionRequest.sourcePeerID, connectionRequest.targetPeerID,
+                connectionRequest.targetPeerID, connectionRequest.sourcePeerID, // switch source / target
                 timeOutConnectionRequest, timeOutDataConnection);
-
-        /*
-        ServerSocket srvSocket = this.getServerSocket();
-        int localPort = srvSocket.getLocalPort();
-        (new NewConnectionCreator(srvSocket, this,
-                connectionRequest.sourcePeerID, connectionRequest.targetPeerID,
-                timeOutConnectionRequest, timeOutDataConnection)).start();
-
-        // tell peer side connector to connect to server socket
-        HubPDUConnectPeerNewTCPSocketRQ newConnectionRQ = new HubPDUConnectPeerNewTCPSocketRQ(
-                connectionRequest.targetPeerID, localPort);
-
-        Log.writeLog(this, this.toString(),"ask my peer to connect to port: " + localPort);
-        newConnectionRQ.sendPDU(this.getOutputStream());
-
-        return true;
-         */
     }
 
     /**
@@ -109,6 +90,7 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
     @Override
     public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair streamPair) {
         // tell hub - we have a new data connection and are eager to be connected with other peer
+        Log.writeLog(this, this.toString(),"newConnectionCreated: " + sourcePeerID + "-->" + targetPeerID);
         try {
             this.getHub().startDataSession(targetPeerID, sourcePeerID, streamPair, this.getTimeOutDataConnection());
         } catch (ASAPHubException | IOException e) {

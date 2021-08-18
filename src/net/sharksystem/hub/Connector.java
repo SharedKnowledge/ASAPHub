@@ -107,7 +107,7 @@ public interface Connector {
      * Called from hub - asks peer side to open a new connection with given parameter to initiate a new peer encounter
      * @param hubPDU
      */
-    void openNewConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU);
+    void openNewTCPConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU);
 
     void notifyPDUReceived(HubPDU hubPDU);
 }

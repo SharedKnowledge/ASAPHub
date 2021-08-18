@@ -223,7 +223,7 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
     }
 
     @Override
-    public void openNewConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) {
+    public void openNewTCPConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ pdu) {
         this.pduNotHandled(pdu);
     }
 
@@ -238,8 +238,8 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
     protected void silenceEnded() { }
 
     @Override
-    protected void dataSessionStarted(ConnectionRequest connectionRequest, StreamPair streamPair) {
-        Log.writeLog(this, this.toString(), "data session started due to request: " + connectionRequest);
+    protected void dataSessionStarted(CharSequence targetPeerID, StreamPair streamPair) {
+        Log.writeLog(this, this.toString(), "data session started to peer: " + targetPeerID);
 
         // tell listener
         if(this.listener != null) {
@@ -248,7 +248,7 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
                 @Override
                 public void run() {
                     for(NewConnectionListener l : listener) {
-                        l.notifyPeerConnected(connectionRequest.targetPeerID, streamPair);
+                        l.notifyPeerConnected(targetPeerID, streamPair);
                     }
                 }
             }).start();

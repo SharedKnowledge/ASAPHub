@@ -132,7 +132,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
 
     private boolean statusSynchronizing = false;
 
-    protected abstract void dataSessionStarted(ConnectionRequest connectionRequest, StreamPair streamPair);
+    protected abstract void dataSessionStarted(CharSequence targetPeerID, StreamPair streamPair);
 
     public final void askForSilence(long waitDuration) throws IOException, ASAPHubException {
         if(!this.statusHubConnectorProtocol()) throw new ASAPHubException("wrong status, cannot send silence RQ");
@@ -204,7 +204,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         //TimedStreamPair timedStreamPair = new TimedStreamPair(this.wrappedDataSessionStreamPair, timeout);
 
         // tell sub classes
-        this.dataSessionStarted(connectionRequest, this.wrappedDataSessionStreamPair);
+        this.dataSessionStarted(connectionRequest.targetPeerID, this.wrappedDataSessionStreamPair);
     }
 
     private byte[] syncSequence;

@@ -134,7 +134,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     }
 
     @Override
-    protected void dataSessionStarted(ConnectionRequest connectionRequest, StreamPair streamPair) {
+    protected void dataSessionStarted(CharSequence targetPeerID, StreamPair streamPair) {
         // hub takes care of the rest
         /*
         int timeout = (int) (connectionRequest.until - System.currentTimeMillis());
@@ -368,7 +368,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     }
 
     @Override
-    public void openNewConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU) {
+    public void openNewTCPConnectionRequest(HubPDUConnectPeerNewTCPSocketRQ hubPDU) {
         this.pduNotHandled(hubPDU);
     }
 

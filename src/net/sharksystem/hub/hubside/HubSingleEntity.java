@@ -70,7 +70,4 @@ public abstract class HubSingleEntity extends HubGenericImpl {
             throws ASAPHubException {
         this.getConnector(targetPeerID).notifyConnectionEnded(sourcePeerID, targetPeerID, connection);
     }
-
-    protected abstract void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
-                                                  boolean newConnection) throws ASAPHubException, IOException;
 }

@@ -77,7 +77,7 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity implements New
      */
     @Override
     public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair streamPair) {
-        Log.writeLog(this, "new connection created");
+        Log.writeLog(this, "new connection created: " + sourcePeerID + "--> " + targetPeerID);
         this.connectionCreated(sourcePeerID, targetPeerID, streamPair);
     }
 }
