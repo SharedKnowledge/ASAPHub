@@ -14,7 +14,6 @@ import net.sharksystem.utils.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -356,11 +355,14 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     //                                       reaction on received PDUs                                         //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private boolean peerSideCanCreateTCPConnections = false;
+
     @Override
     public void register(HubPDURegister pdu) {
         // received register pdu - tell hub
         Log.writeLog(this, this.toString(), "received register from peer side - tell hub");
-        this.hub.register(pdu.peerID, this);
+        this.peerSideCanCreateTCPConnections = pdu.canCreateTCPConnections;
+        this.hub.register(pdu.peerID, this, pdu.canCreateTCPConnections);
     }
 
     @Override
@@ -408,9 +410,13 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         this.pduNotHandled(pdu);
     }
 
+    public boolean hubSideCanEstablishTCPConnections() {
+        return false;
+    }
+
     @Override
     public boolean canEstablishTCPConnections() {
-        return false;
+        return this.hubSideCanEstablishTCPConnections() && this.peerSideCanCreateTCPConnections;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////

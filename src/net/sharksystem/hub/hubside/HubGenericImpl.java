@@ -119,12 +119,6 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             throws ASAPHubException, IOException;
 
     void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection) {
-        this.connectionCreated(sourcePeerID, targetPeerID, connection, false);
-    }
-
-    void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection,
-                           boolean addIdleStreamPairCloser) {
-
         Log.writeLog(this, "connection created called");
         DataSessionRequest dataSessionRequest = null;
         List<DataSessionRequest> addAgain = new ArrayList<>();
@@ -150,12 +144,6 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             Log.writeLog(this, "found fitting data session in list");
             try {
                 Log.writeLog(this, "create data link");
-                if(addIdleStreamPairCloser) {
-                    Log.writeLog(this, "add idle stream pair closer");
-                    int timeout = dataSessionRequest.timeout;
-                    IdleStreamPairCloser.getIdleStreamsCloser(connection, timeout).start();
-                    IdleStreamPairCloser.getIdleStreamsCloser(dataSessionRequest.connection, timeout).start();
-                }
                 StreamPairLink dataLink =
                         new StreamPairLink(dataSessionRequest.connection, sourcePeerID, connection, targetPeerID);
             } catch (IOException e) {

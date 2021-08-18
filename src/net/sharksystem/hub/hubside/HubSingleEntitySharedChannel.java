@@ -75,10 +75,19 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity implements New
      * @param sourcePeerID
      * @param targetPeerID
      * @param streamPair
+     * @param timeOutDataConnection
      */
     @Override
-    public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair streamPair) {
+    public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID,
+                                     StreamPair streamPair, int timeOutDataConnection) {
         Log.writeLog(this, "got notified: new connection created: " + sourcePeerID + " --> " + targetPeerID);
-        this.connectionCreated(targetPeerID, sourcePeerID, streamPair, true);
+        try {
+            IdleStreamPairCloser.getIdleStreamsCloser(streamPair, timeOutDataConnection).start();
+        } catch (IOException e) {
+            Log.writeLog(this, this.toString(), "cannot attach idle streams closer: "
+                    + e.getLocalizedMessage());
+        }
+
+        this.connectionCreated(targetPeerID, sourcePeerID, streamPair);
     }
 }

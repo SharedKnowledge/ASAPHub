@@ -1,6 +1,5 @@
 package net.sharksystem.hub.protocol;
 
-import net.sharksystem.asap.ASAP;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
 
@@ -10,7 +9,7 @@ import java.io.OutputStream;
 
 public class HubPDURegister extends HubPDU {
     public final CharSequence peerID;
-    private final boolean canCreateTCPConnections;
+    public final boolean canCreateTCPConnections;
 
     public HubPDURegister(CharSequence peerID, boolean canCreateTCPConnections) {
         super(HUB_REGISTER);

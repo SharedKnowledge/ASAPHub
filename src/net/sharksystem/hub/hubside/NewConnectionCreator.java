@@ -40,7 +40,8 @@ class NewConnectionCreator extends Thread implements AlarmClockListener {
                     + listener.getClass().getSimpleName());
 
             this.listener.newConnectionCreated(this.sourcePeerID, this.targetPeerID,
-                    StreamPairImpl.getStreamPair(newSocket.getInputStream(), newSocket.getOutputStream()));
+                    StreamPairImpl.getStreamPair(newSocket.getInputStream(), newSocket.getOutputStream()),
+                    this.timeOutDataConnection);
 
         } catch (IOException e) {
             // maybe time out killed server socket.

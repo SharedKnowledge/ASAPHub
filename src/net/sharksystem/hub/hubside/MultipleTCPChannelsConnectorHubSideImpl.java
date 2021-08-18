@@ -6,10 +6,6 @@ import net.sharksystem.hub.protocol.ConnectionRequest;
 import net.sharksystem.hub.protocol.HubPDUConnectPeerNewTCPSocketRQ;
 import net.sharksystem.streams.IdleStreamPairCloser;
 import net.sharksystem.streams.StreamPair;
-import net.sharksystem.streams.StreamPairWrapper;
-import net.sharksystem.streams.WrappedStreamPairListener;
-import net.sharksystem.utils.AlarmClock;
-import net.sharksystem.utils.AlarmClockListener;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
@@ -27,7 +23,7 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
     }
 
     @Override
-    public boolean canEstablishTCPConnections() {
+    public boolean hubSideCanEstablishTCPConnections() {
         return true;
     }
 
@@ -95,10 +91,12 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
 
     // called as result of a new connection request - peer has created a new data connection
     @Override
-    public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair streamPair) {
+    public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID,
+                                     StreamPair streamPair, int timeOutDataConnection) {
         // tell hub - we have a new data connection and are eager to be connected with other peer
         Log.writeLog(this, this.toString(),"newConnectionCreated: " + sourcePeerID + "-->" + targetPeerID);
         try {
+            IdleStreamPairCloser.getIdleStreamsCloser(streamPair, timeOutDataConnection).start();
             this.getHub().startDataSession(sourcePeerID, targetPeerID, streamPair, this.getTimeOutDataConnection());
         } catch (ASAPHubException | IOException e) {
             Log.writeLog(this, this.toString(),"could not create data connection: " + e.getLocalizedMessage());
