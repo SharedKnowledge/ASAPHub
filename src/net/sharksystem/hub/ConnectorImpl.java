@@ -157,14 +157,21 @@ public abstract class ConnectorImpl implements Connector {
     private String idString = null;
     protected String getID() {
         if(this.idString == null) {
+            String s;
             if (this.isHubSide()) {
-                this.idString = "hub ";
+                s = "hub ";
             } else {
-                this.idString = "peer ";
+                s = "peer ";
             }
 
-            this.idString = this.idString + this.getPeerID().toString();
+            if(this.getPeerID() != null) {
+                s = s + this.getPeerID().toString();
+                this.idString = s; // peer registered - will not change
+            } else {
+                return s + "no peer yet";
+            }
         }
+
         return this.idString;
     }
 

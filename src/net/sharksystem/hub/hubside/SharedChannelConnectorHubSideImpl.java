@@ -45,6 +45,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
 
         this.hub = hub;
 
+        /* connector thread reads...
         // read hello pdu
         try {
             HubPDURegister hubPDURegister = (HubPDURegister) HubPDU.readPDU(this.getInputStream());
@@ -56,6 +57,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         }
 
         this.hub.register(this.peerID, this);
+         */
 
     }
 
@@ -360,9 +362,32 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
     @Override
     public void register(HubPDURegister pdu) {
         // received register pdu - tell hub
-        Log.writeLog(this, this.toString(), "received register from peer side - tell hub");
+        Log.writeLog(this, this.toString(),
+                "received register from peer side - tell hub (peer can create TCP = "
+                        + pdu.canCreateTCPConnections + ")");
+        this.peerID = pdu.peerID.toString();
         this.peerSideCanCreateTCPConnections = pdu.canCreateTCPConnections;
+        try {
+            this.sendHubStatusRPLY();
+        } catch (IOException e) {
+            Log.writeLog(this, this.toString(), "failed to send hub status" + e.getLocalizedMessage());
+        }
         this.hub.register(pdu.peerID, this, pdu.canCreateTCPConnections);
+
+        /* connector thread reads...
+        // read hello pdu
+        try {
+            HubPDURegister hubPDURegister = (HubPDURegister) HubPDU.readPDU(this.getInputStream());
+            this.peerID = hubPDURegister.peerID.toString();
+            Log.writeLog(this, this.toString(), "new connector: " + this.getPeerID());
+            this.sendHubStatusRPLY();
+        } catch (IOException e) {
+            throw new ASAPHubException(e);
+        }
+
+        this.hub.register(this.peerID, this);
+         */
+
     }
 
     @Override
