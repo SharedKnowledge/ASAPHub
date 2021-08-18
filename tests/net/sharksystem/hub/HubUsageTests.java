@@ -22,20 +22,31 @@ public class HubUsageTests {
 
     @Test
     public void usageSharedConnection() throws IOException, InterruptedException, ASAPException {
-        this.runUsageTest(false);
+        this.runUsageTest(false, false);
     }
 
     @Test
     public void usageNewConnection() throws IOException, InterruptedException, ASAPException {
-        this.runUsageTest(true);
+        this.runUsageTest(true, true);
     }
 
-    public void runUsageTest(boolean canCreateTCPConnections) throws IOException, InterruptedException, ASAPException {
+    @Test
+    public void usageNewConnection2() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(true, false);
+    }
+
+    @Test
+    public void usageNewConnection3() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(false, true);
+    }
+
+    public void runUsageTest(boolean aliceCanCreateTCPConnections, boolean bobCanCreateTCPConnections)
+            throws IOException, InterruptedException, ASAPException {
         int maxTimeInSeconds = Connector.DEFAULT_TIMEOUT_IN_MILLIS / 1000;
         maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
         int specificPort = getPort();
         CharSequence host = "localhost";
-        TCPHub hub = new TCPHub(specificPort, canCreateTCPConnections);
+        TCPHub hub = new TCPHub(specificPort, aliceCanCreateTCPConnections);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
         hub.setMaxIdleConnectionInSeconds(maxTimeInSeconds);
         new Thread(hub).start();
@@ -44,7 +55,7 @@ public class HubUsageTests {
         HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
         aliceHubConnector.addListener(aliceListener);
 
-        aliceHubConnector.connectHub(ALICE_ID, canCreateTCPConnections);
+        aliceHubConnector.connectHub(ALICE_ID, aliceCanCreateTCPConnections);
         Thread.sleep(100);
         Collection<CharSequence> peerNames = aliceHubConnector.getPeerIDs();
         Assert.assertEquals(0, peerNames.size());
@@ -52,7 +63,7 @@ public class HubUsageTests {
         HubConnectorTester bobListener = new HubConnectorTester(BOB_ID);
         HubConnector bobHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
         bobHubConnector.addListener(bobListener);
-        bobHubConnector.connectHub(BOB_ID, canCreateTCPConnections);
+        bobHubConnector.connectHub(BOB_ID, bobCanCreateTCPConnections);
         Thread.sleep(100);
 
         peerNames = bobHubConnector.getPeerIDs();
