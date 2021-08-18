@@ -2,7 +2,6 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPPeer;
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.streams.IdleStreamPairCloser;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.streams.StreamPairLink;
 import net.sharksystem.utils.Log;
@@ -21,20 +20,13 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
      * @throws IOException
      */
     @Override
-    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
-            throws ASAPHubException, IOException {
-
-        this.connectionRequest(sourcePeerID, targetPeerID, timeout, false);
-    }
-
-    @Override
     public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
-                          int timeout, boolean newConnection) throws ASAPHubException, IOException {
+                          int timeout) throws ASAPHubException, IOException {
         Log.writeLog(this, "received connection request ("
-                + sourcePeerID + " -> " + targetPeerID + ") | " + "newConnection = " + newConnection);
+                + sourcePeerID + " -> " + targetPeerID + ")");
 
         // request comes from hub connector - relay this request to the other side
-        this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout, newConnection);
+        this.sendConnectionRequest(sourcePeerID, targetPeerID, timeout);
     }
 
     /**
@@ -44,7 +36,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
      * @param timeout
      */
     protected abstract void sendConnectionRequest(
-            CharSequence sourcePeerID,CharSequence targetPeerID, int timeout, boolean newConnection)
+            CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
                 throws ASAPHubException, IOException;
 
     /**

@@ -21,8 +21,7 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity implements New
      * @param timeout
      * @throws ASAPHubException
      */
-    protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout,
-                                         boolean newConnection)
+    protected void sendConnectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException {
 
         ConnectorInternal targetConnector = this.getConnector(targetPeerID);
@@ -31,7 +30,7 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity implements New
 
         // asked connector to establish a connection - it will try and call hub back and asks for a data session
         Log.writeLog(this, "create connection request ("  + sourcePeerID + " -> " + targetPeerID + ")");
-        targetConnector.connectionRequest(sourcePeerID, targetPeerID, timeout, newConnection);
+        targetConnector.connectionRequest(sourcePeerID, targetPeerID, timeout);
     }
 
     /**
@@ -60,6 +59,7 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity implements New
         Log.writeLog(this, "createDataConnection");
         ConnectorInternal targetConnector = this.getConnector(targetPeerID);
         if(targetConnector.canEstablishTCPConnections()) {
+            Log.writeLog(this,"found connector, it can establish new connections " + targetPeerID);
             targetConnector.createNewConnection(this, sourcePeerID, targetPeerID, timeout, timeout);
         } else {
             Log.writeLog(this,"found connector to " + targetPeerID);

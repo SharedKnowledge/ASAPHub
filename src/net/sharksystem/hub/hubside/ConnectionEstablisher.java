@@ -55,9 +55,6 @@ public interface ConnectionEstablisher {
     void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
             throws ASAPHubException, IOException;
 
-    void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout, boolean newConnection)
-            throws ASAPHubException, IOException;
-
     /**
      * An existing connection is terminated. Connection requests are discarded. Nothing happens otherwise.
      * @param targetPeerID

@@ -22,11 +22,6 @@ public class ConnectorInternalLocalStub implements ConnectorInternal {
     }
 
     @Override
-    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout, boolean newConnection) throws ASAPHubException, IOException {
-
-    }
-
-    @Override
     public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
 
     }

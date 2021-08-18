@@ -46,7 +46,7 @@ public class HubUsageTests {
         maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
         int specificPort = getPort();
         CharSequence host = "localhost";
-        TCPHub hub = new TCPHub(specificPort, aliceCanCreateTCPConnections);
+        TCPHub hub = new TCPHub(specificPort, true);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
         hub.setMaxIdleConnectionInSeconds(maxTimeInSeconds);
         new Thread(hub).start();

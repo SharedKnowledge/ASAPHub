@@ -89,8 +89,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
      */
     @Override
     public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
-                                  int timeout, boolean newConnection)
-            throws ASAPHubException, IOException {
+                                  int timeout) throws ASAPHubException, IOException {
 
         Log.writeLog(this, this.toString(), "connection request: " + sourcePeerID + " --> " + targetPeerID);
         if(localCall(sourcePeerID, targetPeerID)) {
@@ -101,15 +100,11 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
             // remember call
             this.externalConnectionRequestList.add(
                     new ConnectionRequest(
-                            sourcePeerID, targetPeerID,System.currentTimeMillis() + timeout, newConnection));
+                            sourcePeerID, targetPeerID,System.currentTimeMillis() + timeout,
+                            this.canEstablishTCPConnections()));
 
             this.handleExternalConnectionRequestList();
         }
-    }
-
-    public void connectionRequest(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout)
-            throws ASAPHubException, IOException {
-        this.connectionRequest(sourcePeerID, targetPeerID, timeout, false);
     }
 
     void connectionRequest(CharSequence targetPeerID) throws ASAPHubException, IOException {
@@ -408,8 +403,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         try {
             this.hub.connectionRequest(
                     this.peerID, pdu.peerID,
-                    this.getTimeOutConnectionRequest(),
-                    this.canEstablishTCPConnections());
+                    this.getTimeOutConnectionRequest());
 
         } catch (ASAPHubException | IOException e) {
             Log.writeLogErr(this, this.toString(), "connection RQ failed with hub: " + e.getLocalizedMessage());
