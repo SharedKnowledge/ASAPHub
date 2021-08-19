@@ -69,6 +69,11 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
                 Log.writeLog(this, this.toString(), "newly created socket died before first usage");
                 return;
             }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // ignore
+            }
              */
             String s = SharedTCPChannelConnectorPeerSide.this.getPeerID() + " --> " + this.peerID;
             SharedTCPChannelConnectorPeerSide.this.dataSessionStarted(

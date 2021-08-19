@@ -94,7 +94,7 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
     public void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID,
                                      StreamPair streamPair, int timeOutDataConnection) {
         // tell hub - we have a new data connection and are eager to be connected with other peer
-        Log.writeLog(this, this.toString(),"newConnectionCreated: " + sourcePeerID + "-->" + targetPeerID);
+        Log.writeLog(this, this.toString(),"newConnectionCreated: " + sourcePeerID + " --> " + targetPeerID);
         try {
             IdleStreamPairCloser.getIdleStreamsCloser(streamPair, timeOutDataConnection).start();
             // a preparer would fit
