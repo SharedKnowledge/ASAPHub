@@ -137,7 +137,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             try {
                 Log.writeLog(this, "create data link");
                 StreamPairLink dataLink =
-                        new StreamPairLink(dataSessionRequest.connection, sourcePeerID, connection, targetPeerID);
+                        new StreamPairLink(dataSessionRequest.connection, targetPeerID, connection, sourcePeerID);
             } catch (IOException e) {
                 Log.writeLogErr(this, "while creating stream pair link: " + e.getLocalizedMessage());
             }

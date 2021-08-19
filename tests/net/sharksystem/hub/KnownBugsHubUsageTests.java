@@ -1,8 +1,8 @@
 package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
-import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.hubside.TCPHub;
+import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
 import org.junit.Assert;
 import org.junit.Test;
@@ -10,9 +10,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collection;
 
-import static net.sharksystem.hub.TestConstants.*;
+import static net.sharksystem.hub.TestConstants.ALICE_ID;
+import static net.sharksystem.hub.TestConstants.BOB_ID;
 
-public class HubUsageTests {
+public class KnownBugsHubUsageTests {
     String ROOT_FOLDER = TestConstants.ROOT_DIRECTORY + HubUsageTests.class.getSimpleName() + "/";
 
     static int portNumber = 6907;
@@ -20,6 +21,7 @@ public class HubUsageTests {
         return portNumber++;
     }
 
+/*
     @Test
     public void usageSharedConnection() throws IOException, InterruptedException, ASAPException {
         this.runUsageTest(false, false);
@@ -29,7 +31,8 @@ public class HubUsageTests {
     public void usageNewConnection() throws IOException, InterruptedException, ASAPException {
         this.runUsageTest(true, true);
     }
-/* see known bugs
+ */
+
     @Test
     public void usageNewConnection2() throws IOException, InterruptedException, ASAPException {
         this.runUsageTest(true, false);
@@ -39,7 +42,6 @@ public class HubUsageTests {
     public void usageNewConnection3() throws IOException, InterruptedException, ASAPException {
         this.runUsageTest(false, true);
     }
- */
 
     public void runUsageTest(boolean aliceCanCreateTCPConnections, boolean bobCanCreateTCPConnections)
             throws IOException, InterruptedException, ASAPException {
@@ -104,4 +106,5 @@ public class HubUsageTests {
         }
         Assert.assertEquals(0, peerNames.size());
     }
+
 }

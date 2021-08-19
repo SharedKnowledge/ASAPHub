@@ -1,5 +1,6 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.SharkException;
 import net.sharksystem.streams.StreamPair;
 
 /**
