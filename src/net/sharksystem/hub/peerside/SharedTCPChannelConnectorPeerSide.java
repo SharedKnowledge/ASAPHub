@@ -8,6 +8,8 @@ import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPeerSide {
@@ -42,20 +44,30 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
         try {
             Socket newPeerSocket = new Socket(this.hostName, pdu.getPort());
             Log.writeLog(this, this.toString(), "connected - wait for clear message");
-            //HubPDU hubPDU = HubPDU.readPDU(newPeerSocket.getInputStream());
-            this.dataSessionStarted(pdu.getPeerID(),
-                    StreamPairImpl.getStreamPair(newPeerSocket.getInputStream(), newPeerSocket.getOutputStream()));
+            new Wait4Clear(pdu.peerID, newPeerSocket).start();
         } catch (IOException e) {
             Log.writeLog(this, this.toString(),"could not establish new TCP connection for new peer encounter");
         }
 
     }
-
-    /*
     private class Wait4Clear extends Thread {
-        Wait4Clear(InputStream is) {}
+        private final InputStream is;
+        private final CharSequence peerID;
+        private final OutputStream os;
+
+        Wait4Clear(CharSequence peerID, Socket newSocket) throws IOException {
+            this.is = newSocket.getInputStream();
+            this.os = newSocket.getOutputStream();
+            this.peerID = peerID;
+        }
+
+        public final void run() {
+//            HubPDU pdu = HubPDU.readPDU(this.newSocket.getInputStream());
+            String s = SharedTCPChannelConnectorPeerSide.this.getPeerID() + " --> " + this.peerID;
+            SharedTCPChannelConnectorPeerSide.this.dataSessionStarted(
+                    this.peerID, StreamPairImpl.getStreamPairWithSessionID(this.is, this.os, s));
+        }
     }
-     */
 
     public String toString() {
         return this.getPeerID() + " | " + this.hostName + ":" + this.port;
