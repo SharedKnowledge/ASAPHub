@@ -2,6 +2,7 @@ package net.sharksystem.hub.peerside;
 
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.protocol.ConnectionRequest;
+import net.sharksystem.hub.protocol.HubPDU;
 import net.sharksystem.hub.protocol.HubPDUConnectPeerNewTCPSocketRQ;
 import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.utils.Log;
@@ -40,7 +41,8 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
 
         try {
             Socket newPeerSocket = new Socket(this.hostName, pdu.getPort());
-            Log.writeLog(this, this.toString(), "connected");
+            Log.writeLog(this, this.toString(), "connected - wait for clear message");
+            //HubPDU hubPDU = HubPDU.readPDU(newPeerSocket.getInputStream());
             this.dataSessionStarted(pdu.getPeerID(),
                     StreamPairImpl.getStreamPair(newPeerSocket.getInputStream(), newPeerSocket.getOutputStream()));
         } catch (IOException e) {
@@ -48,6 +50,12 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
         }
 
     }
+
+    /*
+    private class Wait4Clear extends Thread {
+        Wait4Clear(InputStream is) {}
+    }
+     */
 
     public String toString() {
         return this.getPeerID() + " | " + this.hostName + ":" + this.port;

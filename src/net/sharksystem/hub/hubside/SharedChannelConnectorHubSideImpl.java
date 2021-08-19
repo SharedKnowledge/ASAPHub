@@ -202,9 +202,16 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
 
             // handle connection request
             Log.writeLog(this, this.toString(), "launch data session by request: " + connectionRequest);
-            // init data session
-            StreamPair streamPair =
-                    this.initDataSession(connectionRequest, this.getTimeOutDataConnection());
+
+            // init data session - this can fail if we are not in silence mode - that's ok, though
+            StreamPair streamPair = null;
+            try {
+                streamPair = this.initDataSession(connectionRequest, this.getTimeOutDataConnection());
+            }
+            catch(ASAPHubException e) {
+                Log.writeLog(this, this.toString(), "cannot init data session yet - we can wait");
+                return false;
+            }
 
             // tell hub
             Log.writeLog(this, this.toString(), "tell hub about newly created data session: " + connectionRequest);

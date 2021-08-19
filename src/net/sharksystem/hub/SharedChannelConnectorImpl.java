@@ -181,7 +181,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
 
         String sessionID = this.getID() + ":" + this.sessionCounter++;
 
-        Log.writeLog(this, this.toString(), "start new data session " + sessionID);
+        Log.writeLog(this, this.toString(), "start new data session: " + sessionID);
         this.wrappedDataSessionStreamPair = new StreamPairWrapper(
                 this.getInputStream(), this.getOutputStream(), this, sessionID);
 
@@ -199,9 +199,6 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
         // set alarm clock
         this.dataSessionClock = new AlarmClock(this.getTimeOutDataConnection(), ALARM_CLOCK_DATA_SESSION, this);
         this.dataSessionClock.start();
-
-        // launch stream
-        //TimedStreamPair timedStreamPair = new TimedStreamPair(this.wrappedDataSessionStreamPair, timeout);
 
         // tell sub classes
         this.dataSessionStarted(connectionRequest.targetPeerID, this.wrappedDataSessionStreamPair);

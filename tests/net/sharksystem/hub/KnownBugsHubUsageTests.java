@@ -34,17 +34,75 @@ public class KnownBugsHubUsageTests {
  */
 
     @Test
-    public void usageNewConnection2() throws IOException, InterruptedException, ASAPException {
-        this.runUsageTest(true, false);
+    public void usageNewConnection2_0() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(
+                true,
+                false,
+                "ALICE_CAN_TCP",
+                "YZ",
+                false);
     }
 
     @Test
-    public void usageNewConnection3() throws IOException, InterruptedException, ASAPException {
-        this.runUsageTest(false, true);
+    public void usageNewConnection2_1() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(
+                true,
+                false,
+                "A",
+                "Y",
+                false);
     }
 
-    public void runUsageTest(boolean aliceCanCreateTCPConnections, boolean bobCanCreateTCPConnections)
-            throws IOException, InterruptedException, ASAPException {
+    @Test
+    public void usageNewConnection2_2() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(
+                true,
+                false,
+                "A",
+                "XYZ",
+                false);
+    }
+
+    @Test
+    public void usageNewConnection3_0() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(
+                false,
+                true,
+                "BOB_CAN_TCP",
+                "YY",
+                false);
+
+        /*
+        Die Länge der Nachrichten ist richtig. Da kommen zu viele Nullen an. Aber die Anzahl ist richtig.
+        Ist das ein Problem des Lesens oder schreibens?
+         */
+    }
+
+    @Test
+    public void usageNewConnection3_1() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(
+                false,
+                true,
+                "A",
+                "Y",
+                false);
+    }
+
+    @Test
+    public void usageNewConnection3_2() throws IOException, InterruptedException, ASAPException {
+        this.runUsageTest(
+                false,
+                true,
+                "A", // does not matter
+                "Y",// does not matter
+                true);
+    }
+
+    public void runUsageTest(
+            boolean aliceCanCreateTCPConnections,
+            boolean bobCanCreateTCPConnections,
+            String messageA, String messageB,
+            boolean pureBytes)  throws IOException, InterruptedException, ASAPException {
         int maxTimeInSeconds = Connector.DEFAULT_TIMEOUT_IN_MILLIS / 1000;
         maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
         int specificPort = getPort();
@@ -55,7 +113,7 @@ public class KnownBugsHubUsageTests {
         new Thread(hub).start();
 
         HubConnector aliceHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
-        HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID);
+        HubConnectorTester aliceListener = new HubConnectorTester(ALICE_ID, messageA, messageB, pureBytes);
         aliceHubConnector.addListener(aliceListener);
 
         aliceHubConnector.connectHub(ALICE_ID, aliceCanCreateTCPConnections);
@@ -63,7 +121,7 @@ public class KnownBugsHubUsageTests {
         Collection<CharSequence> peerNames = aliceHubConnector.getPeerIDs();
         Assert.assertEquals(0, peerNames.size());
 
-        HubConnectorTester bobListener = new HubConnectorTester(BOB_ID);
+        HubConnectorTester bobListener = new HubConnectorTester(BOB_ID, messageA, messageB, pureBytes);
         HubConnector bobHubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(host, specificPort);
         bobHubConnector.addListener(bobListener);
         bobHubConnector.connectHub(BOB_ID, bobCanCreateTCPConnections);

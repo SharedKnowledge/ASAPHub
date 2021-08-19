@@ -36,11 +36,13 @@ class NewConnectionCreator extends Thread implements AlarmClockListener {
             Socket newSocket = this.srv.accept();
             alarmClock.kill();
             this.srv.close();
-            Log.writeLog(this, "new connection initiated from peer side - call listener: "
-                    + listener.getClass().getSimpleName());
+            Log.writeLog(this, "new connection initiated from peer side ("
+                    + this.sourcePeerID + " --> " + this.targetPeerID + ")");
+            Log.writeLog(this, "call listener: " + listener.getClass().getSimpleName());
 
             this.listener.newConnectionCreated(this.sourcePeerID, this.targetPeerID,
-                    StreamPairImpl.getStreamPair(newSocket.getInputStream(), newSocket.getOutputStream()),
+                    StreamPairImpl.getStreamPairWithSessionID(newSocket.getInputStream(), newSocket.getOutputStream(),
+                            this.sourcePeerID + ":" + newSocket.getLocalPort()),
                     this.timeOutDataConnection);
 
         } catch (IOException e) {

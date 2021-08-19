@@ -17,11 +17,40 @@ import static net.sharksystem.hub.TestConstants.ALICE_ID;
 
 class HubConnectorTester implements NewConnectionListener {
     private final String peerID;
+    private final String messageA;
+    private final String messageB;
+    private final boolean pureBytes;
     private int numberNotifications = 0;
     public boolean error = false;
 
+    public static final String DEFAULT_MESSAGE_A = "AAAAAAAAAAA";
+    public static final String DEFAULT_MESSAGE_B = "YY";
+
     public HubConnectorTester(String peerID) {
+        this(peerID, DEFAULT_MESSAGE_A, DEFAULT_MESSAGE_B, false);
+    }
+
+    public HubConnectorTester(String peerID, String messageA, String messageB, boolean pureBytes) {
         this.peerID = peerID;
+        this.messageA = messageA;
+        this.messageB = messageB;
+        this.pureBytes = pureBytes;
+    }
+
+    private void onError(byte[] expected, byte[] actual) {
+        this.error = true;
+        String expectedBytesAsString = ASAPSerialization.printByteArrayToString(expected);
+        String actualBytesAsString = ASAPSerialization.printByteArrayToString(actual);
+
+
+        System.err.println("Error on side: " + this.peerID + "\n"
+                + expectedBytesAsString + "(expected)\n"
+                + actualBytesAsString + "(actual)");
+
+        /*
+         * This is funny because that reference to a movie "Lost on translation"..
+         */
+        throw new SharkNotSupportedException("lost in transition");
     }
 
     @Override
@@ -33,11 +62,29 @@ class HubConnectorTester implements NewConnectionListener {
         try {
             //Thread.sleep(1500);
             //String message = this.peerID;
-            String message = "AAAAAAAAAAA";
-            System.out.println(peerID + " writes into stream: " + message);
+
+            if(this.pureBytes) {
+
+                byte[] testBytes = new byte[10];
+                for(int i = 0; i < 10; i++) {
+                    byte b = (byte) i;
+                    testBytes[i] = b;
+                }
+                System.out.println(peerID + " writes pure bytes: " + this.messageA);
+                streamPair.getOutputStream().write(testBytes);
+                byte[] receivedBytes = new byte[10];
+                //Thread.sleep(1000); // give other process a moment
+                System.out.println(peerID + " available: " + streamPair.getInputStream().available());
+                streamPair.getInputStream().read(receivedBytes);
+                System.out.println(peerID + " available: " + streamPair.getInputStream().available());
+                if(!Helper.sameByteArray(testBytes, receivedBytes)) this.onError(testBytes, receivedBytes);
+                return;
+            }
+
+            System.out.println(peerID + " writes into stream: " + this.messageA);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ASAPSerialization.writeCharSequenceParameter(message, baos);
+            ASAPSerialization.writeCharSequenceParameter(this.messageA, baos);
             byte[] outBytes = baos.toByteArray();
             ASAPSerialization.writeByteArray(outBytes, streamPair.getOutputStream());
 
@@ -46,6 +93,7 @@ class HubConnectorTester implements NewConnectionListener {
             if(PeerIDHelper.sameID(peerID, ALICE_ID)) {
                 int i = 42; // debug break
             }
+            Thread.sleep(1000);
             byte[] inBytes = ASAPSerialization.readByteArray(streamPair.getInputStream());
             ByteArrayInputStream bais = new ByteArrayInputStream(inBytes);
             String receivedMessage = ASAPSerialization.readCharSequenceParameter(bais);
@@ -53,7 +101,7 @@ class HubConnectorTester implements NewConnectionListener {
             System.out.println(this.peerID + " received: " + receivedMessage);
 
             // test
-            if(!Helper.sameByteArray(outBytes, inBytes)) this.error = true;
+            if(!Helper.sameByteArray(outBytes, inBytes)) this.onError(outBytes, inBytes);
 
             /*
             try {
@@ -63,10 +111,9 @@ class HubConnectorTester implements NewConnectionListener {
             }
              */
 //            message = "Hi: " + receivedMessage;
-            message = "YY";
-            System.out.println(this.peerID + " going to send " + message);
+            System.out.println(this.peerID + " going to send " + this.messageB);
             baos = new ByteArrayOutputStream();
-            ASAPSerialization.writeCharSequenceParameter(message, baos);
+            ASAPSerialization.writeCharSequenceParameter(this.messageB, baos);
             outBytes = baos.toByteArray();
             ASAPSerialization.writeByteArray(outBytes, streamPair.getOutputStream());
 
@@ -79,7 +126,7 @@ class HubConnectorTester implements NewConnectionListener {
             System.out.println(this.peerID + " received#2: " + receivedMessage);
 
             // test
-            if(!Helper.sameByteArray(outBytes, inBytes)) this.error = true;
+            if(!Helper.sameByteArray(outBytes, inBytes)) this.onError(outBytes, inBytes);
 
             // wait a moment
             Thread.sleep(10000);
