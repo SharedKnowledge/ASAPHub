@@ -73,10 +73,11 @@ class HubConnectorTester implements NewConnectionListener {
                 System.out.println(peerID + " writes pure bytes: " + this.messageA);
                 streamPair.getOutputStream().write(testBytes);
                 byte[] receivedBytes = new byte[10];
-                //Thread.sleep(1000); // give other process a moment
                 System.out.println(peerID + " available: " + streamPair.getInputStream().available());
+                Thread.sleep(100); // give other process a moment
+                System.out.println(peerID + " available #2: " + streamPair.getInputStream().available());
                 streamPair.getInputStream().read(receivedBytes);
-                System.out.println(peerID + " available: " + streamPair.getInputStream().available());
+                System.out.println(peerID + " available #3: " + streamPair.getInputStream().available());
                 if(!Helper.sameByteArray(testBytes, receivedBytes)) this.onError(testBytes, receivedBytes);
                 return;
             }

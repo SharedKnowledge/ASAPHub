@@ -2,6 +2,7 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPPeer;
 import net.sharksystem.hub.ASAPHubException;
+import net.sharksystem.hub.ConnectionPreparer;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.streams.StreamPairLink;
 import net.sharksystem.utils.Log;
@@ -77,8 +78,11 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
     public void startDataSession(CharSequence sourcePeerID, CharSequence targetPeerID,
                                  StreamPair connection, int timeout) throws ASAPHubException, IOException {
 
+        ConnectionPreparer preparer = null; // should be in parameter list TODO
         // remember this request
-        this.dataSessionRequestList.add(new DataSessionRequest(sourcePeerID, targetPeerID, connection, timeout));
+        this.dataSessionRequestList.add(
+                new DataSessionRequest(sourcePeerID, targetPeerID, connection, timeout, preparer));
+
         Log.writeLog(this, "start data session " + sourcePeerID + " -> " + targetPeerID);
         this.createDataConnection(sourcePeerID, targetPeerID, timeout);
     }
