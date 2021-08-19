@@ -90,14 +90,21 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
         private final CharSequence targetPeerID;
         private final StreamPair connection;
         private final int timeout;
+        public ConnectionPreparer connectionPreparer;
 
         DataSessionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
                            StreamPair connection, int timeout) {
+            this(sourcePeerID, targetPeerID, connection, timeout,null);
+        }
+
+        DataSessionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
+                           StreamPair connection, int timeout, ConnectionPreparer connectionPreparer) {
             this.sourcePeerID = sourcePeerID;
             this.targetPeerID = targetPeerID;
             this.connection = connection;
             this.until = System.currentTimeMillis() + timeout;
             this.timeout = timeout;
+            this.connectionPreparer = connectionPreparer;
         }
     }
 
@@ -111,6 +118,11 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             throws ASAPHubException, IOException;
 
     void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection) {
+        this.connectionCreated(sourcePeerID, targetPeerID, connection, null);
+    }
+
+    void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection,
+                           ConnectionPreparer connectionPreparer) {
         Log.writeLog(this, "connection created called");
         DataSessionRequest dataSessionRequest = null;
         List<DataSessionRequest> addAgain = new ArrayList<>();
@@ -137,7 +149,15 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             try {
                 Log.writeLog(this, "create data link");
                 StreamPairLink dataLink =
-                        new StreamPairLink(dataSessionRequest.connection, sourcePeerID, connection, targetPeerID);
+                        new StreamPairLink(dataSessionRequest.connection, sourcePeerID, connection, targetPeerID, false);
+
+                if(dataSessionRequest.connectionPreparer != null)
+                    dataSessionRequest.connectionPreparer.prepare(dataSessionRequest.connection);
+
+                if(connectionPreparer != null) connectionPreparer.prepare(connection);
+
+                // now go
+                dataLink.start();
             } catch (IOException e) {
                 Log.writeLogErr(this, "while creating stream pair link: " + e.getLocalizedMessage());
             }

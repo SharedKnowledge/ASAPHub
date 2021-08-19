@@ -43,7 +43,7 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
 
         try {
             Socket newPeerSocket = new Socket(this.hostName, pdu.getPort());
-            Log.writeLog(this, this.toString(), "connected - wait for clear message");
+            Log.writeLog(this, this.toString(), "connected - wait clearance message");
             new Wait4Clear(pdu.peerID, newPeerSocket).start();
         } catch (IOException e) {
             Log.writeLog(this, this.toString(),"could not establish new TCP connection for new peer encounter");
@@ -62,7 +62,14 @@ public class SharedTCPChannelConnectorPeerSide extends SharedChannelConnectorPee
         }
 
         public final void run() {
-//            HubPDU pdu = HubPDU.readPDU(this.newSocket.getInputStream());
+            /*
+            try {
+                this.is.read(); // block to wait until connection is linked on hub side
+            } catch (IOException e) {
+                Log.writeLog(this, this.toString(), "newly created socket died before first usage");
+                return;
+            }
+             */
             String s = SharedTCPChannelConnectorPeerSide.this.getPeerID() + " --> " + this.peerID;
             SharedTCPChannelConnectorPeerSide.this.dataSessionStarted(
                     this.peerID, StreamPairImpl.getStreamPairWithSessionID(this.is, this.os, s));
