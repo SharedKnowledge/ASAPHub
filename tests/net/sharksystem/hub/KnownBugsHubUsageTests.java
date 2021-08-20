@@ -34,61 +34,6 @@ public class KnownBugsHubUsageTests {
  */
 
     @Test
-    public void usageNewConnection2_0() throws IOException, InterruptedException, ASAPException {
-        this.runUsageTest(
-                true,
-                false,
-                "ALICE_CAN_TCP",
-                "YZ",
-                false);
-    }
-
-    @Test
-    public void usageNewConnection2_1() throws IOException, InterruptedException, ASAPException {
-        this.runUsageTest(
-                true,
-                false,
-                "A",
-                "Y",
-                false);
-    }
-
-    @Test
-    public void usageNewConnection2_2() throws IOException, InterruptedException, ASAPException {
-        this.runUsageTest(
-                true,
-                false,
-                "A",
-                "XYZ",
-                false);
-    }
-
-    @Test
-    public void usageNewConnection3_0() throws IOException, InterruptedException, ASAPException {
-        this.runUsageTest(
-                false,
-                true,
-                "BOB_CAN_TCP",
-                "YY",
-                false);
-
-        /*
-        Die Länge der Nachrichten ist richtig. Da kommen zu viele Nullen an. Aber die Anzahl ist richtig.
-        Ist das ein Problem des Lesens oder schreibens?
-         */
-    }
-
-    @Test
-    public void usageNewConnection3_1() throws IOException, InterruptedException, ASAPException {
-        this.runUsageTest(
-                false,
-                true,
-                "A",
-                "Y",
-                false);
-    }
-
-    @Test
     public void usageNewConnection3_2() throws IOException, InterruptedException, ASAPException {
         this.runUsageTest(
                 false,
@@ -96,6 +41,7 @@ public class KnownBugsHubUsageTests {
                 "A", // does not matter
                 "Y",// does not matter
                 true);
+        System.err.println("it says it is ok - I still have doubts because of that necessary sleep. I do not get it yet.");
     }
 
     public void runUsageTest(
