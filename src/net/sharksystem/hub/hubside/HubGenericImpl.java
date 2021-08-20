@@ -155,10 +155,17 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
                 StreamPairLink dataLink =
                         new StreamPairLink(dataSessionRequest.connection, sourcePeerID, connection, targetPeerID, false);
 
+                /*
                 if(dataSessionRequest.connectionPreparer != null)
                     dataSessionRequest.connectionPreparer.prepare(dataSessionRequest.connection);
 
                 if(connectionPreparer != null) connectionPreparer.prepare(connection);
+                 */
+
+                // tell peers e2e is established
+                Log.writeLog(this, "send ready byte to each peer");
+                dataSessionRequest.connection.getOutputStream().write(ConnectionPreparer.readyByte);
+                connection.getOutputStream().write(ConnectionPreparer.readyByte);
 
                 // now go
                 dataLink.start();

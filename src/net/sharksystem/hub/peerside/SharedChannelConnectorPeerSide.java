@@ -239,7 +239,26 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
     @Override
     protected void dataSessionStarted(CharSequence targetPeerID, StreamPair streamPair) {
-        Log.writeLog(this, this.toString(), "data session started to peer: " + targetPeerID);
+        Log.writeLog(this, this.toString(), "data session started to peer " + targetPeerID);
+
+        Log.writeLog(this, this.toString(), "wait for ready byte " + targetPeerID);
+
+        byte b = 0;
+        while(b != ConnectionPreparer.readyByte) {
+            Log.writeLog(this, this.toString(), "no ready byte yet");
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+            try {
+                b = (byte) streamPair.getInputStream().read();
+            } catch (IOException e) {
+                Log.writeLog(this, this.toString(), "connection gone before usage, other peer: "
+                        + targetPeerID);
+            }
+        }
+        Log.writeLog(this, this.toString(), "got ready byte from hub - notify data session can begin");
 
         // tell listener
         if(this.listener != null) {

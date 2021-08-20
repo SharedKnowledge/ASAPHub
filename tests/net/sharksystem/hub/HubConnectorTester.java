@@ -73,8 +73,13 @@ class HubConnectorTester implements NewConnectionListener {
                 System.out.println(peerID + " writes pure bytes: " + this.messageA);
                 streamPair.getOutputStream().write(testBytes);
                 byte[] receivedBytes = new byte[10];
-                System.out.println(peerID + " available: " + streamPair.getInputStream().available());
-                //Thread.sleep(100); // give other process a moment
+                int available = streamPair.getInputStream().available();
+                if(available < 1) {
+                    //System.out.println(peerID + " try to go in read block");
+                    System.out.println(peerID + " sleep");
+                    //streamPair.getInputStream().read();
+                    Thread.sleep(100); // give other process a moment
+                }
                 System.out.println(peerID + " available #2: " + streamPair.getInputStream().available());
                 streamPair.getInputStream().read(receivedBytes);
                 System.out.println(peerID + " available #3: " + streamPair.getInputStream().available());
@@ -89,12 +94,15 @@ class HubConnectorTester implements NewConnectionListener {
             byte[] outBytes = baos.toByteArray();
             ASAPSerialization.writeByteArray(outBytes, streamPair.getOutputStream());
 
+            System.out.println(peerID + " sleep - other threads need to get a chance. Is that still a bug? ");
+            Thread.sleep(100); // give other process a moment
+
             // read
             System.out.println(peerID + " reading..");
             if(PeerIDHelper.sameID(peerID, ALICE_ID)) {
                 int i = 42; // debug break
             }
-            Thread.sleep(1000);
+            //Thread.sleep(1000);
             byte[] inBytes = ASAPSerialization.readByteArray(streamPair.getInputStream());
             ByteArrayInputStream bais = new ByteArrayInputStream(inBytes);
             String receivedMessage = ASAPSerialization.readCharSequenceParameter(bais);
@@ -117,6 +125,9 @@ class HubConnectorTester implements NewConnectionListener {
             ASAPSerialization.writeCharSequenceParameter(this.messageB, baos);
             outBytes = baos.toByteArray();
             ASAPSerialization.writeByteArray(outBytes, streamPair.getOutputStream());
+
+            System.out.println(peerID + " sleep - other threads need to get a chance. Is that still a bug? ");
+            Thread.sleep(100); // give other process a moment
 
             System.out.println(this.peerID + " reading.. ");
             inBytes = ASAPSerialization.readByteArray(streamPair.getInputStream());
