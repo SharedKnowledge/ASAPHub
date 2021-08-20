@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -17,8 +18,8 @@ import static org.junit.Assert.assertTrue;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class HubIPCJavaSideIntegrationTest {
 
-    private final String hostA = "localhost";
-    private final String hostB = "localhost";
+    private final String hostA = "192.168.178.201";
+    private final String hostB = "192.168.178.200";
     private final int ipcPortA = 6000;
     private final int messagePortA = 6100;
     private final int ipcPortB = 6200;
@@ -117,7 +118,7 @@ public class HubIPCJavaSideIntegrationTest {
         hubIPCJavaSideA.disconnect(this.peerIdA, this.peerIdB);
         int attempt = 0;
         boolean disconnected = false;
-        while(attempt < 3){
+        while(attempt < 6){
             if(hubIPCJavaSideB.hasActiveConnection()){
                 attempt++;
                 Thread.sleep(1000);
@@ -165,18 +166,18 @@ public class HubIPCJavaSideIntegrationTest {
      */
     private class StringInputStream extends InputStream {
 
-        private String stringToRead;
         private int readPosition = 0;
+        private byte[] bytesToRead;
 
         public StringInputStream(String stringToRead){
-            this.stringToRead = stringToRead;
+            this.bytesToRead = stringToRead.getBytes(StandardCharsets.UTF_8);
         }
 
         @Override
         public int read() throws IOException {
-            if(this.readPosition < this.stringToRead.length()){
+            if(this.readPosition < this.bytesToRead.length){
                 this.readPosition ++;
-                return stringToRead.charAt(this.readPosition-1);
+                return bytesToRead[this.readPosition-1];
             }
             try {
                 Thread.sleep(100000);
