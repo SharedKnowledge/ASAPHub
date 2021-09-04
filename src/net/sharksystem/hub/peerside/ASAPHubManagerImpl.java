@@ -48,7 +48,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     @Override
     public synchronized void addHub(HubConnector hubConnector) {
         Log.writeLog(this, this.toString(), "added hub connector: " + hubConnector);
-        //this.forceNewRound();
+        this.forceNewRound();
         this.hubConnectors.add(hubConnector);
         hubConnector.addListener(this);
     }
@@ -200,86 +200,38 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
 
     @Override
     public void run() {
-        ASAPHubManagerImpl.this.managerThread = Thread.currentThread();
-        Log.writeLog(this, this.toString(),"Hub manager thread running");
-        while(!this.managerThreadStopped) {
+        this.managerThread = Thread.currentThread();
+        Log.writeLog(this, this.toString(), "hub manager thread running");
+
+        while (!this.managerThreadStopped) {
             long startTime = System.currentTimeMillis();
             List<HubConnector> removeHub = new ArrayList<>();
 
             Log.writeLog(this, this.toString(), "start a new round");
             // start another round
 
-            // first - sync status
+            // start checker thread
             for(HubConnector hubConnector : this.hubConnectors) {
-                try {
-                    hubConnector.prepareBlockUntilReceived(HubPDU.HUB_STATUS_REPLY);
-                    hubConnector.syncHubInformation();
-                } catch (IOException e) {
-                    // io on this hub - removeHub it later and go ahead
-                    Log.writeLog(this, this.toString(), "problems with hub - remove it: " + e);
-                    e.printStackTrace();
-                    removeHub.add(hubConnector);
-                }
+                new HubConnectorSyncThread(
+                        this, this.asapEncounterManager, hubConnector, this.timeoutInMillis
+                ).start();
             }
-
-            for(HubConnector r : removeHub) {
-                this.removeHub(r);
-            }
-
-            removeHub = new ArrayList<>();
-
-            // wait a moment for reply
-            for(HubConnector hubConnector : this.hubConnectors) {
-                Log.writeLog(this, this.toString(), "check " + hubConnector.toString());
-                Collection<CharSequence> peerIDs = null;
-                try {
-                    hubConnector.setTimeOutInMillis(this.timeoutInMillis);
-                    hubConnector.blockUntilReceived(HubPDU.HUB_STATUS_REPLY);
-                    peerIDs = hubConnector.getPeerIDs();
-                } catch (IOException e) {
-                    // io on this hub - removeHub it later and go ahead
-                    Log.writeLog(this, this.toString(), "problems with hub - remove it: " + e);
-                    e.printStackTrace();
-                    removeHub.add(hubConnector);
-                }
-
-                Log.writeLog(this, this.toString(), "got peerIDs: " + peerIDs);
-                if(peerIDs != null && !peerIDs.isEmpty()) {
-                    for(CharSequence peerID : peerIDs) {
-                        if(this.asapEncounterManager.shouldCreateConnectionToPeer(
-                                peerID, EncounterConnectionType.ASAP_HUB)) {
-                            try {
-                                hubConnector.connectPeer(peerID);
-                            } catch (IOException e) {
-                                Log.writeLog(this, this.toString(), "exception when asking for connection: "
-                                        + e.getLocalizedMessage());
-                                removeHub.add(hubConnector);
-                            }
-                        }
-                    }
-                }
-            }
-
-            for(HubConnector r : removeHub) {
-                this.removeHub(r);
-            }
-
-            long duration = System.currentTimeMillis() - startTime;
-            Log.writeLog(this, this.toString(), "made a round through all hubs. Took (in ms): " + duration);
 
             try {
-                long sleepingTime = this.waitIntervalInSeconds*1000 - duration;
+                long sleepingTime = this.waitIntervalInSeconds * 1000;
                 Log.writeLog(this, this.toString(), "wait before next round (in ms): " + sleepingTime);
                 Thread.sleep(sleepingTime);
             } catch (InterruptedException e) {
-                Log.writeLog(this, this.toString(), "interrupted - make next round earlier");
+                if(!this.managerThreadStopped) {
+                    Log.writeLog(this, this.toString(), "interrupted - make next round earlier");
+                }
             }
+            Log.writeLog(this, this.toString(), "hub manager thread ended.");
         }
-        Log.writeLog(this, this.toString(), "hub manager thread ended.");
     }
 
     @Override
-    public void notifyPeerConnected(CharSequence targetPeerID, StreamPair streamPair) {
+    public void notifyPeerConnected (CharSequence targetPeerID, StreamPair streamPair){
         try {
             this.asapEncounterManager.handleEncounter(streamPair, EncounterConnectionType.ASAP_HUB);
         } catch (IOException e) {
@@ -290,5 +242,50 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
 
     public String toString() {
         return this.asapEncounterManager.toString();
+    }
+
+    class HubConnectorSyncThread extends Thread {
+        private final ASAPHubManager hubManager;
+        private final HubConnector hubConnector;
+        private final int timeoutInMillis;
+        private final ASAPEncounterManager asapEncounterManager;
+
+        HubConnectorSyncThread(ASAPHubManager hubManager, ASAPEncounterManager asapEncounterManager,
+                               HubConnector hubConnector, int timeoutInMillis) {
+            this.hubManager = hubManager;
+            this.asapEncounterManager = asapEncounterManager;
+            this.hubConnector = hubConnector;
+            this.timeoutInMillis = timeoutInMillis;
+        }
+
+        public void run() {
+            try {
+                // prepare a block - thread will be blocked until new status from hub came in
+                Log.writeLog(this, this.toString(), "check hub connection");
+                this.hubConnector.prepareBlockUntilReceived(HubPDU.HUB_STATUS_REPLY);
+                this.hubConnector.syncHubInformation();
+                this.hubConnector.setTimeOutInMillis(this.timeoutInMillis);
+                // now block - wait for reply
+                this.hubConnector.blockUntilReceived(HubPDU.HUB_STATUS_REPLY);
+                Collection<CharSequence> peerIDs = hubConnector.getPeerIDs();
+
+                Log.writeLog(this, this.toString(), "got peerIDs: " + peerIDs);
+                if (peerIDs != null && !peerIDs.isEmpty()) for (CharSequence peerID : peerIDs) {
+                    if (this.asapEncounterManager.shouldCreateConnectionToPeer(
+                            peerID, EncounterConnectionType.ASAP_HUB)) {
+                        this.hubConnector.connectPeer(peerID);
+                    }
+                }
+            } catch (IOException e) {
+                // io on this hub - removeHub it later and go ahead
+                Log.writeLog(this, this.toString(), "problems with hub - remove it: " + e);
+                e.printStackTrace();
+                this.hubManager.removeHub(this.hubConnector);
+            }
+        }
+
+        public String toString() {
+            return this.asapEncounterManager.toString();
+        }
     }
 }
