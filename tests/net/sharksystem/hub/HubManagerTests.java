@@ -2,7 +2,7 @@ package net.sharksystem.hub;
 
 import net.sharksystem.asap.*;
 import net.sharksystem.asap.apps.testsupport.ASAPTestPeerFS;
-import net.sharksystem.hub.hubside.TCPHub;
+import net.sharksystem.hub.hubside.ASAPTCPHub;
 import net.sharksystem.hub.peerside.ASAPHubManagerImpl;
 import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
@@ -24,7 +24,7 @@ public class HubManagerTests {
         // launch hub
         int specificPort = 6907;
         CharSequence host = "localhost";
-        TCPHub hub = new TCPHub(specificPort);
+        ASAPTCPHub hub = new ASAPTCPHub(specificPort);
 
         int maxTimeOutMillis = Connector.DEFAULT_TIMEOUT_IN_MILLIS;
 

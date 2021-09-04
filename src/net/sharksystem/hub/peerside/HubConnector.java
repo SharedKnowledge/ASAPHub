@@ -87,4 +87,5 @@ public interface HubConnector {
     void prepareBlockUntilReceived(byte pduCommand);
     void blockUntilReceived(byte hubStatusReply);
 
+    boolean isSame(HubConnectorDescription hcd);
 }

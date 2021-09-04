@@ -8,19 +8,38 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 public class HubConnectorFactory {
-    public static HubConnector createHubConnector(HubConnectorDescription hcd)
-            throws IOException, ASAPHubException {
-
+    public static HubConnector createHubConnector(HubConnectorDescription hcd) throws ASAPHubException, IOException {
         switch (hcd.getType()) {
             case HubConnectorDescription.TCP:
-                TCPHubConnectorDescription tcHcd = (TCPHubConnectorDescription) hcd;
-                return SharedTCPChannelConnectorPeerSide.createTCPHubConnector(tcHcd.getHostName(), tcHcd.getPort());
+                return SharedTCPChannelConnectorPeerSide.createTCPHubConnector(
+                        hcd.getHostName(), hcd.getPortNumber(), hcd.canMultiChannel());
 
             default: throw new ASAPHubException("unknown hub connector protocol type: " + hcd.getType());
         }
     }
 
-    public static HubConnectorDescription createHubConnectorByDescription(byte[] description)
+    /**
+     *
+     * @param hcd
+     * @return
+     * @throws IOException
+     * @throws ASAPHubException
+     * @deprecated
+     */
+    public static HubConnector createHubConnector(AbstractHubConnectorDescription hcd)
+            throws IOException, ASAPHubException {
+
+        switch (hcd.getType()) {
+            case HubConnectorDescription.TCP:
+                TCPHubConnectorDescriptionImpl tcHcd = (TCPHubConnectorDescriptionImpl) hcd;
+                    return SharedTCPChannelConnectorPeerSide.createTCPHubConnector(
+                            tcHcd.getHostName(), tcHcd.getPortNumber(), tcHcd.canMultiChannel());
+
+            default: throw new ASAPHubException("unknown hub connector protocol type: " + hcd.getType());
+        }
+    }
+
+    public static AbstractHubConnectorDescription createHubConnectorByDescription(byte[] description)
             throws IOException, ASAPException {
 
         ByteArrayInputStream bais = new ByteArrayInputStream(description);
@@ -28,9 +47,10 @@ public class HubConnectorFactory {
 
         switch(type) {
             case HubConnectorDescription.TCP:
-                return TCPHubConnectorDescription.createByDescription(description);
+                return TCPHubConnectorDescriptionImpl.createByDescription(description);
 
             default: throw new ASAPHubException("unknown hub connector protocol type: " + type);
         }
     }
+
 }

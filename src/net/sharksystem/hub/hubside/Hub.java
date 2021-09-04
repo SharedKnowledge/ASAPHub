@@ -35,7 +35,7 @@ import net.sharksystem.hub.peerside.HubConnector;
  *
  * @author Thomas Schwotzer
  * @see HubConnector
- * @see TCPHub
+ * @see ASAPTCPHub
  */
 public interface Hub {
     /** first IP package was sent Oct, 29th 1969 */

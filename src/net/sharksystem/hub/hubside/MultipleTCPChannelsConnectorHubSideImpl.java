@@ -76,11 +76,11 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
     private ServerSocket getServerSocket() throws IOException {
         HubInternal hub = this.getHub();
         // now it gets messy - needs to be cleaned up sometimes
-        if(!(hub instanceof TCPHub)) {
+        if(!(hub instanceof ASAPTCPHub)) {
             throw new IOException("need TCPHub to work - FATAL");
         }
 
-        TCPHub tcpHub = (TCPHub) hub;
+        ASAPTCPHub tcpHub = (ASAPTCPHub) hub;
         ServerSocket srvSocket = null;
         try {
             return tcpHub.getServerSocket();

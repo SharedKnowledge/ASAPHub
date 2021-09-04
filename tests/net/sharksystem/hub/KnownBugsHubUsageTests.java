@@ -1,7 +1,7 @@
 package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
-import net.sharksystem.hub.hubside.TCPHub;
+import net.sharksystem.hub.hubside.ASAPTCPHub;
 import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
 import org.junit.Assert;
@@ -53,7 +53,7 @@ public class KnownBugsHubUsageTests {
         maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
         int specificPort = getPort();
         CharSequence host = "localhost";
-        TCPHub hub = new TCPHub(specificPort, true);
+        ASAPTCPHub hub = new ASAPTCPHub(specificPort, true);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
         hub.setMaxIdleConnectionInSeconds(maxTimeInSeconds);
         new Thread(hub).start();

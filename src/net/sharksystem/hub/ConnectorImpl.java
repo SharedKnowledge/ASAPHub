@@ -1,13 +1,10 @@
 package net.sharksystem.hub;
 
-import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.hub.peerside.HubConnectorStatusListener;
-import net.sharksystem.hub.protocol.ConnectionRequest;
 import net.sharksystem.hub.protocol.ConnectorThread;
 import net.sharksystem.hub.protocol.HubPDU;
 import net.sharksystem.utils.Log;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -134,6 +131,7 @@ public abstract class ConnectorImpl implements Connector {
                     return;
                 } catch (InterruptedException e) {
                     // woke up - do it again
+                    Log.writeLog(this, "woke up from blocking " + pduCommand);
                 }
             } else {
                 Log.writeLog(this, "leave: " + pduCommand);

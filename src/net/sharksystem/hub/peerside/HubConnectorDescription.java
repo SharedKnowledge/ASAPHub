@@ -1,46 +1,37 @@
 package net.sharksystem.hub.peerside;
 
-import net.sharksystem.asap.ASAPException;
-import net.sharksystem.asap.utils.ASAPSerialization;
 import net.sharksystem.hub.ASAPHubException;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-public abstract class HubConnectorDescription {
-    public static final byte TCP = 0x00;
-    private final byte type;
+public interface HubConnectorDescription {
+    byte TCP = 0x00;
 
-    protected HubConnectorDescription(byte type) {
-        this.type = type;
-    }
+    /**
+     * provides type of this hub description. Known type constants are defined with this interface.
+     * @return
+     */
+    byte getType();
 
-    public byte getType() {
-        return this.type;
-    }
+    /**
+     * Provides host name on which hub is running
+     * @throws ASAPHubException if no such hostname exists in used protocol.
+     */
+    CharSequence getHostName() throws ASAPHubException;
 
-    public abstract String getTypeString();
+    /**
+     * Provides port number on hub side
+     * @throws ASAPHubException if no such concept as port exists in used protocol.
+     */
+    int getPortNumber() throws ASAPHubException;
 
-    public static HubConnectorDescription createHubConnectorDescription(byte[] serializedDescription)
-            throws IOException, ASAPException {
+    /**
+     * Is it allowed to create a new connection / channel for a peer encounter?
+     * @return
+     */
+    boolean canMultiChannel();
 
-        ByteArrayInputStream bais = new ByteArrayInputStream(serializedDescription);
-        byte type = ASAPSerialization.readByte(bais);
+    boolean isSame(HubConnectorDescription otherHcd);
 
-        switch(type) {
-            case TCP:
-                return TCPHubConnectorDescription.createHubConnectorDescription(serializedDescription);
-
-            default: throw new ASAPHubException("unknown hub connector protocol type: " + type);
-        }
-    }
-
-    public boolean isSame(HubConnectorDescription other) {
-        if(other.getType() != this.getType()) return false;
-
-        return this.isSameSpecific(other);
-    }
-
-    protected abstract boolean isSameSpecific(HubConnectorDescription other);
-    public abstract byte[] serialize() throws IOException;
+    byte[] serialize() throws IOException;
 }

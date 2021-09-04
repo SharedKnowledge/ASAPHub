@@ -1,13 +1,18 @@
 package net.sharksystem.hub;
 
+import net.sharksystem.TestHelper;
+import net.sharksystem.asap.ASAPEncounterManagerImpl;
 import net.sharksystem.asap.ASAPException;
-import net.sharksystem.hub.peerside.HubConnector;
-import net.sharksystem.hub.hubside.TCPHub;
-import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
+import net.sharksystem.asap.ASAPMessageReceivedListener;
+import net.sharksystem.asap.apps.testsupport.ASAPTestPeerFS;
+import net.sharksystem.asap.engine.ASAPEngineFS;
+import net.sharksystem.hub.peerside.*;
+import net.sharksystem.hub.hubside.ASAPTCPHub;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import static net.sharksystem.hub.TestConstants.*;
@@ -100,11 +105,12 @@ public class HubUsageTests {
             boolean bobCanCreateTCPConnections,
             String messageA, String messageB,
             boolean pureBytes)  throws IOException, InterruptedException, ASAPException {
+
         int maxTimeInSeconds = Connector.DEFAULT_TIMEOUT_IN_MILLIS / 1000;
         maxTimeInSeconds = maxTimeInSeconds > 0 ? maxTimeInSeconds : 1;
         int specificPort = getPort();
         CharSequence host = "localhost";
-        TCPHub hub = new TCPHub(specificPort, true);
+        ASAPTCPHub hub = new ASAPTCPHub(specificPort, true);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
         hub.setMaxIdleConnectionInSeconds(maxTimeInSeconds);
         new Thread(hub).start();
@@ -160,5 +166,73 @@ public class HubUsageTests {
             System.out.println(name);
         }
         Assert.assertEquals(0, peerNames.size());
+    }
+
+    @Test
+    public void usageHubManagerAndTwoPeers() throws IOException, InterruptedException, ASAPException {
+        int hubPort = TestHelper.getPortNumber();
+        HubConnectorDescription localHostHubDescription =
+                new TCPHubConnectorDescriptionImpl("localhost", hubPort, true);
+        Collection<HubConnectorDescription> hubDescriptions = new ArrayList<>();
+        hubDescriptions.add(localHostHubDescription);
+
+        // launch asap hub
+        ASAPTCPHub hub = ASAPTCPHub.startTCPHubThread(hubPort, true, MAX_IDLE_IN_SECONDS);
+
+        // give it moment to settle in
+        Thread.sleep(1000);
+
+        Collection<CharSequence> formats = new ArrayList<>();
+        formats.add(FORMAT);
+
+        //////////////////////////////// setup Alice
+        ASAPEngineFS.removeFolder(ALICE_ROOTFOLDER);
+        ASAPTestPeerFS aliceASAPPeer = new ASAPTestPeerFS(ALICE_ID, formats);
+
+        // send a message
+        aliceASAPPeer.sendASAPMessage(FORMAT, URI, "Hi there".getBytes());
+
+        ////////////// setup Bob
+        ASAPEngineFS.removeFolder(BOB_ROOTFOLDER);
+        ASAPTestPeerFS bobASAPPeer = new ASAPTestPeerFS(BOB_ID, formats);
+        DummyMessageReceivedListener bobListener = new DummyMessageReceivedListener(BOB_ID);
+        bobASAPPeer.addASAPMessageReceivedListener(FORMAT, bobListener);
+
+        ///////////////////// connect to hub - Alice
+        // setup encounter manager with a connection handler
+        ASAPEncounterManagerImpl aliceEncounterManager =
+                new ASAPEncounterManagerImpl(aliceASAPPeer);
+
+        // setup hub manager
+        ASAPHubManager aliceHubManager = ASAPHubManagerImpl.startASAPHubManager(aliceEncounterManager);
+
+        // connect with bulk import
+        aliceHubManager.connectASAPHubs(hubDescriptions, aliceASAPPeer, true);
+        Thread.sleep(1000);
+
+        ///////////////////// connect to hub - Bob
+        // setup encounter manager with a connection handler
+        ASAPEncounterManagerImpl bobEncounterManager =
+                new ASAPEncounterManagerImpl(bobASAPPeer);
+
+        // setup hub manager
+        ASAPHubManager bobHubManager = ASAPHubManagerImpl.startASAPHubManager(bobEncounterManager);
+
+        // connect to hub - Bob
+        bobHubManager.connectASAPHubs(hubDescriptions, bobASAPPeer, true);
+        Thread.sleep(1000);
+
+        // give them moment to exchange data
+        Thread.sleep(5000);
+        //Thread.sleep(Long.MAX_VALUE);
+        System.out.println("slept a moment");
+
+        // Bob received a message?
+        Assert.assertEquals(1, bobListener.counter);
+
+        // shut down
+        hub.kill();
+        aliceHubManager.kill();
+        bobHubManager.kill();
     }
 }

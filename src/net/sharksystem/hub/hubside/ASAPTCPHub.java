@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
+public class ASAPTCPHub extends HubSingleEntitySharedChannel implements Runnable {
     public static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
     private final boolean newConnection;
     private int maxIdleInMillis = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS * 1000;
@@ -25,15 +25,18 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
     private int maxPort = 0;
     private int nextPort = 0;
 
-    public TCPHub() throws IOException {
+    private boolean killed = false;
+    private StatusPrinter statusPrinter;
+
+    public ASAPTCPHub() throws IOException {
         this(DEFAULT_PORT);
     }
 
-    public TCPHub(int port) throws IOException {
+    public ASAPTCPHub(int port) throws IOException {
         this(port, false);
     }
 
-    public TCPHub(int port, boolean newConnection) throws IOException {
+    public ASAPTCPHub(int port, boolean newConnection) throws IOException {
         this.port = port;
         this.nextPort = port+1;
         this.serverSocket = new ServerSocket(this.port);
@@ -78,7 +81,7 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
     @Override
     public void run() {
         Log.writeLog(this, "started on port: " + this.port);
-        while(true) {
+        while(!killed) {
             Socket newConnection = null;
             try {
                 newConnection = this.serverSocket.accept();
@@ -155,7 +158,7 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
     //                                              command line                                           //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         String usageString = "optional parameters: -port [portnumber] -maxIdleSeconds [seconds]";
 
         // now get real parameters
@@ -196,33 +199,54 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
         }
 
         // create TCPHub
+        ASAPTCPHub.startTCPHubThread(port, true, maxIdleInSeconds);
+    }
+
+    public static ASAPTCPHub startTCPHubThread(int port, boolean multichannel, int maxIdleInSeconds)
+            throws IOException {
+
+        ASAPTCPHub tcpHub = new ASAPTCPHub(port, multichannel);
+        if(maxIdleInSeconds > 0) {
+            tcpHub.setMaxIdleConnectionInSeconds(maxIdleInSeconds);
+        }
+
+        System.out.println("start TCP hub on port " + tcpHub.port
+                + " with maxIdleInSeconds: " + tcpHub.maxIdleInMillis / 1000);
+
+        tcpHub.startStatusPrinter();
+        new Thread(tcpHub).start();
+        return tcpHub;
+    }
+
+    public void kill() {
+        this.killed = true;
+
         try {
-            TCPHub tcpHub = new TCPHub(port);
-            if(maxIdleInSeconds > 0) {
-                tcpHub.setMaxIdleConnectionInSeconds(maxIdleInSeconds);
-            }
-
-            System.out.println("start TCP hub on port " + tcpHub.port
-                    + " with maxIdleInSeconds: " + tcpHub.maxIdleInMillis / 1000);
-
-            Thread statusPrinter = new StatusPrinter(tcpHub);
-            statusPrinter.start();
-            tcpHub.run();
+            this.serverSocket.close();
         } catch (IOException e) {
-            System.err.println("cannot launch TCPHub: " + e.getLocalizedMessage());
-            e.printStackTrace();
+            Log.writeLog(this, "cannot close server socket: " + e.getLocalizedMessage());
+        }
+
+        if(this.statusPrinter != null) {
+            this.statusPrinter.kill();
         }
     }
 
-    private static class StatusPrinter extends Thread {
-        private final TCPHub tcpHub;
+    private void startStatusPrinter() {
+        this.statusPrinter = new StatusPrinter(this);
+        this.statusPrinter.start();
+    }
 
-        StatusPrinter(TCPHub tcpHub) {
+    private static class StatusPrinter extends Thread {
+        private final ASAPTCPHub tcpHub;
+        private boolean stopped = false;
+
+        StatusPrinter(ASAPTCPHub tcpHub) {
             this.tcpHub = tcpHub;
         }
 
         public void run() {
-            for (; ; ) {
+            while(!this.stopped) {
                 System.out.println("registered peers: " + this.tcpHub.getRegisteredPeers());
                 try {
                     Thread.sleep(30000);
@@ -230,6 +254,10 @@ public class TCPHub extends HubSingleEntitySharedChannel implements Runnable {
                     // ignore
                 }
             }
+        }
+
+        public void kill() {
+            this.stopped = true;
         }
     }
 }
