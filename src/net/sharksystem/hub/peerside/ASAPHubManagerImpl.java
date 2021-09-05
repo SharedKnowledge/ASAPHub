@@ -23,17 +23,15 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     private int forceNewRoundWaitingPeriod = 2000; // some seconds - other connections can arrive..
     private AlarmClock alarmClock;
 
-    public static ASAPHubManager startASAPHubManager(
+    public static ASAPHubManager createASAPHubManager(
             ASAPEncounterManager asapEncounterManager,  int waitIntervalInSeconds) {
-        ASAPHubManagerImpl asapHubManager = new ASAPHubManagerImpl(asapEncounterManager, waitIntervalInSeconds);
 
-        Log.writeLog(ASAPHubManagerImpl.class, "launch hub manager thread");
-        new Thread(asapHubManager).start();
-        return asapHubManager;
+        return new ASAPHubManagerImpl(asapEncounterManager, waitIntervalInSeconds);
     }
 
-    public static ASAPHubManager startASAPHubManager(ASAPEncounterManager asapEncounterManager) {
-        return startASAPHubManager(asapEncounterManager, DEFAULT_WAIT_INTERVAL_IN_SECONDS);
+    public static ASAPHubManager createASAPHubManager(ASAPEncounterManager asapEncounterManager) {
+
+        return new ASAPHubManagerImpl(asapEncounterManager, DEFAULT_WAIT_INTERVAL_IN_SECONDS);
     }
 
     public ASAPHubManagerImpl(ASAPEncounterManager asapEncounterManager) {
@@ -46,11 +44,34 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     }
 
     @Override
-    public synchronized void addHub(HubConnector hubConnector) {
+    public void addHub(HubConnector hubConnector) {
         Log.writeLog(this, this.toString(), "added hub connector: " + hubConnector);
-        this.forceNewRound();
-        this.hubConnectors.add(hubConnector);
-        hubConnector.addListener(this);
+        synchronized(this.hubConnectors) {
+            this.hubConnectors.add(hubConnector);
+            hubConnector.addListener(this);
+
+            if(this.managerThread == null) {
+                // re-launch
+                this.managerThreadStopped = false;
+                new Thread(this).start();
+            } else {
+                // we have a running manager thread
+                this.forceNewRound();
+            }
+        }
+    }
+
+    @Override
+    public void removeHub(HubConnector hubConnector) {
+        Log.writeLog(this, this.toString(), "remove hub connector: " + hubConnector);
+        synchronized(this.hubConnectors) {
+            this.hubConnectors.remove(hubConnector);
+            hubConnector.removeListener(this);
+            if (this.hubConnectors.size() == 0) {
+                Log.writeLog(this, this.toString(), "no more connector - shut down hub manager thread");
+                this.kill();
+            }
+        }
     }
 
     /**
@@ -91,13 +112,6 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
         if(this.managerThread != null)
             Log.writeLog(this, this.toString(), "call interrupt in manager thread");
             this.managerThread.interrupt();
-    }
-
-    @Override
-    public synchronized void removeHub(HubConnector hubConnector) {
-        Log.writeLog(this, this.toString(), "remove hub connector: " + hubConnector);
-        this.hubConnectors.remove(hubConnector);
-        hubConnector.removeListener(this);
     }
 
     public void setTimeOutInMillis(int millis) {
@@ -201,7 +215,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     @Override
     public void run() {
         this.managerThread = Thread.currentThread();
-        Log.writeLog(this, this.toString(), "hub manager thread running");
+        Log.writeLog(this, this.toString(), "hub manager thread started");
 
         while (!this.managerThreadStopped) {
             long startTime = System.currentTimeMillis();

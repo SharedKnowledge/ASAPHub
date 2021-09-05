@@ -204,7 +204,8 @@ public class HubUsageTests {
                 new ASAPEncounterManagerImpl(aliceASAPPeer);
 
         // setup hub manager
-        ASAPHubManager aliceHubManager = ASAPHubManagerImpl.startASAPHubManager(aliceEncounterManager);
+//        ASAPHubManager aliceHubManager = ASAPHubManagerImpl.startASAPHubManager(aliceEncounterManager);
+        ASAPHubManager aliceHubManager = ASAPHubManagerImpl.createASAPHubManager(aliceEncounterManager);
 
         // connect with bulk import
         aliceHubManager.connectASAPHubs(hubDescriptions, aliceASAPPeer, true);
@@ -216,7 +217,8 @@ public class HubUsageTests {
                 new ASAPEncounterManagerImpl(bobASAPPeer);
 
         // setup hub manager
-        ASAPHubManager bobHubManager = ASAPHubManagerImpl.startASAPHubManager(bobEncounterManager);
+//        ASAPHubManager bobHubManager = ASAPHubManagerImpl.startASAPHubManager(bobEncounterManager);
+        ASAPHubManager bobHubManager = ASAPHubManagerImpl.createASAPHubManager(bobEncounterManager);
 
         // connect to hub - Bob
         bobHubManager.connectASAPHubs(hubDescriptions, bobASAPPeer, true);
