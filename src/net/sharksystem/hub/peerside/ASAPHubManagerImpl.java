@@ -13,7 +13,8 @@ import net.sharksystem.utils.Log;
 import java.io.IOException;
 import java.util.*;
 
-public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnectionListener, AlarmClockListener {
+public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnectionListener, AlarmClockListener,
+        HubConnectorStatusListener {
     private static final int FORCE_NEW_ROUND_KEY = 1;
     private final ASAPEncounterManager asapEncounterManager;
     private final int waitIntervalInSeconds;
@@ -218,17 +219,20 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
         Log.writeLog(this, this.toString(), "hub manager thread started");
 
         while (!this.managerThreadStopped) {
-            long startTime = System.currentTimeMillis();
-            List<HubConnector> removeHub = new ArrayList<>();
-
             Log.writeLog(this, this.toString(), "start a new round");
-            // start another round
 
-            // start checker thread
             for(HubConnector hubConnector : this.hubConnectors) {
-                new HubConnectorSyncThread(
-                        this, this.asapEncounterManager, hubConnector, this.timeoutInMillis
-                ).start();
+                Log.writeLog(this, this.toString(), "check hub connection");
+                hubConnector.addStatusListener(this);
+                try {
+                    // trigger syncing
+                    hubConnector.syncHubInformation();
+                } catch (IOException e) {
+                    // io on this hub - removeHub it later and go ahead
+                    Log.writeLog(this, this.toString(), "problems with hub - remove it: " + e);
+                    e.printStackTrace();
+                    removeHub(hubConnector);
+                }
             }
 
             try {
@@ -241,6 +245,35 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
                 }
             }
             Log.writeLog(this, this.toString(), "hub manager thread ended.");
+        }
+    }
+
+
+    @Override
+    public void notifyConnectedAndOpen() {
+        // ignore
+    }
+
+    @Override
+    public void notifySynced(Connector connector, boolean changed) {
+        Log.writeLog(this, this.toString(), "synced (changed: " + changed + ")");
+        if(changed && connector instanceof HubConnector) {
+            HubConnector hubConnector = (HubConnector) connector;
+            try {
+                Collection<CharSequence> peerIDs = hubConnector.getPeerIDs();
+                Log.writeLog(this, this.toString(), "got peerIDs: " + peerIDs);
+                if (peerIDs != null && !peerIDs.isEmpty()) for (CharSequence peerID : peerIDs) {
+                    if (this.asapEncounterManager.shouldCreateConnectionToPeer(
+                            peerID, EncounterConnectionType.ASAP_HUB)) {
+                        hubConnector.connectPeer(peerID);
+                    }
+                }
+            } catch (IOException e) {
+                // io on this hub - removeHub it later and go ahead
+                Log.writeLog(this, this.toString(), "problems with hub - remove it: " + e);
+                e.printStackTrace();
+                this.removeHub(hubConnector);
+            }
         }
     }
 
