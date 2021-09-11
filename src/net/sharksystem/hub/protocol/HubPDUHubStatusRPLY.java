@@ -26,4 +26,8 @@ public class HubPDUHubStatusRPLY extends HubPDU {
         super.sendPDUNumber(os);
         ASAPSerialization.writeCharSequenceSetParameter(this.connectedPeers, os);
     }
+
+    public String toString() {
+        return super.toString() + " | " + this.connectedPeers;
+    }
 }

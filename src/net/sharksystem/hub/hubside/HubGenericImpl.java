@@ -2,7 +2,7 @@ package net.sharksystem.hub.hubside;
 
 import net.sharksystem.asap.ASAPPeer;
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.ConnectionPreparer;
+import net.sharksystem.hub.Connector;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.streams.StreamPairLink;
 import net.sharksystem.utils.Log;
@@ -77,11 +77,9 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
     @Override
     public void startDataSession(CharSequence sourcePeerID, CharSequence targetPeerID,
                                  StreamPair connection, int timeout) throws ASAPHubException, IOException {
-
-        ConnectionPreparer preparer = null; // should be in parameter list TODO
         // remember this request
         this.dataSessionRequestList.add(
-                new DataSessionRequest(sourcePeerID, targetPeerID, connection, timeout, preparer));
+                new DataSessionRequest(sourcePeerID, targetPeerID, connection, timeout));
 
         Log.writeLog(this, "start data session " + sourcePeerID + " -> " + targetPeerID);
         this.createDataConnection(sourcePeerID, targetPeerID, timeout);
@@ -94,21 +92,14 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
         private final CharSequence targetPeerID;
         private final StreamPair connection;
         private final int timeout;
-        public ConnectionPreparer connectionPreparer;
 
         DataSessionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
                            StreamPair connection, int timeout) {
-            this(sourcePeerID, targetPeerID, connection, timeout,null);
-        }
-
-        DataSessionRequest(CharSequence sourcePeerID, CharSequence targetPeerID,
-                           StreamPair connection, int timeout, ConnectionPreparer connectionPreparer) {
             this.sourcePeerID = sourcePeerID;
             this.targetPeerID = targetPeerID;
             this.connection = connection;
             this.until = System.currentTimeMillis() + timeout;
             this.timeout = timeout;
-            this.connectionPreparer = connectionPreparer;
         }
     }
 
@@ -122,11 +113,6 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             throws ASAPHubException, IOException;
 
     void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection) {
-        this.connectionCreated(sourcePeerID, targetPeerID, connection, null);
-    }
-
-    void connectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair connection,
-                           ConnectionPreparer connectionPreparer) {
         Log.writeLog(this, "connection created called");
         DataSessionRequest dataSessionRequest = null;
         List<DataSessionRequest> addAgain = new ArrayList<>();
@@ -144,7 +130,7 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             }
         } while(dataSessionRequest == null && !this.dataSessionRequestList.isEmpty());
 
-        // re-add
+        // put back in list
         for(DataSessionRequest r : addAgain) { this.dataSessionRequestList.add(r); }
 
         if(dataSessionRequest != null) {
@@ -153,19 +139,15 @@ public abstract class HubGenericImpl implements Hub, HubInternal {
             try {
                 Log.writeLog(this, "create data link");
                 StreamPairLink dataLink =
-                        new StreamPairLink(dataSessionRequest.connection, sourcePeerID, connection, targetPeerID, false);
-
-                /*
-                if(dataSessionRequest.connectionPreparer != null)
-                    dataSessionRequest.connectionPreparer.prepare(dataSessionRequest.connection);
-
-                if(connectionPreparer != null) connectionPreparer.prepare(connection);
-                 */
+                        new StreamPairLink(
+                                dataSessionRequest.connection,
+                                sourcePeerID, connection,
+                                targetPeerID, false);
 
                 // tell peers e2e is established
                 Log.writeLog(this, "send ready byte to each peer");
-                dataSessionRequest.connection.getOutputStream().write(ConnectionPreparer.readyByte);
-                connection.getOutputStream().write(ConnectionPreparer.readyByte);
+                dataSessionRequest.connection.getOutputStream().write(Connector.readyByte);
+                connection.getOutputStream().write(Connector.readyByte);
 
                 // now go
                 dataLink.start();

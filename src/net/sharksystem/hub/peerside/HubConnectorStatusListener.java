@@ -1,5 +1,7 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.hub.Connector;
+
 public interface HubConnectorStatusListener {
     /**
      * Called if an open connection is established to the hub.
@@ -8,6 +10,8 @@ public interface HubConnectorStatusListener {
 
     /**
      * Got a sync reply (from hub)
+     * @param connector
+     * @param changed peer list changed - or not
      */
-    void notifySynced();
+    void notifySynced(Connector connector, boolean changed);
 }

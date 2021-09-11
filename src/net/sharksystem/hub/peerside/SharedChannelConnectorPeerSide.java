@@ -216,10 +216,15 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
 
     @Override
     public void hubStatusRPLY(HubPDUHubStatusRPLY pdu) {
+        Log.writeLog(this, this.toString(), pdu.toString());
+
+        Collection<CharSequence> previousIDs = this.peerIDs;
         synchronized (this) {
             this.peerIDs = pdu.connectedPeers;
         }
-        this.notifyListenerSynced();
+
+        // changes?
+        this.notifyListenerSynced(!net.sharksystem.utils.Utils.sameContent(previousIDs, this.peerIDs));
     }
 
     @Override
@@ -244,7 +249,7 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
         Log.writeLog(this, this.toString(), "wait for ready byte " + targetPeerID);
 
         byte b = 0;
-        while(b != ConnectionPreparer.readyByte) {
+        while(b != Connector.readyByte) {
             Log.writeLog(this, this.toString(), "no ready byte yet");
             try {
                 Thread.sleep(100);
@@ -256,6 +261,7 @@ public abstract class SharedChannelConnectorPeerSide extends SharedChannelConnec
             } catch (IOException e) {
                 Log.writeLog(this, this.toString(), "connection gone before usage, other peer: "
                         + targetPeerID);
+                return;
             }
         }
         Log.writeLog(this, this.toString(), "got ready byte from hub - notify data session can begin");

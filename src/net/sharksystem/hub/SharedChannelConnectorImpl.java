@@ -28,7 +28,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
     public int getTimeOutDataConnection() {
         return this.getTimeoutInMillis();
     }
-    public int getTimeOutConnectionRequest() { return this.getTimeoutInMillis() * 2; }
+    public int getTimeOutConnectionRequest() { return this.getTimeoutInMillis() * 1000000; }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                         status management                                           //
@@ -195,6 +195,9 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
 
         // kill all other alarm clocks
         this.stopAlarmClocks();
+
+        Log.writeLog(this, this.toString(), "set data session timeout (ms): "
+                + this.getTimeOutDataConnection());
 
         // set alarm clock
         this.dataSessionClock = new AlarmClock(this.getTimeOutDataConnection(), ALARM_CLOCK_DATA_SESSION, this);

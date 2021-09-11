@@ -169,15 +169,24 @@ public class HubUsageTests {
     }
 
     @Test
-    public void usageHubManagerAndTwoPeers() throws IOException, InterruptedException, ASAPException {
+    public void usageHubManagerAndTwoPeers_MultiChannel_True() throws IOException, InterruptedException, ASAPException {
+        this.usageHubManagerAndTwoPeers(true);
+    }
+
+    @Test
+    public void usageHubManagerAndTwoPeers_MultiChannel_False() throws IOException, InterruptedException, ASAPException {
+        this.usageHubManagerAndTwoPeers(false);
+    }
+
+    public void usageHubManagerAndTwoPeers(boolean multichannel) throws IOException, InterruptedException, ASAPException {
         int hubPort = TestHelper.getPortNumber();
         HubConnectorDescription localHostHubDescription =
-                new TCPHubConnectorDescriptionImpl("localhost", hubPort, true);
+                new TCPHubConnectorDescriptionImpl("localhost", hubPort, multichannel);
         Collection<HubConnectorDescription> hubDescriptions = new ArrayList<>();
         hubDescriptions.add(localHostHubDescription);
 
         // launch asap hub
-        ASAPTCPHub hub = ASAPTCPHub.startTCPHubThread(hubPort, true, MAX_IDLE_IN_SECONDS);
+        ASAPTCPHub hub = ASAPTCPHub.startTCPHubThread(hubPort, multichannel, MAX_IDLE_IN_SECONDS);
 
         // give it moment to settle in
         Thread.sleep(1000);

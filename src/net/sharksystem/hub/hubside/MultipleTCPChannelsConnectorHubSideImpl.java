@@ -98,7 +98,6 @@ public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnec
         try {
             IdleStreamPairCloser.getIdleStreamsCloser(streamPair, timeOutDataConnection).start();
             // a preparer would fit
-            TCPSocketConnectionPreparer preparer = new TCPSocketConnectionPreparer();
             this.getHub().startDataSession(sourcePeerID, targetPeerID, streamPair, this.getTimeOutDataConnection());
         } catch (ASAPHubException | IOException e) {
             Log.writeLog(this, this.toString(),"could not create data connection: " + e.getLocalizedMessage());

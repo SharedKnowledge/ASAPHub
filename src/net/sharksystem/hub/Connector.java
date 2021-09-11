@@ -29,6 +29,8 @@ import net.sharksystem.hub.protocol.*;
  *
  */
 public interface Connector {
+    byte readyByte = 42; // what else would it be
+
     /**
      * A silent request is sent from hub to peer side as the first step to initiate a connection on a shared
      * channel. Peer side is meant to stop sending further messages. Peer side sends an acknowledgment (silent reply)

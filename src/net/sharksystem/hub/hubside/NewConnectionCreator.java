@@ -31,6 +31,7 @@ class NewConnectionCreator extends Thread implements AlarmClockListener {
     public void run() {
         try {
             // set alarm
+            Log.writeLog(this, "start server socket / timeout (ms): " + this.timeOutConnectionRequest);
             AlarmClock alarmClock = new AlarmClock(this.timeOutConnectionRequest, this);
             alarmClock.start();
             Socket newSocket = this.srv.accept();
@@ -55,7 +56,7 @@ class NewConnectionCreator extends Thread implements AlarmClockListener {
     public void alarmClockRinging(int i) {
         Log.writeLog(this, "timeout - close server port");
         try {
-            this.srv.close();
+            if(this.srv != null) this.srv.close();
         } catch (IOException e) {
             Log.writeLog(this, "problems closing server socket: " + e.getLocalizedMessage());
         }

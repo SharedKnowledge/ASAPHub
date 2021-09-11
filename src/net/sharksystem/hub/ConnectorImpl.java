@@ -38,9 +38,9 @@ public abstract class ConnectorImpl implements Connector {
         }
     }
 
-    protected void notifyListenerSynced() {
+    protected void notifyListenerSynced(boolean changed) {
         for(HubConnectorStatusListener listener : this.statusListener) {
-            listener.notifySynced();
+            listener.notifySynced(this, changed);
         }
     }
 

@@ -1,7 +1,6 @@
 package net.sharksystem.hub.hubside;
 
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.ConnectionPreparer;
 import net.sharksystem.streams.IdleStreamPairCloser;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.utils.Log;
@@ -89,9 +88,6 @@ public class HubSingleEntitySharedChannel extends HubSingleEntity implements New
                     + e.getLocalizedMessage());
         }
 
-//        ConnectionPreparer preparer = new TCPSocketConnectionPreparer();
-        ConnectionPreparer preparer = null;
-
-        this.connectionCreated(targetPeerID, sourcePeerID, streamPair, preparer);
+        this.connectionCreated(targetPeerID, sourcePeerID, streamPair);
     }
 }
