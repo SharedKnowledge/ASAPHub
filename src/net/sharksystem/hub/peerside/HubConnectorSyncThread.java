@@ -34,6 +34,7 @@ class HubConnectorSyncThread extends Thread implements HubConnectorStatusListene
             // now block - wait for reply
             //this.hubConnector.blockUntilReceived(HubPDU.HUB_STATUS_REPLY);
 
+            /*
             Collection<CharSequence> peerIDs = hubConnector.getPeerIDs();
 
             Log.writeLog(this, this.toString(), "got peerIDs: " + peerIDs);
@@ -43,6 +44,7 @@ class HubConnectorSyncThread extends Thread implements HubConnectorStatusListene
                     this.hubConnector.connectPeer(peerID);
                 }
             }
+             */
         } catch (IOException e) {
             // io on this hub - removeHub it later and go ahead
             Log.writeLog(this, this.toString(), "problems with hub - remove it: " + e);
