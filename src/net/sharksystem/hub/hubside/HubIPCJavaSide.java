@@ -66,16 +66,10 @@ public class HubIPCJavaSide extends HubGenericImpl {
         }else{
             System.out.println("send no disconnect request, because there is no active connection");
         }
-//        else if(this.establishedConnection.getSourcePeerID().contentEquals(sourcePeerID) && this.establishedConnection.getTargetPeerID().contentEquals(targetPeerID)){
-//            // TODO create disconnect request model and send it to python side
-//        }else {
-//            System.out.println("current connection has another source and target peer id");
-//        }
     }
 
     @Override
     public void createDataConnection(CharSequence sourcePeerID, CharSequence targetPeerID, int timeout) throws ASAPHubException, IOException {
-        System.out.println("call createDataConnection");
         ConnectorInternal connectorInternal = this.connectorInternalMap.get(targetPeerID);
         StreamPair streamPair = connectorInternal.initDataSession(sourcePeerID, targetPeerID, timeout);
         this.connectionCreated(sourcePeerID, targetPeerID, streamPair);
@@ -153,21 +147,19 @@ public class HubIPCJavaSide extends HubGenericImpl {
     }
 
     /**
-     * creates an XML String from a given object and sends it via IPC to Python application
-     *
+     * creates a String formatted like defined in IPC protocol from a given object and sends it via TCP to Python
+     * application
      * @param ipcModel model object which should be sent to python side
      * @throws IOException if an error occurs while sending
      */
     private void sendIPCMessage(IPCModel ipcModel) throws IOException {
-        this.outputStream.write((ipcModel.getIPCMessage() + this.delimiter).getBytes(StandardCharsets.UTF_8));
+        byte[] message = (ipcModel.getIPCMessage() + this.delimiter).getBytes(StandardCharsets.UTF_8);
+        this.outputStream.write(message);
     }
 
     /**
      * helper method to process an incoming connect request
-     *
      * @param connectRequest ConnectRequestModel which contains the data
-     * @throws ASAPHubException
-     * @throws IOException
      */
     private void processIncomingConnectRequest(ConnectRequestModel connectRequest) throws ASAPHubException, IOException {
         CharSequence sourcePeerID = connectRequest.getSourcePeerID();
@@ -189,10 +181,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     /**
      * helper method to process an incoming disconnect request
-     *
      * @param connectRequest ConnectRequestModel which contains the data
-     * @throws ASAPHubException
-     * @throws IOException
      */
     private void processIncomingDisconnectRequest(DisconnectRequestModel connectRequest) throws ASAPHubException, IOException {
         ConnectorInternal connectorInternal = this.connectorInternalMap.get(connectRequest.getTargetPeerID());
@@ -234,10 +223,6 @@ public class HubIPCJavaSide extends HubGenericImpl {
                         } else if (receivedModel instanceof ConnectRequestModel) {
                             System.out.println("got connect request from python side");
                             this.processIncomingConnectRequest((ConnectRequestModel) receivedModel);
-                        }
-                        else if (receivedModel instanceof ConnectRequestModel) {
-                            System.out.println("got connect request from python side");
-                            this.processIncomingConnectRequest((ConnectRequestModel) receivedModel);
                         }else if (receivedModel instanceof DisconnectRequestModel) {
                             System.out.println("got disconnect request from python side");
                             this.processIncomingDisconnectRequest((DisconnectRequestModel) receivedModel);
@@ -256,9 +241,7 @@ public class HubIPCJavaSide extends HubGenericImpl {
 
     /**
      * read message from Python IPC-InputStream until first delimiter.
-     *
      * @return message as String
-     * @throws IOException
      */
     private String readMessageFromInputStream() throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(this.inputStream, StandardCharsets.UTF_8));
@@ -274,6 +257,9 @@ public class HubIPCJavaSide extends HubGenericImpl {
         return message;
     }
 
+    /**
+     * closes socket which is used for IPC
+     */
     public void closeIPCConnection() throws InterruptedException, IOException {
         this.socket.close();
 

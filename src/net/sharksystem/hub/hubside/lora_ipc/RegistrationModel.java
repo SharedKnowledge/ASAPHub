@@ -1,6 +1,5 @@
 package net.sharksystem.hub.hubside.lora_ipc;
 
-import javax.xml.bind.annotation.XmlElement;
 
 /**
  * Model class to register/unregister a peer.

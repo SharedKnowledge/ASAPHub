@@ -1,7 +1,7 @@
 package net.sharksystem.hub.hubside.lora_ipc;
 
 /**
- * Model class for connect request, which can be used to create a XML object for IPC.
+ * Model class for connect request, which is used for IPC
  */
 public class ConnectRequestModel extends RequestModel {
 
@@ -14,6 +14,10 @@ public class ConnectRequestModel extends RequestModel {
         this.timeout = timeout;
     }
 
+    /**
+     * getter for connect request timeout value
+     * @return timeout as int
+     */
     public int getTimeout() {
         return timeout;
     }

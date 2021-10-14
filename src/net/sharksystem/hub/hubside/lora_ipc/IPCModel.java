@@ -4,10 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+/**
+ * parent class of all model classes
+ */
 public abstract class IPCModel {
 
     static final String IPCDelimiter = ",";
 
+    /**
+     * creates a String containing all items of passed Array delimited by |
+     * @param args String Array
+     * @return all items of Array as String delimited by |
+     */
     public static String generateIPCMessage(String[] args) {
         StringBuilder message_str = new StringBuilder();
         for (int i = 0; i < args.length; i++) {
@@ -18,6 +26,11 @@ public abstract class IPCModel {
         return message_str.toString();
     }
 
+    /**
+     * creates appropriate model object from received IPC message
+     * @param ipcMessage IPC message as String
+     * @return object of class IPCModel with attributes from received message
+     */
     public static IPCModel createModelObjectFromIPCString(String ipcMessage) {
         List<String> messageValues = new ArrayList<>();
         StringTokenizer stringTokenizer = new StringTokenizer(ipcMessage, IPCDelimiter);
@@ -44,5 +57,9 @@ public abstract class IPCModel {
         return null;
     }
 
+    /**
+     * creates IPC message of model object
+     * @return IPC message as String
+     */
     public abstract String getIPCMessage();
 }

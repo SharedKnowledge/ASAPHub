@@ -1,5 +1,8 @@
 package net.sharksystem.hub.hubside.lora_ipc;
 
+/**
+ * Model class for disconnect request, which is used for IPC
+ */
 public class DisconnectRequestModel extends RequestModel{
     final static String IPCMessageType = "DisconnectRequest";
 
