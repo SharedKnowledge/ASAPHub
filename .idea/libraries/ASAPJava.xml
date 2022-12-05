@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="ASAPJava">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/libs/ASAPJava.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
