@@ -70,8 +70,8 @@
                 <artifactId>maven-install-plugin</artifactId>
                 <version>2.5.1</version>
                 <configuration>
-                    <groupId>org.somegroup</groupId>
-                    <artifactId>someartifact</artifactId>
+                    <groupId>net.sharksystem</groupId>
+                    <artifactId>asapjava</artifactId>
                     <version>1.0</version>
                     <packaging>jar</packaging>
                     <file>${basedir}/libs/ASAPJava.jar</file>
@@ -97,8 +97,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.somegroup</groupId>
-            <artifactId>someartifact</artifactId>
+            <groupId>net.sharksystem</groupId>
+            <artifactId>asapjava</artifactId>
             <version>1.0</version>
         </dependency>
     </dependencies>
