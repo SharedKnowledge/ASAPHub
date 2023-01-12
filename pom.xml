@@ -19,6 +19,7 @@
                 <configuration>
                     <source>8</source>
                     <target>8</target>
+                    <maxmem>2024m</maxmem>
                 </configuration>
             </plugin>
             <plugin>

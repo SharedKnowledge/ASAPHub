@@ -1,13 +1,12 @@
 package net.sharksystem.hub;
 
-import net.sharksystem.SharkException;
 import net.sharksystem.SharkNotSupportedException;
-import net.sharksystem.asap.utils.Helper;
-import net.sharksystem.asap.utils.PeerIDHelper;
-import net.sharksystem.streams.StreamPair;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
+import net.sharksystem.asap.utils.Helper;
+import net.sharksystem.asap.utils.PeerIDHelper;
 import net.sharksystem.hub.peerside.NewConnectionListener;
+import net.sharksystem.streams.StreamPair;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -102,7 +101,7 @@ class HubConnectorTester implements NewConnectionListener {
             if(PeerIDHelper.sameID(peerID, ALICE_ID)) {
                 int i = 42; // debug break
             }
-            //Thread.sleep(1000);
+            Thread.sleep(1000);  // without this sleep HubUsageTests will fail if ASAPHub was deployed locally
             byte[] inBytes = ASAPSerialization.readByteArray(streamPair.getInputStream());
             ByteArrayInputStream bais = new ByteArrayInputStream(inBytes);
             String receivedMessage = ASAPSerialization.readCharSequenceParameter(bais);

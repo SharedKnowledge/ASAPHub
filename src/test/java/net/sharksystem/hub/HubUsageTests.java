@@ -3,7 +3,6 @@ package net.sharksystem.hub;
 import net.sharksystem.TestHelper;
 import net.sharksystem.asap.ASAPEncounterManagerImpl;
 import net.sharksystem.asap.ASAPException;
-import net.sharksystem.asap.ASAPMessageReceivedListener;
 import net.sharksystem.asap.apps.testsupport.ASAPTestPeerFS;
 import net.sharksystem.asap.engine.ASAPEngineFS;
 import net.sharksystem.hub.peerside.*;
@@ -28,11 +27,11 @@ public class HubUsageTests {
     @Test
     public void usageSharedConnection() throws IOException, InterruptedException, ASAPException {
         this.runUsageTest(
-        true,
-        false,
-        "NON_CAN_TCP",
-        "YZ",
-        false);
+                true,
+                false,
+                "NON_CAN_TCP",
+                "YZ",
+                false);
     }
 
     @Test

@@ -1,8 +1,8 @@
 package net.sharksystem.hub;
 
 import net.sharksystem.asap.ASAPException;
-import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.hubside.ASAPTCPHub;
+import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
 import org.junit.Test;
 

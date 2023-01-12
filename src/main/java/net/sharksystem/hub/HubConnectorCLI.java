@@ -5,31 +5,36 @@ import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.NewConnectionListener;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
 import net.sharksystem.streams.StreamPair;
+import net.sharksystem.utils.Commandline;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class HubConnectorCLI {
     static final String GET_PEERS = "peers";
-    static final String SET_PEER = "id";
+    static final String SET_PEER = "set-id";
     static final String CONNECT_PEER = "connect";
-
+    static final String HELP = "help";
+    static final String EXIT = "exit";
     private final PrintStream printStream;
     private final InputStream inputStream;
-    private int port = 6000;
+    private int port;
+    static int DEFAULT_PORT = 6000;
     //    private String hostName = "localhost";
-    private String hostName = "localhost";
+    private String hostName;
 
+    private static String helpText =
+            "list available peers:         peers\n" +
+                    "set own peer-id               set-id [peer-id] [multichannel false/true]\n" +
+                    "connect to peer               connect [target-peer-id]\n" +
+                    "get cli guidelines            help\n" +
+                    "terminate application         exit";
 
-    public HubConnectorCLI(InputStream inputStream, OutputStream outputStream) {
-        printStream = new PrintStream(outputStream);
-        this.inputStream = inputStream;
-    }
 
     public HubConnectorCLI(InputStream inputStream, OutputStream outputStream, String host, int port) {
-        this(inputStream, outputStream);
+        printStream = new PrintStream(outputStream);
+        this.inputStream = inputStream;
         this.port = port;
         this.hostName = host;
     }
@@ -46,15 +51,13 @@ public class HubConnectorCLI {
             printStream.println("connector CLI started");
             while ((line = in.readLine()) != null) {
                 String command = line;
-                String arg = "";
+                List<String> args = new ArrayList<>();
                 // get command and argument
-                if (command.contains("=")) {
-                    String[] commandAndArg = command.split("=", 2);
-                    command = commandAndArg[0];
-                    arg = commandAndArg[1];
-                }
+                String[] commandAndArg = command.split(" ");
+                command = commandAndArg[0];
+                if (commandAndArg.length > 1)
+                    args = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(commandAndArg, 1, commandAndArg.length)));
                 printStream.println(command);
-                printStream.println(arg);
 
                 switch (command) {
                     case GET_PEERS:
@@ -64,13 +67,27 @@ public class HubConnectorCLI {
                         printStream.println(hubConnector.getPeerIDs());
                         break;
                     case SET_PEER:
-                        printStream.println("set peer-id to: " + arg);
-                        hubConnector.connectHub(arg, true);
+                        if (args.size() < 2) {
+                            printStream.println("multichannel parameter was not set");
+                            printStream.println(helpText);
+                            break;
+                        }
+                        printStream.println("set peer-id to: " + args.get(0) + ". multichannel: " + args.get(1));
+                        hubConnector.connectHub(args.get(0), Boolean.parseBoolean(args.get(1)));
                         break;
                     case CONNECT_PEER:
-                        printStream.println("connecting to peer: " + arg);
+                        printStream.println("connecting to peer: " + args.get(0));
                         connectionListener.addMessage("Hello World!");
-                        hubConnector.connectPeer(arg);
+                        hubConnector.connectPeer(args.get(0));
+                        break;
+                    case HELP:
+                        printStream.println(helpText);
+                        break;
+                    case EXIT:
+                        System.exit(0);
+                        break;
+                    default:
+                        printStream.println(helpText);
                         break;
                 }
             }
@@ -80,21 +97,48 @@ public class HubConnectorCLI {
     }
 
     public static void main(String[] args) throws ASAPException, IOException, InterruptedException {
-        PrintStream o = new PrintStream("log.txt");
-        PrintStream console = System.out;
+        String usageString = "optional parameters: -host [hostname] -port [portnumber] -multichannel [true/false]";
+        HashMap<String, String> argumentMap = Commandline.parametersToMap(args,
+                false, usageString);
 
-        // write logs into file
-        System.setOut(o);
+        int port = DEFAULT_PORT;
+        int maxIdleInSeconds = -1;
 
-        HubConnectorCLI cli;
-        if(args.length == 2){
-            cli = new HubConnectorCLI(System.in, console, args[0], Integer.parseInt(args[1]));
+        if (argumentMap != null) {
+            Set<String> keys = argumentMap.keySet();
+            if (keys.contains("-help") || keys.contains("-?")) {
+                System.out.println(usageString);
+                System.exit(0);
+            }
 
-        }else{
-             cli = new HubConnectorCLI(System.in, console);
+            // port defined
+            String portString = argumentMap.get("-port");
+            if (portString != null) {
+                try {
+                    port = Integer.parseInt(portString);
+                } catch (RuntimeException re) {
+                    System.err.println("port number must be a numeric: " + portString);
+                    System.exit(1);
+                }
+            }
+
+            String host = argumentMap.get("-host");
+            if (host == null) {
+                System.err.println("hostname not set");
+                System.exit(1);
+            }
+
+            PrintStream o = new PrintStream("log.txt");
+            PrintStream console = System.out;
+
+            // write logs into file
+            System.setOut(o);
+
+            HubConnectorCLI cli = new HubConnectorCLI(System.in, console, host, port);
+
+            cli.startCLI();
+
         }
-        cli.startCLI();
-
     }
 }
 

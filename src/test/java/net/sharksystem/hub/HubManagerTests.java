@@ -1,6 +1,7 @@
 package net.sharksystem.hub;
 
-import net.sharksystem.asap.*;
+import net.sharksystem.asap.ASAPEncounterManagerImpl;
+import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.apps.testsupport.ASAPTestPeerFS;
 import net.sharksystem.hub.hubside.ASAPTCPHub;
 import net.sharksystem.hub.peerside.ASAPHubManagerImpl;
