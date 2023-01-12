@@ -23,6 +23,7 @@ public class HubConnectorCLI {
     static int DEFAULT_PORT = 6000;
     //    private String hostName = "localhost";
     private String hostName;
+    private boolean multiChannel;
 
     private static String helpText =
             "list available peers:         peers\n" +
@@ -32,17 +33,18 @@ public class HubConnectorCLI {
                     "terminate application         exit";
 
 
-    public HubConnectorCLI(InputStream inputStream, OutputStream outputStream, String host, int port) {
+    public HubConnectorCLI(InputStream inputStream, OutputStream outputStream, String host, int port, boolean multiChannel) {
         printStream = new PrintStream(outputStream);
         this.inputStream = inputStream;
         this.port = port;
         this.hostName = host;
+        this.multiChannel = multiChannel;
     }
 
     public void startCLI() throws IOException, ASAPHubException, InterruptedException {
         CLIConnectionListener connectionListener = new CLIConnectionListener(this.printStream);
         Socket s = new Socket(hostName, port);
-        HubConnector hubConnector = new SharedTCPChannelConnectorPeerSide(s, hostName, port, true);
+        HubConnector hubConnector = new SharedTCPChannelConnectorPeerSide(s, hostName, port, this.multiChannel);
         hubConnector.addListener(connectionListener);
 
         try (BufferedReader in =
@@ -67,13 +69,8 @@ public class HubConnectorCLI {
                         printStream.println(hubConnector.getPeerIDs());
                         break;
                     case SET_PEER:
-                        if (args.size() < 2) {
-                            printStream.println("multichannel parameter was not set");
-                            printStream.println(helpText);
-                            break;
-                        }
-                        printStream.println("set peer-id to: " + args.get(0) + ". multichannel: " + args.get(1));
-                        hubConnector.connectHub(args.get(0), Boolean.parseBoolean(args.get(1)));
+                        printStream.println("set peer-id to: " + args.get(0));
+                        hubConnector.connectHub(args.get(0));
                         break;
                     case CONNECT_PEER:
                         printStream.println("connecting to peer: " + args.get(0));
@@ -127,6 +124,11 @@ public class HubConnectorCLI {
                 System.err.println("hostname not set");
                 System.exit(1);
             }
+            String multiChannelStr = argumentMap.get("-multichannel");
+            boolean multiChannel = false;
+            if (multiChannelStr != null){
+                multiChannel = Boolean.valueOf(multiChannelStr);
+            }
 
             PrintStream o = new PrintStream("log.txt");
             PrintStream console = System.out;
@@ -134,7 +136,7 @@ public class HubConnectorCLI {
             // write logs into file
             System.setOut(o);
 
-            HubConnectorCLI cli = new HubConnectorCLI(System.in, console, host, port);
+            HubConnectorCLI cli = new HubConnectorCLI(System.in, console, host, port, multiChannel);
 
             cli.startCLI();
 
