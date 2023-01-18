@@ -1,0 +1,6 @@
+create conn1 false
+create conn2 true
+set-id conn1 alice
+set-id conn2 bob
+peers conn1
+connect conn1 bob

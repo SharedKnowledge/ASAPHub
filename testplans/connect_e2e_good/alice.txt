@@ -1,0 +1,2 @@
+set-id alice
+connect bob

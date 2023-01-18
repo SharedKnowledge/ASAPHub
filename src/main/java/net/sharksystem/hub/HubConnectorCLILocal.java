@@ -7,13 +7,13 @@ import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
 import net.sharksystem.streams.StreamPair;
 import net.sharksystem.utils.Commandline;
 
-import java.beans.ExceptionListener;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
 
-public class HubConnectorCLI {
+public class HubConnectorCLILocal {
     static final String GET_PEERS = "peers";
+    static final String CREATE_CONNECTOR = "create";
     static final String SET_PEER = "set-id";
     static final String CONNECT_PEER = "connect";
     static final String HELP = "help";
@@ -21,39 +21,30 @@ public class HubConnectorCLI {
     private final PrintStream printStream;
     private final InputStream inputStream;
     private int port;
-    static int DEFAULT_PORT = 6000;
+    static int DEFAULT_PORT = 6910;
     //    private String hostName = "localhost";
     private String hostName;
     private boolean multiChannel;
-    private CLIConnectionListener connectionListener;
 
     private static String helpText =
-            "list available peers:         peers\n" +
-                    "set own peer-id               set-id [peer-id] [multichannel false/true]\n" +
-                    "connect to peer               connect [target-peer-id]\n" +
+                    "list available peers:         [connector-name]  peers\n" +
+                    "set peer-id of connector      set-id [connector-name] [peer-id] [multichannel false/true]\n" +
+                    "connect to peer               connect [connector-name]  [target-peer-id]\n" +
                     "get cli guidelines            help\n" +
-                    "terminate application         exit";
+                    "terminate application         exit" +
+                    "create connector              create [connector-name]";
+    private Map<String, HubConnector> connectors = new HashMap<>();
 
 
-    public HubConnectorCLI(InputStream inputStream, OutputStream outputStream, String host, int port, boolean multiChannel) {
+    public HubConnectorCLILocal(InputStream inputStream, OutputStream outputStream, String host, int port, boolean multiChannel) {
         printStream = new PrintStream(outputStream);
         this.inputStream = inputStream;
         this.port = port;
         this.hostName = host;
         this.multiChannel = multiChannel;
-        connectionListener = new CLIConnectionListener(this.printStream);
-    }
-
-    public HubConnectorCLI(InputStream inputStream, OutputStream outputStream, String host, int port, boolean multiChannel, ExceptionListener exceptionListener) {
-        this(inputStream, outputStream, host, port, multiChannel);
-        connectionListener = new CLIConnectionListener(this.printStream, exceptionListener);
     }
 
     public void startCLI() throws IOException, ASAPHubException, InterruptedException {
-        HubConnector hubConnector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(hostName, port, this.multiChannel);
-        hubConnector.addListener(connectionListener);
-        hubConnector.addListener(connectionListener);
-
         try (BufferedReader in =
                      new BufferedReader(new InputStreamReader(inputStream))) {
             String line;
@@ -67,22 +58,33 @@ public class HubConnectorCLI {
                 if (commandAndArg.length > 1)
                     args = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(commandAndArg, 1, commandAndArg.length)));
                 printStream.println(command);
-
+                HubConnector connector;
                 switch (command) {
+                    case CREATE_CONNECTOR:
+                        boolean canCreateConnections = Boolean.parseBoolean(args.get(1));
+                        printStream.printf("create connector '%s'. Can create connections: %s%n", args.get(0), canCreateConnections);
+                        connector = SharedTCPChannelConnectorPeerSide.createTCPHubConnector(hostName, port);
+                        CLIConnectionListener connectionListener = new CLIConnectionListener(this.printStream); // maybe move to "CONNECT_PEER"
+                        connectionListener.addMessage("Hello World!");
+                        connector.addListener(connectionListener);
+                        this.connectors.put(args.get(0), connector);
+                        break;
                     case GET_PEERS:
-                        hubConnector.syncHubInformation();
+                        printStream.printf("use connector '%s'.get available peers%n", args.get(0));
+                        connector = this.connectors.get(args.get(0));
+                        connector.syncHubInformation();
                         // wait for async reply of syncHubInformation
                         Thread.sleep(500);
-                        printStream.println(hubConnector.getPeerIDs());
+                        printStream.println(connector.getPeerIDs());
                         break;
                     case SET_PEER:
-                        printStream.println("set peer-id to: " + args.get(0));
-                        hubConnector.connectHub(args.get(0));
+                        printStream.printf("use connector '%s'. set peer-id to: %s%n",
+                                args.get(0), args.get(1));
+                        this.connectors.get(args.get(0)).connectHub(args.get(1));
                         break;
                     case CONNECT_PEER:
-                        printStream.println("connecting to peer: " + args.get(0));
-                        connectionListener.addMessage("Hello World!");
-                        hubConnector.connectPeer(args.get(0));
+                        printStream.printf("use connector '%s'.connecting to peer: %s%n", args.get(0), args.get(1));
+                        this.connectors.get(args.get(0)).connectPeer(args.get(1));
                         break;
                     case HELP:
                         printStream.println(helpText);
@@ -94,7 +96,7 @@ public class HubConnectorCLI {
                         printStream.println(helpText);
                         break;
                 }
-                Thread.sleep(500);
+                Thread.sleep(2000);
             }
         } catch (ASAPException e) {
             throw new RuntimeException(e);
@@ -105,7 +107,7 @@ public class HubConnectorCLI {
         String usageString = "optional parameters: -host [hostname] -port [portnumber] -multichannel [true/false]";
         HashMap<String, String> argumentMap = Commandline.parametersToMap(args,
                 false, usageString);
-
+        String host = "localhost";
         int port = DEFAULT_PORT;
         int maxIdleInSeconds = -1;
 
@@ -127,70 +129,26 @@ public class HubConnectorCLI {
                 }
             }
 
-            String host = argumentMap.get("-host");
-            if (host == null) {
-                System.err.println("hostname not set");
-                System.exit(1);
+            String hostStr = argumentMap.get("-host");
+            if (hostStr != null) {
+                host = hostStr;
             }
             String multiChannelStr = argumentMap.get("-multichannel");
             boolean multiChannel = false;
             if (multiChannelStr != null) {
-                multiChannel = Boolean.valueOf(multiChannelStr);
+                multiChannel = Boolean.parseBoolean(multiChannelStr);
             }
 
             PrintStream o = new PrintStream("log.txt");
             PrintStream console = System.out;
 
             // write logs into file
-            System.setOut(o);
+//            System.setOut(o);
 
-            HubConnectorCLI cli = new HubConnectorCLI(System.in, console, host, port, multiChannel);
+            HubConnectorCLILocal cli = new HubConnectorCLILocal(System.in, System.out, host, port, multiChannel);
 
             cli.startCLI();
 
-        }
-    }
-}
-
-class CLIConnectionListener implements NewConnectionListener {
-    private final PrintStream printStream;
-
-    private final List<String> messages;
-    private ExceptionListener exceptionListener;
-
-
-    public CLIConnectionListener(PrintStream printStream) {
-        this.printStream = printStream;
-        messages = new ArrayList<>();
-    }
-
-    public CLIConnectionListener(PrintStream printStream, ExceptionListener exceptionListener) {
-        this.printStream = printStream;
-        messages = new ArrayList<>();
-        this.exceptionListener = exceptionListener;
-    }
-
-    public void addMessage(String message) {
-        messages.add(message);
-    }
-
-    @Override
-    public void notifyPeerConnected(CharSequence targetPeerID, StreamPair streamPair) {
-        try {
-
-            if (messages.size() > 0) {
-                PrintStream ps = new PrintStream(streamPair.getOutputStream());
-                ps.println(messages.get(0));
-                messages.clear();
-            }
-            printStream.println("connected to peer: " + targetPeerID);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(streamPair.getInputStream()));
-            printStream.println("received message: " + reader.readLine());
-        } catch (IOException e) {
-            e.printStackTrace();
-            if(null != exceptionListener){
-                exceptionListener.exceptionThrown(e);
-            }
         }
     }
 }
