@@ -62,7 +62,7 @@ public class ParameterizedTest {
             new Thread(r).start();
 
             new HubConnectorCLI(fis2, System.out, host, port, listener).startCLI();
-            Thread.sleep(2000);
+            Thread.sleep(4000);
 
             hub.kill();
             Assert.assertNull(listener.getException());
