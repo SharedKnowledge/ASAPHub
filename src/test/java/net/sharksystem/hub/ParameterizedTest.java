@@ -37,7 +37,7 @@ public class ParameterizedTest {
     }
 
     @Test
-    public void testY() throws IOException, ASAPException, InterruptedException {
+    public void runTestPlan() throws IOException, ASAPException, InterruptedException {
         ASAPTCPHub hub = new ASAPTCPHub(port, true);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
         hub.setMaxIdleConnectionInSeconds(60);
@@ -62,6 +62,7 @@ public class ParameterizedTest {
             new Thread(r).start();
 
             new HubConnectorCLI(fis2, System.out, host, port, listener).startCLI();
+            // give listener chance to receive message
             Thread.sleep(4000);
 
             hub.kill();

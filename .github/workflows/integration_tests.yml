@@ -30,5 +30,7 @@ jobs:
       run: mvn surefire-report:report-only
     - uses: actions/upload-artifact@v3
       with:
-        name: Package
+        name: test_results
         path: target/site
+    - name: Publish Test Report
+      uses: scacap/action-surefire-report@v1
