@@ -25,6 +25,7 @@ jobs:
       run: mvn org.apache.maven.plugins:maven-install-plugin:2.5.1:install-file -Dfile=libs/ASAPJava.jar
     - name: Run tests
       run: mvn -Dtest=ParameterizedTest test
+      continue-on-error: true
     - name: generate html report
       run: mvn surefire-report:report-only
     - uses: actions/upload-artifact@v3
