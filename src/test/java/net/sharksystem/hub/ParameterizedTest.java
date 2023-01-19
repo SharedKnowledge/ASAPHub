@@ -36,7 +36,7 @@ public class ParameterizedTest {
         this.testPlanDir = testPlanDir;
     }
 
-    @Test
+    @Test()
     public void runTestPlan() throws IOException, ASAPException, InterruptedException {
         ASAPTCPHub hub = new ASAPTCPHub(port, true);
         hub.setPortRange(7000, 9000); // optional - required to configure a firewall
@@ -66,7 +66,8 @@ public class ParameterizedTest {
             Thread.sleep(4000);
 
             hub.kill();
-            Assert.assertNull(listener.getException());
+            Assert.assertNull(String.format("Testplan '%s': check if exception was thrown", testPlanDir.getName()),
+                    listener.getException());
 
 
         }
