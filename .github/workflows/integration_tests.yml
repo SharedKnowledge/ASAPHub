@@ -1,0 +1,34 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Java CI with Maven
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+        cache: maven
+    - name: setup local maven repo
+      run: mvn org.apache.maven.plugins:maven-install-plugin:2.5.1:install-file -Dfile=libs/ASAPJava.jar -DargLine="-Xmx2048m"
+    - name: Build with Maven
+      run: mvn -Dtest=ParameterizedTest test
+    - name: generate html report
+      run: mvn surefire-report:report-only
+    - name: GH Pages Push
+      uses: PavanMudigonda/html-reporter-github-pages/composite@v1.1
+      with:
+        test_results: target/site
+        keep_reports: 20

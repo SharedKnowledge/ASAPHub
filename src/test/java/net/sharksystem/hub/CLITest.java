@@ -45,12 +45,12 @@ public class CLITest {
         FileInputStream fis2 = new FileInputStream(testFileName2);
 
 
-        ASAPTCPHub hub = new ASAPTCPHub(port, true);
-        hub.setPortRange(7000, 9000); // optional - required to configure a firewall
-        hub.setMaxIdleConnectionInSeconds(60);
-        new Thread(hub).start();
-        HubConnectorCLI cli = new HubConnectorCLI(fis, System.out, host, port, false, listener);
-        HubConnectorCLI cli2 = new HubConnectorCLI(fis2, System.out, host, port, true, listener);
+//        ASAPTCPHub hub = new ASAPTCPHub(port, true);
+//        hub.setPortRange(7000, 9000); // optional - required to configure a firewall
+//        hub.setMaxIdleConnectionInSeconds(60);
+//        new Thread(hub).start();
+        HubConnectorCLI cli = new HubConnectorCLI(fis, System.out, host, port);
+        HubConnectorCLI cli2 = new HubConnectorCLI(fis2, System.err, host, port);
         Runnable r = new Runnable() {
             @Override
             public void run() {
@@ -68,7 +68,7 @@ public class CLITest {
         new Thread(r).start();
 
         cli2.startCLI();
-        Thread.sleep(5000);
+        Thread.sleep(20000);
 
         Assert.assertTrue(listener.getException() == null);
 
