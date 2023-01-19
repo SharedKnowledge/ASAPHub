@@ -23,12 +23,11 @@ jobs:
         cache: maven
     - name: setup local maven repo
       run: mvn org.apache.maven.plugins:maven-install-plugin:2.5.1:install-file -Dfile=libs/ASAPJava.jar -DargLine="-Xmx2048m"
-    - name: Build with Maven
+    - name: Run tests
       run: mvn -Dtest=ParameterizedTest test
     - name: generate html report
       run: mvn surefire-report:report-only
-    - name: GH Pages Push
-      uses: PavanMudigonda/html-reporter-github-pages/composite@v1.1
+    - uses: actions/upload-artifact@v3
       with:
-        test_results: target/site
-        keep_reports: 20
+        name: Package
+        path: target/site
