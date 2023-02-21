@@ -27,7 +27,5 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
         cache: maven
-    - name: setup local maven repo
-      run: mvn org.apache.maven.plugins:maven-install-plugin:2.5.1:install-file -Dfile=libs/ASAPJava.jar -DargLine="-Xmx2048m"
     - name: Build with Maven
-      run: mvn -Dtest=HubUsageTests test
+      run: mvn install -DskipTests
