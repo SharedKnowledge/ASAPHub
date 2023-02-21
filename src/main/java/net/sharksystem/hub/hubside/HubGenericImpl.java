@@ -3,9 +3,9 @@ package net.sharksystem.hub.hubside;
 import net.sharksystem.asap.ASAPPeer;
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.Connector;
-import net.sharksystem.streams.StreamPair;
-import net.sharksystem.streams.StreamPairLink;
 import net.sharksystem.utils.Log;
+import net.sharksystem.utils.streams.StreamPair;
+import net.sharksystem.utils.streams.StreamPairLink;
 
 import java.io.IOException;
 import java.util.*;

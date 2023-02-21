@@ -1,7 +1,8 @@
 package net.sharksystem.hub.hubside;
 
-import net.sharksystem.streams.StreamPair;
+import net.sharksystem.utils.streams.StreamPair;
 
 public interface NewConnectionCreatorListener {
-    void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID, StreamPair streamPair, int timeOutDataConnection);
+    void newConnectionCreated(CharSequence sourcePeerID, CharSequence targetPeerID,
+                              StreamPair streamPair, int timeOutDataConnection);
 }

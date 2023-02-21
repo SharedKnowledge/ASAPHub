@@ -2,11 +2,9 @@ package net.sharksystem.hub.peerside;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.hub.protocol.ConnectionRequest;
-import net.sharksystem.hub.protocol.HubPDU;
 import net.sharksystem.hub.protocol.HubPDUConnectPeerNewTCPSocketRQ;
-import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.utils.Log;
+import net.sharksystem.utils.streams.StreamPairImpl;
 
 import java.io.IOException;
 import java.io.InputStream;

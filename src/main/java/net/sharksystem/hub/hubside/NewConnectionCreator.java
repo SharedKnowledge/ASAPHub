@@ -1,9 +1,9 @@
 package net.sharksystem.hub.hubside;
 
-import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.utils.AlarmClock;
 import net.sharksystem.utils.AlarmClockListener;
 import net.sharksystem.utils.Log;
+import net.sharksystem.utils.streams.StreamPairImpl;
 
 import java.io.IOException;
 import java.net.ServerSocket;

@@ -2,10 +2,10 @@ package net.sharksystem.hub.peerside;
 
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.PeerIDHelper;
-import net.sharksystem.streams.StreamPair;
 import net.sharksystem.hub.*;
 import net.sharksystem.hub.protocol.*;
 import net.sharksystem.utils.Log;
+import net.sharksystem.utils.streams.StreamPair;
 
 import java.io.IOException;
 import java.io.InputStream;

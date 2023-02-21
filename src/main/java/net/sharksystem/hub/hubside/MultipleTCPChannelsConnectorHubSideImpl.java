@@ -4,9 +4,9 @@ import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.ASAPHubException;
 import net.sharksystem.hub.protocol.ConnectionRequest;
 import net.sharksystem.hub.protocol.HubPDUConnectPeerNewTCPSocketRQ;
-import net.sharksystem.streams.IdleStreamPairCloser;
-import net.sharksystem.streams.StreamPair;
 import net.sharksystem.utils.Log;
+import net.sharksystem.utils.streams.IdleStreamPairCloser;
+import net.sharksystem.utils.streams.StreamPair;
 
 import java.io.IOException;
 import java.io.InputStream;

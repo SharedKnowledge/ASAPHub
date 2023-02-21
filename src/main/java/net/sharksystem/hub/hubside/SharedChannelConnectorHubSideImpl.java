@@ -1,15 +1,15 @@
 package net.sharksystem.hub.hubside;
 
 import net.sharksystem.SharkNotSupportedException;
-import net.sharksystem.streams.StreamPair;
-import net.sharksystem.streams.StreamPairLink;
-import net.sharksystem.streams.WrappedStreamPairListener;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.PeerIDHelper;
 import net.sharksystem.hub.*;
 import net.sharksystem.hub.protocol.*;
 import net.sharksystem.utils.AlarmClockListener;
 import net.sharksystem.utils.Log;
+import net.sharksystem.utils.streams.StreamPair;
+import net.sharksystem.utils.streams.StreamPairLink;
+import net.sharksystem.utils.streams.WrappedStreamPairListener;
 
 import java.io.IOException;
 import java.io.InputStream;

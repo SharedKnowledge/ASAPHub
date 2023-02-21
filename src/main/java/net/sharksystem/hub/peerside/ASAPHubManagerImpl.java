@@ -5,10 +5,10 @@ import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.ASAPPeer;
 import net.sharksystem.asap.EncounterConnectionType;
 import net.sharksystem.hub.Connector;
-import net.sharksystem.streams.StreamPair;
 import net.sharksystem.utils.AlarmClock;
 import net.sharksystem.utils.AlarmClockListener;
 import net.sharksystem.utils.Log;
+import net.sharksystem.utils.streams.StreamPair;
 
 import java.io.IOException;
 import java.util.*;

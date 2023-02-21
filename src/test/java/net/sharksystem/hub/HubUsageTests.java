@@ -1,12 +1,13 @@
 package net.sharksystem.hub;
 
-import net.sharksystem.TestHelper;
 import net.sharksystem.asap.ASAPEncounterManagerImpl;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.apps.testsupport.ASAPTestPeerFS;
 import net.sharksystem.asap.engine.ASAPEngineFS;
 import net.sharksystem.hub.peerside.*;
 import net.sharksystem.hub.hubside.ASAPTCPHub;
+import net.sharksystem.utils.fs.FSUtils;
+import net.sharksystem.utils.testsupport.TestHelper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -194,14 +195,14 @@ public class HubUsageTests {
         formats.add(FORMAT);
 
         //////////////////////////////// setup Alice
-        ASAPEngineFS.removeFolder(ALICE_ROOTFOLDER);
+        FSUtils.removeFolder(ALICE_ROOTFOLDER);
         ASAPTestPeerFS aliceASAPPeer = new ASAPTestPeerFS(ALICE_ID, formats);
 
         // send a message
         aliceASAPPeer.sendASAPMessage(FORMAT, URI, "Hi there".getBytes());
 
         ////////////// setup Bob
-        ASAPEngineFS.removeFolder(BOB_ROOTFOLDER);
+        FSUtils.removeFolder(BOB_ROOTFOLDER);
         ASAPTestPeerFS bobASAPPeer = new ASAPTestPeerFS(BOB_ID, formats);
         DummyMessageReceivedListener bobListener = new DummyMessageReceivedListener(BOB_ID);
         bobASAPPeer.addASAPMessageReceivedListener(FORMAT, bobListener);

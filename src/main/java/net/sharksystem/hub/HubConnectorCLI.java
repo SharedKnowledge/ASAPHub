@@ -4,8 +4,8 @@ import net.sharksystem.asap.ASAPException;
 import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.NewConnectionListener;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
-import net.sharksystem.streams.StreamPair;
 import net.sharksystem.utils.Commandline;
+import net.sharksystem.utils.streams.StreamPair;
 
 import java.io.*;
 import java.net.Socket;

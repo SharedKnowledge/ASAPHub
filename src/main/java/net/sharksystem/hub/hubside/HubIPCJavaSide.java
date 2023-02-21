@@ -1,9 +1,9 @@
 package net.sharksystem.hub.hubside;
 
 import net.sharksystem.hub.ASAPHubException;
-import net.sharksystem.streams.StreamPair;
-import net.sharksystem.streams.StreamPairImpl;
 import net.sharksystem.hub.hubside.lora_ipc.*;
+import net.sharksystem.utils.streams.StreamPair;
+import net.sharksystem.utils.streams.StreamPairImpl;
 
 import java.io.*;
 import java.net.Socket;

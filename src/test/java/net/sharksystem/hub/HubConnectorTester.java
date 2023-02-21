@@ -3,10 +3,10 @@ package net.sharksystem.hub;
 import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.utils.ASAPSerialization;
-import net.sharksystem.asap.utils.Helper;
 import net.sharksystem.asap.utils.PeerIDHelper;
 import net.sharksystem.hub.peerside.NewConnectionListener;
-import net.sharksystem.streams.StreamPair;
+import net.sharksystem.utils.SerializationHelper;
+import net.sharksystem.utils.streams.StreamPair;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -82,7 +82,7 @@ class HubConnectorTester implements NewConnectionListener {
                 System.out.println(peerID + " available #2: " + streamPair.getInputStream().available());
                 streamPair.getInputStream().read(receivedBytes);
                 System.out.println(peerID + " available #3: " + streamPair.getInputStream().available());
-                if(!Helper.sameByteArray(testBytes, receivedBytes)) this.onError(testBytes, receivedBytes);
+                if(!SerializationHelper.sameByteArray(testBytes, receivedBytes)) this.onError(testBytes, receivedBytes);
                 return;
             }
 
@@ -109,7 +109,7 @@ class HubConnectorTester implements NewConnectionListener {
             System.out.println(this.peerID + " received: " + receivedMessage);
 
             // test
-            if(!Helper.sameByteArray(outBytes, inBytes)) this.onError(outBytes, inBytes);
+            if(!SerializationHelper.sameByteArray(outBytes, inBytes)) this.onError(outBytes, inBytes);
 
             /*
             try {
@@ -137,7 +137,7 @@ class HubConnectorTester implements NewConnectionListener {
             System.out.println(this.peerID + " received#2: " + receivedMessage);
 
             // test
-            if(!Helper.sameByteArray(outBytes, inBytes)) this.onError(outBytes, inBytes);
+            if(!SerializationHelper.sameByteArray(outBytes, inBytes)) this.onError(outBytes, inBytes);
 
             // wait a moment
             Thread.sleep(10000);

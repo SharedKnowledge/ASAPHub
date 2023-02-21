@@ -1,14 +1,13 @@
 package net.sharksystem.hub;
 
-import net.sharksystem.SharkNotSupportedException;
-import net.sharksystem.streams.StreamPair;
-import net.sharksystem.streams.StreamPairWrapper;
-import net.sharksystem.streams.WrappedStreamPairListener;
-import net.sharksystem.asap.utils.Helper;
 import net.sharksystem.hub.protocol.*;
 import net.sharksystem.utils.AlarmClock;
 import net.sharksystem.utils.AlarmClockListener;
 import net.sharksystem.utils.Log;
+import net.sharksystem.utils.SerializationHelper;
+import net.sharksystem.utils.streams.StreamPair;
+import net.sharksystem.utils.streams.StreamPairWrapper;
+import net.sharksystem.utils.streams.WrappedStreamPairListener;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -243,7 +242,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
             throws IOException, ASAPHubException {
         if(!this.statusInSilence()) throw new ASAPHubException("not in silence mode - cannot clear channel");
         // create a sync sequence
-        this.syncSequence = Helper.long2byteArray(System.currentTimeMillis());
+        this.syncSequence = SerializationHelper.long2byteArray(System.currentTimeMillis());
         /*
         Log.writeLog(this, this.toString(), "sync sequence: ");
         ASAPSerialization.printByteArray(this.syncSequence);
