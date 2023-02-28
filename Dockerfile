@@ -1,0 +1,14 @@
+FROM maven:3.6.0-jdk-11-slim AS build
+COPY src /home/app/src
+COPY libs /home/app/libs
+COPY pom.xml /home/app
+COPY local_mvn_repo /home/app/local_mvn_repo
+RUN mvn -f /home/app/pom.xml clean package -DskipTests
+RUN ls
+#
+# Package stage
+#
+FROM openjdk:11-jre-slim
+COPY --from=build /home/app/target/ASAPHub.jar /usr/local/lib/asaphub.jar
+EXPOSE 6910
+ENTRYPOINT ["java","-jar","/usr/local/lib/asaphub.jar"]

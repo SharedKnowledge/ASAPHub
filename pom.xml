@@ -66,26 +66,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-                <version>3.0.0-M1</version>
-                <executions>
-                    <execution>
-                        <id>install-local-jar</id>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <file>${basedir}/libs/ASAPJava.jar</file>
-                            <groupId>net.sharksystem</groupId>
-                            <artifactId>asapjava</artifactId>
-                            <version>0.8</version>
-                            <packaging>jar</packaging>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -101,4 +81,11 @@
             <version>0.8</version>
         </dependency>
     </dependencies>
+    <repositories>
+        <repository>
+            <id>example-repo</id>
+            <name>Example Repository</name>
+            <url>file:///${basedir}/local_mvn_repo</url>
+        </repository>
+    </repositories>
 </project>
