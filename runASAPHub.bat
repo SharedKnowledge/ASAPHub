@@ -1,0 +1,1 @@
+java -cp libs/ASAPJava.jar;ASAPHub.jar net.sharksystem.hub.hubside.ASAPTCPHub
