@@ -148,7 +148,7 @@ class HubConnectorTester implements NewConnectionListener {
             //e.printStackTrace();
         } catch (IOException iex) {
             System.out.println(this.peerID + " ioException ");
-            //iex.printStackTrace();
+            iex.printStackTrace();
         } catch (Error e) {
             System.out.println(this.peerID + " caught an error: ");
             e.printStackTrace();
