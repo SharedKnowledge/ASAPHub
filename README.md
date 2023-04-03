@@ -54,6 +54,16 @@ mvn install:install-file \
 4. sync local repository with the .m2 repository of your machine `mvn clean install -U -DskipTests`
 5. commit changes in `local_mvn_repo` and `pom.xml`
 
+# Build and run using Docker
+
+## build image
+
+`docker build -t asaphub:latest .`
+
+## run container
+
+`docker run --name hub asaphub:latest`
+
 # Wiki
 
 Visit [the wiki](https://github.com/SharedKnowledge/ASAPHub/wiki) for all other information on what ASAP is and how to use it.
