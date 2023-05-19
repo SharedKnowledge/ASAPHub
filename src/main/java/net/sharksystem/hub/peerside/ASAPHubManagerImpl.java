@@ -123,6 +123,12 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     //                                                 bulk import                                             //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private List<HubConnectorDescription> runningConnectorDescriptions = new ArrayList<>();
+
+    public synchronized List<HubConnectorDescription> getRunningConnectorDescriptions() {
+        return this.runningConnectorDescriptions;
+    }
+
     public void connectASAPHubs(Collection<HubConnectorDescription> descriptions,
                                 ASAPPeer asapPeer, boolean killNotDescribed) {
         // for each description
@@ -132,6 +138,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
             for(HubConnector runningHc : this.hubConnectors) {
                 if(runningHc.isSame(hcd)) {
                     isRunning = true;
+                    this.runningConnectorDescriptions.add(hcd);
                     break;
                 }
             }
@@ -150,7 +157,8 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
                             ASAPHubManagerImpl.this.addHub(hubConnector);
                             Log.writeLog(ASAPHubManagerImpl.this,ASAPHubManagerImpl.this.toString(),
                                     "hub connector initialized: " + hcd);
-
+                            // remember - it is running now
+                            ASAPHubManagerImpl.this.runningConnectorDescriptions.add(hcd);
                         } catch (IOException | ASAPException e) {
                             Log.writeLog(ASAPHubManagerImpl.this,ASAPHubManagerImpl.this.toString(),
                                     "cannot create hub connector: " + e.getLocalizedMessage());
@@ -174,9 +182,11 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
                         break;
                     }
                 }
-                if (!found) toBeKilled.add(runningHc);
+                if (!found) {
+                    toBeKilled.add(runningHc);
+                    this.runningConnectorDescriptions.remove(runningHc);
+                }
             }
-
             this.disconnectASAPHubs(toBeKilled);
         }
     }
