@@ -13,10 +13,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @RunWith(Parameterized.class)
-public class ParameterizedTest {
+public class AutomatedCLITests {
 
     @Parameterized.Parameters
     public static Collection<Object[]> getFiles() {
@@ -32,7 +31,7 @@ public class ParameterizedTest {
     private final int port = 6910;
     private final String host = "localhost";
 
-    public ParameterizedTest(File testPlanDir) {
+    public AutomatedCLITests(File testPlanDir) {
         this.testPlanDir = testPlanDir;
     }
 
