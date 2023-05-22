@@ -24,6 +24,8 @@ public abstract class BasicHubConnectionManager implements HubConnectionManager 
     protected List<HubConnectorDescription> hcdListHub = new ArrayList<>();
     protected List<HubConnectionManager.FailedConnectionAttempt> failedConnectionAttempts = new ArrayList<>();
 
+    private long lastSync = System.currentTimeMillis();
+
     /**
      * Hub manager can be asked to connect to or disconnect from hubs. We send a list of hubs which are to be
      * connected. Connection establishment can take a while, though. It is a wish list on application side for a while.
@@ -34,6 +36,11 @@ public abstract class BasicHubConnectionManager implements HubConnectionManager 
      * accurate. We can keep track of failed attempts. And we do.
      */
     protected void syncLists() {
+        // avoid calls within milliseconds
+        long now = System.currentTimeMillis();
+        if(now - this.lastSync <= 100) return;
+        this.lastSync = now;
+
         // ask for current list from hub
         List<HubConnectorDescription> toBeRemoved = new ArrayList<>();
         for(HubConnectorDescription wishedConnection : this.hcdList) {
@@ -106,11 +113,13 @@ public abstract class BasicHubConnectionManager implements HubConnectionManager 
 
     @Override
     public List<HubConnectorDescription> getConnectedHubs() {
+        this.syncLists();
         return this.hcdList; // return this list outside hub
     }
 
     @Override
     public List<HubConnectionManager.FailedConnectionAttempt> getFailedConnectionAttempts() {
+        this.syncLists();
         return this.failedConnectionAttempts;
     }
 }
