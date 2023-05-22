@@ -28,7 +28,7 @@ public abstract class AbstractHubConnectorDescription implements HubConnectorDes
 
         switch(type) {
             case TCP:
-                return TCPHubConnectorDescriptionImpl.createHubConnectorDescription(serializedDescription);
+                return TCPHubConnectorDescriptionImpl.createByDescription(serializedDescription);
 
             default: throw new ASAPHubException("unknown hub connector protocol type: " + type);
         }
