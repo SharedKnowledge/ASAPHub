@@ -62,7 +62,7 @@ mvn install:install-file \
 
 ## run container
 
-`docker run --name hub --net=host asaphub:latest`
+`docker run --rm --net=host --name hub asaphub:latest`
 
 # Wiki
 

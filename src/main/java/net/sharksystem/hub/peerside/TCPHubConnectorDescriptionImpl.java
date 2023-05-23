@@ -1,12 +1,13 @@
 package net.sharksystem.hub.peerside;
 
 import net.sharksystem.asap.ASAPException;
+import net.sharksystem.asap.ASAPHop;
 import net.sharksystem.asap.utils.ASAPSerialization;
 import net.sharksystem.hub.ASAPHubException;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TCPHubConnectorDescriptionImpl extends AbstractHubConnectorDescription {
     private final CharSequence hostName;
@@ -17,20 +18,22 @@ public class TCPHubConnectorDescriptionImpl extends AbstractHubConnectorDescript
             throws IOException, ASAPException {
 
         ByteArrayInputStream bais = new ByteArrayInputStream(serializedDescription);
+        return readDescription(bais);
+    }
 
-        // type
-        byte type = ASAPSerialization.readByte(bais); // can be ignored
+    public static TCPHubConnectorDescriptionImpl readDescription(InputStream is) throws ASAPException, IOException {
+        byte type = ASAPSerialization.readByte(is); // can be ignored
 
         if(type != TCP) {
             throw new ASAPHubException("try to construct TCPHubConnection from serialized byte[] from wrong format");
         }
 
         // hostname
-        String hostName = ASAPSerialization.readCharSequenceParameter(bais);
+        String hostName = ASAPSerialization.readCharSequenceParameter(is);
         // port
-        int port = ASAPSerialization.readIntegerParameter(bais);
+        int port = ASAPSerialization.readIntegerParameter(is);
         // multichannel
-        boolean multiChannel = ASAPSerialization.readBooleanParameter(bais);
+        boolean multiChannel = ASAPSerialization.readBooleanParameter(is);
 
         return new TCPHubConnectorDescriptionImpl(hostName, port, multiChannel);
     }
@@ -63,6 +66,8 @@ public class TCPHubConnectorDescriptionImpl extends AbstractHubConnectorDescript
 
         return baos.toByteArray();
     }
+
+
 
     public CharSequence getHostName() {
         return this.hostName;
@@ -115,4 +120,44 @@ public class TCPHubConnectorDescriptionImpl extends AbstractHubConnectorDescript
     public String toString() {
         return this.hostName + ":" + this.port;
     }
+
+    /**
+     * Serializes a List of hubConnectorDescription objects to a byte array
+     * @param hubConnectorDescriptions List of HubConnectorDescription objects
+     * @return serialized List as byte array
+     * @throws IOException
+     */
+    public static byte[] serializeConnectorDescriptionList(List<HubConnectorDescription> hubConnectorDescriptions) throws IOException{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        if(hubConnectorDescriptions == null || hubConnectorDescriptions.isEmpty()) {
+            // no hcd
+            ASAPSerialization.writeIntegerParameter(0, baos);
+        }else {
+            // write number of descriptions
+            ASAPSerialization.writeIntegerParameter(hubConnectorDescriptions.size(), baos);
+            for (HubConnectorDescription hcd : hubConnectorDescriptions) {
+                baos.write(hcd.serialize());
+            }
+        }
+        return baos.toByteArray();
+    }
+
+    /**
+     *
+     * @param serializedHubDescriptions List HubConnectorDescription objects serialized as byte array
+     * @return List containing the deserialized HubConnectorDescription objects
+     * @throws IOException
+     * @throws ASAPException throws an ASAPException if HubConnectorDescription isn't of type TCP-HubConnectorDescription
+     */
+    public static List<HubConnectorDescription> deserializeHubConnectorDescriptionList(byte[] serializedHubDescriptions) throws IOException, ASAPException {
+        List<HubConnectorDescription> hubDescriptions = new ArrayList<>();
+        ByteArrayInputStream is = new ByteArrayInputStream(serializedHubDescriptions);
+        int number = ASAPSerialization.readIntegerParameter(is);
+        while(number-- > 0) {
+            hubDescriptions.add(TCPHubConnectorDescriptionImpl.readDescription(is));
+        }
+        return hubDescriptions;
+    }
+
 }

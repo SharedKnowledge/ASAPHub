@@ -7,8 +7,7 @@ import net.sharksystem.utils.Commandline;
 import net.sharksystem.utils.Log;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -209,13 +208,28 @@ public class ASAPTCPHub extends HubSingleEntitySharedChannel implements Runnable
         if(maxIdleInSeconds > 0) {
             tcpHub.setMaxIdleConnectionInSeconds(maxIdleInSeconds);
         }
-
-        System.out.println("start TCP hub on port " + tcpHub.port
-                + " with maxIdleInSeconds: " + tcpHub.maxIdleInMillis / 1000);
-
+        System.out.printf("start TCP hub on %s:%d with maxIdleInSeconds: %d%n", tcpHub.getHostAddress(),
+                tcpHub.port, tcpHub.maxIdleInMillis);
         tcpHub.startStatusPrinter();
         new Thread(tcpHub).start();
         return tcpHub;
+    }
+
+    /**
+     * Gets the host address of the machine where the hub is running on.
+     * @return host address (IPv4) as String; returns an empty string if host address couldn't be resolved
+     */
+    String getHostAddress(){
+        String hostAddress = "";
+        try (final DatagramSocket socket = new DatagramSocket()) {
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            hostAddress = socket.getLocalAddress().getHostAddress();
+        } catch (SocketException e) {
+            Log.writeLog(this, "cannot determine host address: " + e.getLocalizedMessage());
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+        return hostAddress;
     }
 
     public void kill() {
