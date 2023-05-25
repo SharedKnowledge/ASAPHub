@@ -26,4 +26,4 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
-      run: mvn install -Dtest=HubUsageTests -Dtest=HubManagerTests -Dtest=HubConnectionManagerTest
+      run: mvn install -Dtest=HubUsageTests,HubManagerTests,HubConnectionManagerTest

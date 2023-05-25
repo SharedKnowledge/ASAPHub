@@ -7,6 +7,7 @@ import net.sharksystem.hub.hubside.ASAPTCPHub;
 import net.sharksystem.hub.peerside.ASAPHubManagerImpl;
 import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.SharedTCPChannelConnectorPeerSide;
+import net.sharksystem.utils.testsupport.TestHelper;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -23,7 +24,7 @@ public class HubManagerTests {
     @Test
     public void test1() throws IOException, ASAPException, InterruptedException {
         // launch hub
-        int specificPort = 6907;
+        int specificPort = TestHelper.getPortNumber();
         CharSequence host = "localhost";
         ASAPTCPHub hub = new ASAPTCPHub(specificPort);
 
