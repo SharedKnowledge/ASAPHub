@@ -14,9 +14,14 @@ The compiled jar (ASAPHub.jar) will be in your target/ folder.
 
 ### without tests
 
-This is needed in case you want to build the jar while your tests fail (which currently, they do fail
+This is needed in case you want to build the jar while your tests fail (which need some time for execution
 ).
 `mvn clean package -DskipTests`
+
+### only run tests
+Run all testcases to perform a healthcheck:
+
+`mvn test`
 
 ## update ASAPJava library
 
