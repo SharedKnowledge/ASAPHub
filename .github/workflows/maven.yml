@@ -25,5 +25,7 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
         cache: maven
-    - name: Build with Maven
+    - name: run tests
       run: mvn test
+    - name: run HubUsage test   # run HubUsageTests separately, because they are failing if all testsuites are executed at once
+      run: mvn test -dTest=HubUsageTests

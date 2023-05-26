@@ -120,6 +120,7 @@
                         <exclude>**/TestSuiteRelease1.java</exclude>
                         <exclude>**/HubTests.java</exclude>
                         <exclude>**/AutomatedCLITests.java</exclude>
+                        <exclude>**/HubUsageTests.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>
