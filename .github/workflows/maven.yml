@@ -26,4 +26,4 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: run tests
-      run: mvn test -DMAVEN_OPTS=-Xmx2048m
+      run: mvn test -DMAVEN_OPTS=-Xmx4000m
