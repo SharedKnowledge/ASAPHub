@@ -68,12 +68,7 @@ public abstract class BasicHubConnectionManager implements HubConnectionManager 
                 }
             }
             if(recordedOldAttempt != null) this.failedConnectionAttempts.remove(recordedOldAttempt);
-            this.failedConnectionAttempts.add(new HubConnectionManager.FailedConnectionAttempt() {
-                @Override
-                public HubConnectorDescription getHubConnectorDescription() { return failedConnection; }
-                @Override
-                public long getTimeStamp() { return lastConnectionAttempt; }
-            });
+            this.failedConnectionAttempts.add(new FailedConnectionAttemptImpl(failedConnection, lastConnectionAttempt));
         }
     }
 
