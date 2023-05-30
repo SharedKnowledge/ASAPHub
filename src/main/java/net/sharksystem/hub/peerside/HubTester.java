@@ -131,7 +131,6 @@ public class HubTester {
                 "  -V, --version           Print version information and exit.\n" +
                 "If the HubTester is to be used for sending messages, the following argument must be passed:\n" +
                 "      --send              [baseMessage] [count] [delay in milliseconds]";
-
         Map<String, List<String>> params = new HashMap<>();
         List<String> options = null;
         for (String a : args) {
@@ -152,7 +151,7 @@ public class HubTester {
             }
         }
         // check for help text
-        if(!getMapValue(params, "help", "").isEmpty()){
+        if(params.get("help") != null){
             System.out.println(helpText);
             System.exit(0);
         }
