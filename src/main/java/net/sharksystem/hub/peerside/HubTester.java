@@ -12,6 +12,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
+/**
+ * This class provides a command-line tool to test the hub from different machines.
+ */
 public class HubTester {
 
     private final HubConnectionManager hubConnectionManager;
@@ -28,6 +31,11 @@ public class HubTester {
         printStream = System.out;
     }
 
+    /**
+     * Writes the ASAPHub logs into a file instead of printing them to the console.
+     * @param fileName filename of the output file
+     * @throws FileNotFoundException throws an exception if file couldn't be created
+     */
     public void redirectASAPLogs(String fileName) throws FileNotFoundException {
         printStream = System.out;
         PrintStream o = new PrintStream(fileName);
@@ -35,26 +43,45 @@ public class HubTester {
         System.setOut(o);
     }
 
-
+    /**
+     * Establishes a connection to the ASAPHub using a HubConnectionManager
+     * @param hubConnectorDescription
+     * @throws SharkException
+     * @throws IOException
+     */
     public void connectHub(HubConnectorDescription hubConnectorDescription) throws SharkException, IOException {
         hubConnectionManager.connectHub(hubConnectorDescription);
     }
 
     public void sendMessages(String message, CharSequence uri, int messageCount, int delay) throws InterruptedException, ASAPException {
         for (int i = 0; i < messageCount; i++) {
+            String messageToSend = String.format("%s_%03d", message, i);
+            this.printStream.printf("sending message '%s'%n", messageToSend);
             asapPeer.sendASAPMessage(this.format, uri, String.format("%s_%03d", message, i).getBytes());
             Thread.sleep(delay);
         }
     }
 
+    /**
+     * Adds an ASAPMessageReceivedListener to the ASAPPeer which prints all incoming message to the console.
+     */
     public void receiveMessages() {
         asapPeer.addASAPMessageReceivedListener(this.format, new CustomMessageReceivedListener((String) asapPeer.getPeerID(), printStream));
     }
 
+    /**
+     * Closes the connection to the ASAPHub
+     * @param hubConnectorDescription HubConnectorDescription object which contains the connection information
+     * @throws SharkException
+     * @throws IOException
+     */
     public void shutDown(HubConnectorDescription hubConnectorDescription) throws SharkException, IOException {
         this.hubConnectionManager.disconnectHub(hubConnectorDescription);
     }
 
+    /**
+     * This class implements an ASAPMessageReceivedListener which prints all received messages using a PrintStream
+     */
     static class CustomMessageReceivedListener implements ASAPMessageReceivedListener {
         private final String peerName;
         private final PrintStream printStream;
@@ -73,6 +100,12 @@ public class HubTester {
                     new String(getLastElement(yourPDUIter)));
         }
 
+        /**
+         * Gets the last element of an Iterator
+         * @param iterator Iterator object
+         * @return last element of the iterator
+         * @param <T> type of elements present within an Iterator
+         */
         public static <T> T getLastElement(Iterator<T> iterator) {
             T last = null;
             while (iterator.hasNext()) {
@@ -97,7 +130,7 @@ public class HubTester {
                 "      --uri=<uri>         optional argument to set the URI of the ASAP application (default: asap://testuri)\n" +
                 "  -V, --version           Print version information and exit.\n" +
                 "If the HubTester is to be used for sending messages, the following argument must be passed:\n" +
-                "      --send              [baseMessage] [count] [delay]";
+                "      --send              [baseMessage] [count] [delay in milliseconds]";
 
         Map<String, List<String>> params = new HashMap<>();
         List<String> options = null;
@@ -157,10 +190,9 @@ public class HubTester {
                 hubTester.redirectASAPLogs(logRedirectPath);
             }
             hubTester.connectHub(hubDescription);
+            hubTester.receiveMessages();
             if (sendArgsList != null) {
                 hubTester.sendMessages(message, uri, count, delay);
-            } else {
-                hubTester.receiveMessages();
             }
         }catch (IllegalArgumentException | NoSuchElementException e){
             System.err.println(e.getLocalizedMessage());
@@ -168,6 +200,14 @@ public class HubTester {
         }
     }
 
+    /**
+     * Gets the first item of the List-value of a map.
+     * @param argsMap Map containing the arguments
+     * @param key argument name
+     * @param defaultValue default return value if no value was found for the given key; set argument to null if
+     *                     the argument is required
+     * @return first item of the list value
+     */
     private static String getMapValue(Map<String, List<String>> argsMap, String key, String defaultValue) {
         if (argsMap.get(key) != null) {
             return argsMap.get(key).get(0);
