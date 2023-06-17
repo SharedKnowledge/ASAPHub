@@ -51,6 +51,7 @@ public abstract class BasicHubConnectionManager implements HubConnectionManager 
                     break; // found - go ahead.
                 }
             }
+            // remove failed attempt from connected hubs list
             if(!found) toBeRemoved.add(wishedConnection);
         }
 
@@ -74,6 +75,19 @@ public abstract class BasicHubConnectionManager implements HubConnectionManager 
                 @Override
                 public long getTimeStamp() { return lastConnectionAttempt; }
             });
+        }
+
+        // remove attempts which where successful later on
+        List<FailedConnectionAttempt> connectedNow = new ArrayList<>();
+        for(HubConnectionManager.FailedConnectionAttempt failedAttempt: this.failedConnectionAttempts){
+            for(HubConnectorDescription runningConnection : this.hcdListHub) {
+                if(failedAttempt.getHubConnectorDescription().isSame(runningConnection)) {
+                    connectedNow.add(failedAttempt);
+                }
+            }
+        }
+        for(FailedConnectionAttempt failedAttempt : connectedNow) {
+            this.failedConnectionAttempts.remove(failedAttempt);
         }
     }
 

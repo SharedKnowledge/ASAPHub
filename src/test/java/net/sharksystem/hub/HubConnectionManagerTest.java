@@ -186,5 +186,30 @@ public class HubConnectionManagerTest {
         assertEquals(1, hubConnectionManager.getFailedConnectionAttempts().size());
     }
 
+    @Test
+    public void connectHubEdgeSuccessfulAttemptAfterFailedAttempt() throws IOException, SharkException, InterruptedException {
+        HubConnectorDescription hubDescriptionSecondHub = new TCPHubConnectorDescriptionImpl("localhost",
+                hubPort + 1, multiChannel);
+        hubConnectionManager.connectHub(hubDescriptionSecondHub);
+        // give it some time for connection attempt
+        Thread.sleep(1000);
+
+        // first attempt should fail, because hub wasn't started yet
+        assertEquals(0, hubConnectionManager.getConnectedHubs().size());
+        assertEquals(1, hubConnectionManager.getFailedConnectionAttempts().size());
+
+        ASAPTCPHub asapHub2 = ASAPTCPHub.startTCPHubThread(hubPort+1, multiChannel, MAX_IDLE_IN_SECONDS);
+        hubConnectionManager.connectHub(hubDescriptionSecondHub);
+
+        // give it some time for connection establishment
+        Thread.sleep(1000);
+        // connection should be established now
+        assertEquals(1, hubConnectionManager.getConnectedHubs().size());
+        // failed attempt from first try should be removed
+        assertEquals(0, hubConnectionManager.getFailedConnectionAttempts().size());
+
+        asapHub2.kill();
+    }
+
 
 }
