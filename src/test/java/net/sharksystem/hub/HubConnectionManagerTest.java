@@ -176,14 +176,13 @@ public class HubConnectionManagerTest {
         assertEquals(1, hubConnectionManager.getFailedConnectionAttempts().size());
 
 
-        hubConnectionManager.disconnectHub(localHostHubDescription);
+        hubConnectionManager.disconnectHub(hubDescriptionWrongPort);
         // give it some time for disconnecting
         Thread.sleep(1000);
         // connected hub list should contain one item
         assertEquals(0, hubConnectionManager.getConnectedHubs().size());
         // still one element left after disconnecting
-        // TODO clarify whether this is a bug
-        assertEquals(1, hubConnectionManager.getFailedConnectionAttempts().size());
+        assertEquals(0, hubConnectionManager.getFailedConnectionAttempts().size());
     }
 
     @Test
