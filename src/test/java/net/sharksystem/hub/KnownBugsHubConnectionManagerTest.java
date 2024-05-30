@@ -28,7 +28,8 @@ public class KnownBugsHubConnectionManagerTest {
     public void setUp() throws Exception {
         hubPort = TestHelper.getPortNumber();
         ASAPPeerFS asapPeer = new ASAPTestPeerFS(ALICE_ID, Collections.singletonList(FORMAT));
-        hubConnectionManager = new HubConnectionManagerImpl(new ASAPEncounterManagerImpl(asapPeer), asapPeer);
+        hubConnectionManager = new HubConnectionManagerImpl(
+                new ASAPEncounterManagerImpl(asapPeer, asapPeer.getPeerID()), asapPeer);
         asapHub = ASAPTCPHub.startTCPHubThread(hubPort, multiChannel, MAX_IDLE_IN_SECONDS);
     }
 

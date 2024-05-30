@@ -1,5 +1,6 @@
 package net.sharksystem.hub;
 
+import net.sharksystem.SharkException;
 import net.sharksystem.asap.ASAPEncounterManagerImpl;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.apps.testsupport.ASAPTestPeerFS;
@@ -169,16 +170,16 @@ public class HubUsageTests {
     }
 
     @Test
-    public void usageHubManagerAndTwoPeers_MultiChannel_True() throws IOException, InterruptedException, ASAPException {
+    public void usageHubManagerAndTwoPeers_MultiChannel_True() throws IOException, InterruptedException, SharkException {
         this.usageHubManagerAndTwoPeers(true);
     }
 
     @Test
-    public void usageHubManagerAndTwoPeers_MultiChannel_False() throws IOException, InterruptedException, ASAPException {
+    public void usageHubManagerAndTwoPeers_MultiChannel_False() throws IOException, InterruptedException, SharkException {
         this.usageHubManagerAndTwoPeers(false);
     }
 
-    public void usageHubManagerAndTwoPeers(boolean multichannel) throws IOException, InterruptedException, ASAPException {
+    public void usageHubManagerAndTwoPeers(boolean multichannel) throws IOException, InterruptedException, SharkException {
         int hubPort = TestHelper.getPortNumber();
         HubConnectorDescription localHostHubDescription =
                 new TCPHubConnectorDescriptionImpl("localhost", hubPort, multichannel);
@@ -210,7 +211,7 @@ public class HubUsageTests {
         ///////////////////// connect to hub - Alice
         // setup encounter manager with a connection handler
         ASAPEncounterManagerImpl aliceEncounterManager =
-                new ASAPEncounterManagerImpl(aliceASAPPeer);
+                new ASAPEncounterManagerImpl(aliceASAPPeer, aliceASAPPeer.getPeerID());
 
         // setup hub manager
 //        ASAPHubManager aliceHubManager = ASAPHubManagerImpl.startASAPHubManager(aliceEncounterManager);
@@ -223,7 +224,7 @@ public class HubUsageTests {
         ///////////////////// connect to hub - Bob
         // setup encounter manager with a connection handler
         ASAPEncounterManagerImpl bobEncounterManager =
-                new ASAPEncounterManagerImpl(bobASAPPeer);
+                new ASAPEncounterManagerImpl(bobASAPPeer, bobASAPPeer.getPeerID());
 
         // setup hub manager
 //        ASAPHubManager bobHubManager = ASAPHubManagerImpl.startASAPHubManager(bobEncounterManager);

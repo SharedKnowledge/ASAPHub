@@ -1,5 +1,6 @@
 package net.sharksystem.hub;
 
+import net.sharksystem.SharkException;
 import net.sharksystem.asap.ASAPEncounterManagerImpl;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.apps.testsupport.ASAPTestPeerFS;
@@ -22,7 +23,7 @@ public class HubManagerTests {
 
 
     @Test
-    public void test1() throws IOException, ASAPException, InterruptedException {
+    public void test1() throws IOException, SharkException, InterruptedException {
         // launch hub
         int specificPort = TestHelper.getPortNumber();
         CharSequence host = "localhost";
@@ -60,7 +61,7 @@ public class HubManagerTests {
         Thread.sleep(maxTimeOutMillis*2);
 
         // add to hub manager
-        ASAPEncounterManagerImpl asapEncounterManager = new ASAPEncounterManagerImpl(alicePeer);
+        ASAPEncounterManagerImpl asapEncounterManager = new ASAPEncounterManagerImpl(alicePeer, alicePeer.getPeerID());
         ASAPHubManagerImpl asapASAPHubManager = new ASAPHubManagerImpl(asapEncounterManager);
         asapASAPHubManager.setTimeOutInMillis(maxTimeOutMillis);
         asapASAPHubManager.addHub(aliceHubConnector);

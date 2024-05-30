@@ -1,9 +1,6 @@
 package net.sharksystem.hub.peerside;
 
-import net.sharksystem.asap.ASAPEncounterManager;
-import net.sharksystem.asap.ASAPException;
-import net.sharksystem.asap.ASAPPeer;
-import net.sharksystem.asap.EncounterConnectionType;
+import net.sharksystem.asap.*;
 import net.sharksystem.hub.Connector;
 import net.sharksystem.utils.AlarmClock;
 import net.sharksystem.utils.AlarmClockListener;
@@ -275,7 +272,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
                 Log.writeLog(this, this.toString(), "got peerIDs: " + peerIDs);
                 if (peerIDs != null && !peerIDs.isEmpty()) for (CharSequence peerID : peerIDs) {
                     if (this.asapEncounterManager.shouldCreateConnectionToPeer(
-                            peerID, EncounterConnectionType.ASAP_HUB)) {
+                            peerID, ASAPEncounterConnectionType.ASAP_HUB)) {
                         hubConnector.connectPeer(peerID);
                     }
                 }
@@ -291,7 +288,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     @Override
     public void notifyPeerConnected(CharSequence targetPeerID, StreamPair streamPair) {
         try {
-            this.asapEncounterManager.handleEncounter(streamPair, EncounterConnectionType.ASAP_HUB);
+            this.asapEncounterManager.handleEncounter(streamPair, ASAPEncounterConnectionType.ASAP_HUB);
         } catch (IOException e) {
             Log.writeLogErr(this, this.toString(), "cannot handle peer encounter: "
                     + e.getLocalizedMessage());

@@ -22,12 +22,13 @@ public class HubTester {
     private final CharSequence format;
     private PrintStream printStream;
 
-    public HubTester(String peerId, CharSequence format) throws IOException, ASAPException {
+    public HubTester(String peerId, CharSequence format) throws IOException, SharkException {
         String ROOT_FOLDER = "./testPeerFS" + "/" + peerId;
         FSUtils.removeFolder(ROOT_FOLDER);
         this.asapPeer = new ASAPTestPeerFS(peerId, new ArrayList<>(Collections.singletonList(format)));
         this.format = format;
-        this.hubConnectionManager = new HubConnectionManagerImpl(new ASAPEncounterManagerImpl(asapPeer), asapPeer);
+        this.hubConnectionManager = new HubConnectionManagerImpl(
+                new ASAPEncounterManagerImpl(asapPeer, asapPeer.getPeerID()), asapPeer);
         printStream = System.out;
     }
 
