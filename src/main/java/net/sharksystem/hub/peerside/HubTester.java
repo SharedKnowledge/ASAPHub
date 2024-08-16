@@ -3,9 +3,9 @@ package net.sharksystem.hub.peerside;
 import net.sharksystem.SharkException;
 import net.sharksystem.asap.*;
 import net.sharksystem.asap.apps.testsupport.ASAPTestPeerFS;
+import net.sharksystem.fs.FSUtils;
 import net.sharksystem.hub.HubConnectionManager;
 import net.sharksystem.hub.HubConnectionManagerImpl;
-import net.sharksystem.utils.fs.FSUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

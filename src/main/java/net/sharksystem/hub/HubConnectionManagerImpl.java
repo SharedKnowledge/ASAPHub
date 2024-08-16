@@ -4,6 +4,7 @@ import net.sharksystem.SharkException;
 import net.sharksystem.asap.ASAPEncounterManager;
 import net.sharksystem.asap.ASAPPeer;
 import net.sharksystem.hub.peerside.ASAPHubManagerImpl;
+import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.HubConnectorDescription;
 
 import java.io.IOException;
@@ -31,6 +32,11 @@ public class HubConnectionManagerImpl extends BasicHubConnectionManager
         this.syncLists();
         super.disconnectHub(hcd);
         this.connectionChanged(hcd, false);
+    }
+
+    @Override
+    public HubConnector getHubConnector(HubConnectorDescription hcd) throws SharkException {
+        return this.hubManager.getHubConnector(hcd);
     }
 
     public HubConnectionManagerImpl(ASAPEncounterManager encounterManager, ASAPPeer asapPeer) {

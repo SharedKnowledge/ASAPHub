@@ -1,6 +1,7 @@
 package net.sharksystem.hub;
 
 import net.sharksystem.SharkException;
+import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.HubConnectorDescription;
 
 import java.io.IOException;
@@ -38,6 +39,14 @@ public interface HubConnectionManager {
      */
     List<HubConnectorDescription> getConnectedHubs();
     List<FailedConnectionAttempt> getFailedConnectionAttempts();
+
+    /**
+     * Produce a hub connector by its description
+     * @param hcd
+     * @return
+     * @throws SharkException if no connection exists
+     */
+    HubConnector getHubConnector(HubConnectorDescription hcd) throws SharkException;
 
     interface FailedConnectionAttempt {
         HubConnectorDescription getHubConnectorDescription();

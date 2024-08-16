@@ -1,5 +1,6 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.SharkException;
 import net.sharksystem.asap.ASAPPeer;
 
 import java.util.Collection;
@@ -29,6 +30,14 @@ public interface ASAPHubManager {
      *                         Existing connections which are not in the list are stopped.
      */
     void connectASAPHubs(Collection<HubConnectorDescription> descriptions, ASAPPeer asapPeer, boolean killNotDescribed);
+
+    /**
+     * Produce a hub connector by its description
+     * @param hcd
+     * @return
+     * @throws SharkException if no connection exists
+     */
+    HubConnector getHubConnector(HubConnectorDescription hcd) throws SharkException;
 
     /**
      * Produce a list of running connections. Note: Chronologically order can change after each call.

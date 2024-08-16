@@ -1,5 +1,6 @@
 package net.sharksystem.hub.peerside;
 
+import net.sharksystem.SharkException;
 import net.sharksystem.asap.*;
 import net.sharksystem.hub.Connector;
 import net.sharksystem.utils.AlarmClock;
@@ -124,6 +125,14 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
 
     public synchronized List<HubConnectorDescription> getRunningConnectorDescriptions() {
         return this.runningConnectorDescriptions;
+    }
+
+    public HubConnector getHubConnector(HubConnectorDescription hcd) throws SharkException {
+        for(HubConnector runningHc : this.hubConnectors) {
+            if(runningHc.isSame(hcd)) return runningHc;
+        }
+
+        throw new SharkException("no connection to described hub available");
     }
 
     public void connectASAPHubs(Collection<HubConnectorDescription> descriptions,
