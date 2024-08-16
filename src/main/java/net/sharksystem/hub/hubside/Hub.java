@@ -39,7 +39,7 @@ import net.sharksystem.hub.peerside.HubConnector;
  */
 public interface Hub {
     /** first IP package was sent Oct, 29th 1969 */
-    int DEFAULT_PORT = 6910;
+    int DEFAULT_PORT = 6907;
 
     /**
      * Connect a peer that runs in the same JVM with the hub and is always present. This peer is meant to act as repeater.
