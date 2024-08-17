@@ -235,7 +235,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
         Log.writeLog(this, this.toString(), "hub manager thread started");
 
         while (!this.managerThreadStopped) {
-            Log.writeLog(this, this.toString(), "start a new round");
+            Log.writeLog(this, this.toString(),"start a new round");
 
             for(HubConnector hubConnector : this.hubConnectors) {
                 Log.writeLog(this, this.toString(), "check hub connection");
@@ -297,6 +297,8 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     @Override
     public void notifyPeerConnected(CharSequence targetPeerID, StreamPair streamPair) {
         try {
+            // can be a race condition - this side did not initiate connection establishment
+//            this.asapEncounterManager.handleEncounter(streamPair, ASAPEncounterConnectionType.ASAP_HUB, false);
             this.asapEncounterManager.handleEncounter(streamPair, ASAPEncounterConnectionType.ASAP_HUB);
         } catch (IOException e) {
             Log.writeLogErr(this, this.toString(), "cannot handle peer encounter: "

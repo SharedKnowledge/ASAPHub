@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class ASAPTCPHub extends HubSingleEntitySharedChannel implements Runnable {
     public static final int DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS = 60;
-    private final boolean newConnection;
+    private final boolean createNewConnection;
     private int maxIdleInMillis = DEFAULT_MAX_IDLE_CONNECTION_IN_SECONDS * 1000;
 
     private final int port;
@@ -35,11 +35,11 @@ public class ASAPTCPHub extends HubSingleEntitySharedChannel implements Runnable
         this(port, false);
     }
 
-    public ASAPTCPHub(int port, boolean newConnection) throws IOException {
+    public ASAPTCPHub(int port, boolean createNewConnection) throws IOException {
         this.port = port;
         this.nextPort = port+1;
         this.serverSocket = new ServerSocket(this.port);
-        this.newConnection = newConnection;
+        this.createNewConnection = createNewConnection;
     }
 
     public void setPortRange(int minPort, int maxPort) throws ASAPException {
@@ -95,7 +95,7 @@ public class ASAPTCPHub extends HubSingleEntitySharedChannel implements Runnable
 
             try {
                 Connector hubConnectorSession;
-                if(this.newConnection) {
+                if(this.createNewConnection) {
                     hubConnectorSession =
                             new MultipleTCPChannelsConnectorHubSideImpl(
                                     newConnection.getInputStream(), newConnection.getOutputStream(), this);

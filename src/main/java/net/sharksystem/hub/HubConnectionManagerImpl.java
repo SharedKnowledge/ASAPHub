@@ -39,9 +39,22 @@ public class HubConnectionManagerImpl extends BasicHubConnectionManager
         return this.hubManager.getHubConnector(hcd);
     }
 
-    public HubConnectionManagerImpl(ASAPEncounterManager encounterManager, ASAPPeer asapPeer) {
+    private Thread hubManangerThread = null;
+    public HubConnectionManagerImpl(
+            ASAPEncounterManager encounterManager, ASAPPeer asapPeer, int waitIntervalInSeconds) {
         this.asapPeer = asapPeer;
-        this.hubManager = new ASAPHubManagerImpl(encounterManager);
+        this.hubManager = new ASAPHubManagerImpl(encounterManager, waitIntervalInSeconds);
+        // run it
+        this.hubManangerThread = new Thread(this.hubManager);
+        this.hubManangerThread.start();
+    }
+
+    public HubConnectionManagerImpl(ASAPEncounterManager encounterManager, ASAPPeer asapPeer) {
+        this(encounterManager, asapPeer, ASAPHubManagerImpl.DEFAULT_WAIT_INTERVAL_IN_SECONDS);
+    }
+
+    public void stopThreads() {
+        this.hubManager.kill();
     }
 
     @Override

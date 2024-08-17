@@ -189,7 +189,7 @@ public class HubUsageTests {
         ASAPTCPHub hub = ASAPTCPHub.startTCPHubThread(hubPort, multichannel, MAX_IDLE_IN_SECONDS);
 
         // give it moment to settle in
-        Thread.sleep(1000);
+        Thread.sleep(100);
 
         Collection<CharSequence> formats = new ArrayList<>();
         formats.add(FORMAT);
@@ -218,7 +218,7 @@ public class HubUsageTests {
 
         // connect with bulk import
         aliceHubManager.connectASAPHubs(hubDescriptions, aliceASAPPeer, true);
-        Thread.sleep(1000);
+        Thread.sleep(100);
 
         ///////////////////// connect to hub - Bob
         // setup encounter manager with a connection handler
@@ -231,10 +231,10 @@ public class HubUsageTests {
 
         // connect to hub - Bob
         bobHubManager.connectASAPHubs(hubDescriptions, bobASAPPeer, true);
-        Thread.sleep(1000);
+        Thread.sleep(100);
 
         // give them moment to exchange data
-        Thread.sleep(5000);
+        Thread.sleep(500);
         //Thread.sleep(Long.MAX_VALUE);
         System.out.println("slept a moment");
 
