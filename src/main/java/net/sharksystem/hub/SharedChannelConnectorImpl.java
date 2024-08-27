@@ -409,8 +409,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
             throws ASAPHubException, IOException {
 
         return this.initDataSession(
-            new ConnectionRequest(sourcePeerID, targetPeerID, System.currentTimeMillis() + timeout, false),
-                timeout);
+            ConnectionRequest.createNewConnectRequest(sourcePeerID, targetPeerID), timeout);
     }
 
     private Thread threadWaitingForDataConnection = null;
@@ -424,7 +423,13 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
             if(this.threadWaitingForDataConnection == null) {
                 Log.writeLog(this, this.toString(), "no other thread waiting - ask for silence and wait");
                 this.threadWaitingForDataConnection = Thread.currentThread();
-                this.askForSilence(timeout);
+                try {
+                    this.askForSilence(timeout);
+                }
+                catch(ASAPHubException ahe) {
+                    Log.writeLog(this, this.toString(),
+                            "cannot silence connection - SHOULD PUT PENDING LIST: " + connectionRequest);
+                }
                 try {
                     Thread.sleep(timeout);
                 } catch (InterruptedException e) {
@@ -435,11 +440,14 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
             }
             Log.writeLog(this, this.toString(), "waiting over");
             if(connectionRequest.until < System.currentTimeMillis()) {
+                Log.writeLogErr(this, this.toString(), "timed out - will not create data connection");
                 throw new ASAPHubException("timed out - will not create data connection");
             }
 
             if(!this.statusInSilence()) {
-                throw new ASAPHubException("still no silent mode - cannot establish data connection with peer ");
+                Log.writeLogErr(this, this.toString(),
+                        "still no silent mode - cannot establish data connection with peer");
+                throw new ASAPHubException("still no silent mode - cannot establish data connection with peer");
             }
         }
 
@@ -490,7 +498,7 @@ public abstract class SharedChannelConnectorImpl extends ConnectorImpl
 
     public String toString() {
         String status = null;
-        if(statusHubConnectorProtocol()) status = "connected";
+        if(statusHubConnectorProtocol()) status = "hubProtocol";
         else if(statusInSilence()) status = "silence";
         else if(statusAskedForSilence()) status = "askedForSilence";
         else if(statusInDataSession()) status = "dataSession";

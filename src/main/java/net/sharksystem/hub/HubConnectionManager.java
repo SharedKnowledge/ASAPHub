@@ -7,6 +7,9 @@ import net.sharksystem.hub.peerside.HubConnectorDescription;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Interface for applications. It allows connection management with hubs.
+ */
 public interface HubConnectionManager {
     /**
      * Connect a hub

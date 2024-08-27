@@ -83,7 +83,7 @@ public class ASAPTCPHub extends HubSingleEntitySharedChannel implements Runnable
         while(!killed) {
             Socket newConnection = null;
             try {
-                newConnection = this.serverSocket.accept();
+                newConnection = this. serverSocket.accept();
             }
             catch(IOException ioe) {
                 Log.writeLog(this, "exception when going to accept TCP connections - fatal, give up: "

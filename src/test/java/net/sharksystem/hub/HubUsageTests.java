@@ -213,12 +213,12 @@ public class HubUsageTests {
                 new ASAPEncounterManagerImpl(aliceASAPPeer, aliceASAPPeer.getPeerID());
 
         // setup hub manager
-//        ASAPHubManager aliceHubManager = ASAPHubManagerImpl.startASAPHubManager(aliceEncounterManager);
         ASAPHubManager aliceHubManager = ASAPHubManagerImpl.createASAPHubManager(aliceEncounterManager);
 
         // connect with bulk import
         aliceHubManager.connectASAPHubs(hubDescriptions, aliceASAPPeer, true);
         Thread.sleep(100);
+        aliceHubManager.forceSyncWithHubs();
 
         ///////////////////// connect to hub - Bob
         // setup encounter manager with a connection handler
@@ -232,6 +232,7 @@ public class HubUsageTests {
         // connect to hub - Bob
         bobHubManager.connectASAPHubs(hubDescriptions, bobASAPPeer, true);
         Thread.sleep(100);
+        bobHubManager.forceSyncWithHubs();
 
         // give them moment to exchange data
         Thread.sleep(500);

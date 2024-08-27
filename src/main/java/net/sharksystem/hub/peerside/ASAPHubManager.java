@@ -26,10 +26,11 @@ public interface ASAPHubManager {
      *
      * @param descriptions
      * @param asapPeer
-     * @param killNotDescribed if true: A complete descriptions list is assumed. Meaning:
+     * @param killConnectionIfNotInList if true: A complete descriptions list is assumed. Meaning:
      *                         Existing connections which are not in the list are stopped.
      */
-    void connectASAPHubs(Collection<HubConnectorDescription> descriptions, ASAPPeer asapPeer, boolean killNotDescribed);
+    void connectASAPHubs(Collection<HubConnectorDescription> descriptions, ASAPPeer asapPeer,
+                         boolean killConnectionIfNotInList);
 
     /**
      * Produce a hub connector by its description
@@ -54,4 +55,9 @@ public interface ASAPHubManager {
      * kill manager thread if running
      */
     void kill();
+
+    /**
+     * Force hub manager to sync with hubs right now
+     */
+    void forceSyncWithHubs();
 }

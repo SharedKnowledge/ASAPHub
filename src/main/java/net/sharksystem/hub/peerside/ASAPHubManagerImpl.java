@@ -136,7 +136,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     }
 
     public void connectASAPHubs(Collection<HubConnectorDescription> descriptions,
-                                ASAPPeer asapPeer, boolean killNotDescribed) {
+                                ASAPPeer asapPeer, boolean killConnectionIfNotInList) {
         // for each description
         for(HubConnectorDescription hcd : descriptions) {
             // already running?
@@ -176,7 +176,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
             }
         } // end each description for-loop
 
-        if(killNotDescribed) {
+        if(killConnectionIfNotInList) {
             ///////////////////// kill open connections which are not in the list
             Collection<HubConnector> toBeKilled = new ArrayList<>();
 
@@ -227,6 +227,12 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
         this.disconnectASAPHubs(toBeKilled);
     }
 
+    public void forceSyncWithHubs() {
+        if(this.managerThread != null) {
+            this.managerThread.interrupt();
+        }
+    }
+
     private boolean managerThreadStopped = false;
 
     @Override
@@ -260,8 +266,8 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
                     Log.writeLog(this, this.toString(), "interrupted - make next round earlier");
                 }
             }
-            Log.writeLog(this, this.toString(), "hub manager thread ended.");
         }
+        Log.writeLog(this, this.toString(), "hub manager thread ended.");
     }
 
 
