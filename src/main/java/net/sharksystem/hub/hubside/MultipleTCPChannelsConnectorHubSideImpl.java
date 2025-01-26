@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 
-public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnectorHubSideImpl
+public class MultipleTCPChannelsConnectorHubSideImpl extends SharedChannelConnectorHubSide
         implements NewConnectionCreatorListener {
 
     public MultipleTCPChannelsConnectorHubSideImpl(InputStream is, OutputStream os, HubInternal hub)

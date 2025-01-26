@@ -274,12 +274,13 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
     @Override
     public void notifyConnectedAndOpen() {
         // ignore
+        Log.writeLog(this, this.toString(), "notifyConnectedAndOpen");
     }
 
     @Override
     public void notifySynced(Connector connector, boolean changed) {
         Log.writeLog(this, this.toString(), "synced (changed: " + changed + ")");
-//        Log.writeLog(this, this.toString(), ">>>>>>>>>>>>>>>>>>>TODO***TODO***TODO<<<<<<<<<<<<<<<<<<<<<");
+
         if(/*changed && */ connector instanceof HubConnector) { // maybe new message in ASAP peer... connect each round
             HubConnector hubConnector = (HubConnector) connector;
             try {

@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImpl
+public class SharedChannelConnectorHubSide extends SharedChannelConnectorImpl
         implements ConnectorInternal, AlarmClockListener, WrappedStreamPairListener {
 
     private String peerID = null; // represented and connected peer
@@ -34,7 +34,7 @@ public class SharedChannelConnectorHubSideImpl extends SharedChannelConnectorImp
         return true;
     }
 
-    public SharedChannelConnectorHubSideImpl(InputStream is, OutputStream os, HubInternal hub) throws ASAPException {
+    public SharedChannelConnectorHubSide(InputStream is, OutputStream os, HubInternal hub) throws ASAPException {
         super(is, os);
 
         if(hub == null) throw new ASAPHubException("hub must not be null");

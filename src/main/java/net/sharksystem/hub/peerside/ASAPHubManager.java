@@ -20,9 +20,13 @@ public interface ASAPHubManager {
     void setTimeOutInMillis(int millis);
 
     /**
-     * Callee provide a list of hub descriptions. This method tries to establish a connection.
-     * Such an attempt can fail (wrong description, hub gone, network error etc.). This method can also
-     * stop all connector which are no longer in the list
+     * Callee provides a list of hub descriptions. This method synchronizes existing connections with this list.
+     * A new connection if a hub description is in the list but no connection has been established.
+     * A connection is ended if a hub description is not in the list but a connection is established
+     * (only if the boolean parameter is set).
+     * Nothing happens if a connection exists and the hub is still in the list.
+     *
+     * Such an attempt can fail (wrong description, hub gone, network error etc.).
      *
      * @param descriptions
      * @param asapPeer

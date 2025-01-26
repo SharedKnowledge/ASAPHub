@@ -101,7 +101,7 @@ public class ASAPTCPHub extends HubSingleEntitySharedChannel implements Runnable
                                     newConnection.getInputStream(), newConnection.getOutputStream(), this);
                 } else {
                     // another connector has connected
-                    hubConnectorSession = new SharedChannelConnectorHubSideImpl(
+                    hubConnectorSession = new SharedChannelConnectorHubSide(
                             newConnection.getInputStream(), newConnection.getOutputStream(), this);
                 }
                 (new ConnectorThread(hubConnectorSession, newConnection.getInputStream())).start();
