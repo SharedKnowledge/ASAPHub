@@ -27,14 +27,29 @@ public class ASAPTCPHub extends HubSingleEntitySharedChannel implements Runnable
     private boolean killed = false;
     private StatusPrinter statusPrinter;
 
+    /**
+     * Create a TCP hub that shares connections listening on default port.
+     * @throws IOException
+     */
     public ASAPTCPHub() throws IOException {
         this(DEFAULT_PORT);
     }
 
+    /**
+     * Create a TCP hub that always shares a connection
+     * @param port
+     * @throws IOException
+     */
     public ASAPTCPHub(int port) throws IOException {
         this(port, false);
     }
 
+    /**
+     * Create a hub commincating with TCP
+     * @param port proposed hub - during startup, hub will try to allocate that port but look for others if already taken
+     * @param createNewConnection create a new TCP connnection or when peer ask for initiation of an encounter.
+     * @throws IOException
+     */
     public ASAPTCPHub(int port, boolean createNewConnection) throws IOException {
         this.port = port;
         this.nextPort = port+1;
