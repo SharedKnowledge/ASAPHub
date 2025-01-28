@@ -9,8 +9,11 @@ import net.sharksystem.hub.peerside.HubConnectorDescription;
 
 import java.io.IOException;
 
+/**
+ * That class merges encounter and asap hub management
+ */
 public class HubConnectionManagerImpl extends BasicHubConnectionManager
-        implements HubConnectionManager, HubConnectionManagerMessageHandler {
+        implements HubConnectionManagerMessageHandler {
     private final ASAPPeer asapPeer;
     private ASAPHubManagerImpl hubManager;
 
@@ -40,6 +43,20 @@ public class HubConnectionManagerImpl extends BasicHubConnectionManager
     }
 
     private Thread hubManangerThread = null;
+
+    //////////////// hub new connection listener management
+    public void addNewConnectedHubListener(NewHubConnectedListener connectedHubListener) {
+        if(this.hubManager != null) {
+            this.hubManager.addNewConnectedHubListener(connectedHubListener);
+        }
+    }
+
+    public void removeNewConnectedHubListener(NewHubConnectedListener connectedHubListener) {
+        if(this.hubManager != null) {
+            this.hubManager.removeNewConnectedHubListener(connectedHubListener);
+        }
+    }
+
     public HubConnectionManagerImpl(
             ASAPEncounterManager encounterManager, ASAPPeer asapPeer, int waitIntervalInSeconds) {
         this.asapPeer = asapPeer;

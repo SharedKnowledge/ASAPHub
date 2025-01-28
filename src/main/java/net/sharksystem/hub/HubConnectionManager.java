@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Interface for applications. It allows connection management with hubs.
  */
-public interface HubConnectionManager {
+public interface HubConnectionManager extends NewHubConnectionListenerManagement {
     /**
      * Connect a hub
      * @param hcd Hub description

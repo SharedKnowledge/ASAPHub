@@ -2,7 +2,7 @@ package net.sharksystem.hub.peerside;
 
 import net.sharksystem.SharkException;
 import net.sharksystem.asap.*;
-import net.sharksystem.hub.Connector;
+import net.sharksystem.hub.*;
 import net.sharksystem.utils.AlarmClock;
 import net.sharksystem.utils.AlarmClockListener;
 import net.sharksystem.utils.Log;
@@ -11,7 +11,8 @@ import net.sharksystem.utils.streams.StreamPair;
 import java.io.IOException;
 import java.util.*;
 
-public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnectionListener, AlarmClockListener,
+public class ASAPHubManagerImpl implements ASAPHubManager, NewHubConnectionListenerManagement,
+        Runnable, NewConnectionListener, AlarmClockListener,
         HubConnectorStatusListener {
     private static final int FORCE_NEW_ROUND_KEY = 1;
     private final ASAPEncounterManager asapEncounterManager;
@@ -135,6 +136,29 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
         throw new SharkException("no connection to described hub available");
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                 new hub connector listener management                              //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    private Set<NewHubConnectedListener> connectedHubListenerList = new HashSet<>();
+    public void addNewConnectedHubListener(NewHubConnectedListener connectedHubListener) {
+        this.connectedHubListenerList.add(connectedHubListener);
+    }
+
+    public void removeNewConnectedHubListener(NewHubConnectedListener connectedHubListener) {
+        this.connectedHubListenerList.remove(connectedHubListener);
+    }
+
+    private void notifyNewHubConnectionListener(HubConnectorDescription hcd) {
+        for(NewHubConnectedListener connectedHubListener : this.connectedHubListenerList) {
+            connectedHubListener.newHubConnected(hcd);
+        }
+    }
+
+    private void hubConnectorStarted(HubConnectorDescription hcd) {
+        this.runningConnectorDescriptions.add(hcd);
+        this.notifyNewHubConnectionListener(hcd);
+    }
+
     public void connectASAPHubs(Collection<HubConnectorDescription> descriptions,
                                 ASAPPeer asapPeer, boolean killConnectionIfNotInList) {
         // for each description
@@ -164,7 +188,8 @@ public class ASAPHubManagerImpl implements ASAPHubManager, Runnable, NewConnecti
                             Log.writeLog(ASAPHubManagerImpl.this,ASAPHubManagerImpl.this.toString(),
                                     "hub connector initialized: " + hcd);
                             // remember - it is running now
-                            ASAPHubManagerImpl.this.runningConnectorDescriptions.add(hcd);
+//                            ASAPHubManagerImpl.this.runningConnectorDescriptions.add(hcd);
+                            ASAPHubManagerImpl.this.hubConnectorStarted(hcd);
                         } catch (IOException | ASAPException e) {
                             Log.writeLog(ASAPHubManagerImpl.this,ASAPHubManagerImpl.this.toString(),
                                     "cannot create hub connector: " + e.getLocalizedMessage());
