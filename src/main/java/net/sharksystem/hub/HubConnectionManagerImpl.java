@@ -8,6 +8,7 @@ import net.sharksystem.hub.peerside.HubConnector;
 import net.sharksystem.hub.peerside.HubConnectorDescription;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * That class merges encounter and asap hub management
@@ -23,6 +24,15 @@ public class HubConnectionManagerImpl extends BasicHubConnectionManager
     protected void syncLists() {
         this.refreshHubList(); // refresh first
         super.syncLists();
+    }
+
+    public void connectHubs(List<HubConnectorDescription> hcdList) throws SharkException, IOException {
+        if(hcdList == null || hcdList.isEmpty()) return;
+        this.syncLists();
+        for(HubConnectorDescription hcd : hcdList) {
+            super.connectHub(hcd);
+        }
+        this.connectionChanged(true);
     }
 
     public void connectHub(HubConnectorDescription hcd) throws SharkException, IOException {
@@ -74,8 +84,14 @@ public class HubConnectionManagerImpl extends BasicHubConnectionManager
         this.hubManager.kill();
     }
 
+    /* this first parameter hcd is useless ?? */
     @Override
     public void connectionChanged(HubConnectorDescription hcd, boolean connect) {
+        // list are already in order - tell hub manager
+        this.hubManager.connectASAPHubs(this.hcdList, this.asapPeer, true);
+    }
+
+    public void connectionChanged(boolean connect) {
         // list are already in order - tell hub manager
         this.hubManager.connectASAPHubs(this.hcdList, this.asapPeer, true);
     }

@@ -22,6 +22,8 @@ public interface HubConnectionManager extends NewHubConnectionListenerManagement
      */
     void connectHub(HubConnectorDescription hcd) throws SharkException, IOException;
 
+    void connectHubs(List<HubConnectorDescription> hcdList) throws SharkException, IOException;
+
     /**
      * Disconnect from a hub
      * @param hcd description
