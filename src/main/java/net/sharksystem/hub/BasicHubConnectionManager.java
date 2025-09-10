@@ -26,10 +26,6 @@ public abstract class BasicHubConnectionManager implements HubConnectionManager 
 
     private long lastSync = System.currentTimeMillis();
 
-    public long getLastSyncTime() {
-        return this.lastSync;
-    }
-
     /**
      * Hub manager can be asked to connect to or disconnect from hubs. We send a list of hubs which are to be
      * connected. Connection establishment can take a while, though. It is a wish list on application side for a while.
