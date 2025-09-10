@@ -30,8 +30,8 @@ public interface HubConnector {
     Collection<CharSequence> getPeerIDs() throws IOException;
 
     /**
-     * Refresh hub information. Hub status can change. Peers can come and go. A hub is not considered to broadcast those changes. This
-     * method synchronizes this side (peers' side) with the hub.
+     * Refresh hub information. Hub status can change. Peers can come and go. A hub is not meant to broadcast
+     * those changes. This method synchronizes this side (peers' side) with the hub.
      * @throws IOException communication problem, e.g. not connected to a hub
      */
     void syncHubInformation() throws IOException;

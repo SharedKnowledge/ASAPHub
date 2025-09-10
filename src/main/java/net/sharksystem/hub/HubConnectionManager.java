@@ -12,6 +12,18 @@ import java.util.List;
  */
 public interface HubConnectionManager extends NewHubConnectionListenerManagement {
     /**
+     * The minimum time between two sync attempts between peer and hub.
+     * Around a second sounds like a reasonable time.
+     */
+    int MINIMAL_TIME_BEFORE_NEXT_HUB_SYNC_IN_MILLIS = 1000;
+
+    /**
+     *
+     * @return time when last sync with hubs happened.
+     */
+    long getLastSyncTime();
+
+    /**
      * Connect a hub
      * @param hcd Hub description
      * @throws SharkException Can fail, e.g.
