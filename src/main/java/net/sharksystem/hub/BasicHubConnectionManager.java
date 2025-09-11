@@ -36,9 +36,9 @@ public abstract class BasicHubConnectionManager implements HubConnectionManager 
      * accurate. We can keep track of failed attempts. And we do.
      */
     protected void syncLists() {
-        // wait at least a second for a new sync
+        // wait a few millis for a new sync
         long now = System.currentTimeMillis();
-        if (now - this.lastSync <= MINIMAL_TIME_BEFORE_NEXT_HUB_SYNC_IN_MILLIS) return;
+        if (now - this.lastSync <= 100L) return;
         this.lastSync = now;
 
         // ask for current list from hub
