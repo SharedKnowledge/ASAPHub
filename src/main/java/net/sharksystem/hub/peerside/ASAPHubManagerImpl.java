@@ -84,10 +84,10 @@ public class ASAPHubManagerImpl implements ASAPHubManager, NewHubConnectionListe
      */
     private void forceNewRound() {
         if(this.alarmClock != null) {
-            Log.writeLog(this, this.toString(), "kill old alarm");
+            //Log.writeLog(this, this.toString(), "kill old alarm");
             this.alarmClock.kill();
         }
-        Log.writeLog(this, this.toString(), "set new alarm");
+        //Log.writeLog(this, this.toString(), "set new alarm");
         this.alarmClock = new AlarmClock(forceNewRoundWaitingPeriod, FORCE_NEW_ROUND_KEY, this);
         this.alarmClock.start();
     }
@@ -260,14 +260,21 @@ public class ASAPHubManagerImpl implements ASAPHubManager, NewHubConnectionListe
 
     private boolean managerThreadStopped = false;
 
+    private long lastSyncStatusWithConnectedHubs = -1;
+
+    public long getLastSynchedWithConnectedHubs() {
+        return this.lastSyncStatusWithConnectedHubs;
+    }
+
     @Override
     public void run() {
         this.managerThread = Thread.currentThread();
         Log.writeLog(this, this.toString(), "hub manager thread started");
 
         while (!this.managerThreadStopped) {
-            Log.writeLog(this, this.toString(),"start a new round");
+            Log.writeLog(this, this.toString(),"start a new sync round");
 
+            this.lastSyncStatusWithConnectedHubs = System.currentTimeMillis();
             for(HubConnector hubConnector : this.hubConnectors) {
                 Log.writeLog(this, this.toString(), "check hub connection");
                 hubConnector.addStatusListener(this);
@@ -288,7 +295,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, NewHubConnectionListe
                 Thread.sleep(sleepingTime);
             } catch (InterruptedException e) {
                 if(!this.managerThreadStopped) {
-                    Log.writeLog(this, this.toString(), "interrupted - make next round earlier");
+                    Log.writeLog(this, this.toString(), "interrupted - make next sync round now");
                 }
             }
         }

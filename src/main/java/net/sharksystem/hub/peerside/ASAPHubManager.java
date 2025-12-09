@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.List;
 
 public interface ASAPHubManager {
-    int DEFAULT_WAIT_INTERVAL_IN_SECONDS = 600; // 10 minutes
+    int DEFAULT_WAIT_INTERVAL_IN_SECONDS = 600; // 60 seconds * 10 = 10 minutes
 
     /**
      * Hubs are checked frequently for new peers. Connections are established.

@@ -12,6 +12,18 @@ import java.util.List;
  */
 public interface HubConnectionManager extends NewHubConnectionListenerManagement {
     /**
+     *
+     * @return time when last sync with hubs happened. Is -1 if never synced
+     */
+    long getLastSyncTime();
+
+    /**
+     * Force a new synchronization with all connected hubs. Use this method carefully. We do not want
+     * to produce unnecessary traffic.
+     */
+    void forceSync();
+
+    /**
      * Connect a hub
      * @param hcd Hub description
      * @throws SharkException Can fail, e.g.

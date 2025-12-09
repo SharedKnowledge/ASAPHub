@@ -67,6 +67,17 @@ public class HubConnectionManagerImpl extends BasicHubConnectionManager
         }
     }
 
+    public long getLastSyncTime() {
+        if(this.hubManager == null) return -1;
+        return this.hubManager.getLastSynchedWithConnectedHubs();
+    }
+
+    public void forceSync() {
+        if(this.hubManager != null) {
+            this.hubManager.forceSyncWithHubs();
+        }
+    }
+
     public HubConnectionManagerImpl(
             ASAPEncounterManager encounterManager, ASAPPeer asapPeer, int waitIntervalInSeconds) {
         this.asapPeer = asapPeer;
