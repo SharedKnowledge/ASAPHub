@@ -4,9 +4,9 @@ import net.sharksystem.SharkException;
 import net.sharksystem.asap.ASAPEncounterManagerImpl;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.asap.apps.testsupport.ASAPTestPeerFS;
-import net.sharksystem.fs.FSUtils;
 import net.sharksystem.hub.peerside.*;
 import net.sharksystem.hub.hubside.ASAPTCPHub;
+import net.sharksystem.utils.fs.FSUtils;
 import net.sharksystem.utils.testsupport.TestHelper;
 import org.junit.Assert;
 import org.junit.Test;
@@ -210,7 +210,7 @@ public class HubUsageTests {
         ///////////////////// connect to hub - Alice
         // setup encounter manager with a connection handler
         ASAPEncounterManagerImpl aliceEncounterManager =
-                new ASAPEncounterManagerImpl(aliceASAPPeer, aliceASAPPeer.getPeerID());
+                new ASAPEncounterManagerImpl(aliceASAPPeer);
 
         // setup hub manager
         ASAPHubManager aliceHubManager = ASAPHubManagerImpl.createASAPHubManager(aliceEncounterManager);
@@ -223,7 +223,7 @@ public class HubUsageTests {
         ///////////////////// connect to hub - Bob
         // setup encounter manager with a connection handler
         ASAPEncounterManagerImpl bobEncounterManager =
-                new ASAPEncounterManagerImpl(bobASAPPeer, bobASAPPeer.getPeerID());
+                new ASAPEncounterManagerImpl(bobASAPPeer);
 
         // setup hub manager
 //        ASAPHubManager bobHubManager = ASAPHubManagerImpl.startASAPHubManager(bobEncounterManager);

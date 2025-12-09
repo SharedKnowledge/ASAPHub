@@ -34,7 +34,7 @@ public class HubConnectionManagerTest {
         localHostHubDescription = new TCPHubConnectorDescriptionImpl("localhost", hubPort, multiChannel);
         ASAPPeerFS asapPeer = new ASAPTestPeerFS(ALICE_ID, Collections.singletonList(FORMAT));
         hubConnectionManager = new HubConnectionManagerImpl(
-                new ASAPEncounterManagerImpl(asapPeer, asapPeer.getPeerID()), asapPeer);
+                new ASAPEncounterManagerImpl(asapPeer), asapPeer);
         asapHub = ASAPTCPHub.startTCPHubThread(hubPort, multiChannel, MAX_IDLE_IN_SECONDS);
     }
 

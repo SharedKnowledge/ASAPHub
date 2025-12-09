@@ -23,7 +23,7 @@ import java.util.Collection;
  */
 public interface HubConnector {
     /**
-     * A hub can asked to provide a list of peer names which are connected right now.
+     * A hub can be asked to provide a list of peer names which are connected right now.
      * @return peer name list - can be empty but not null.
      * @throws IOException communication problem, e.g. not connected to a hub
      */

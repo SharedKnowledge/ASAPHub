@@ -313,7 +313,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, NewHubConnectionListe
                 Log.writeLog(this, this.toString(), "got peerIDs: " + peerIDs);
                 if (peerIDs != null && !peerIDs.isEmpty()) for (CharSequence peerID : peerIDs) {
                     if (this.asapEncounterManager.shouldCreateConnectionToPeer(
-                            peerID, ASAPEncounterConnectionType.ASAP_HUB)) {
+                            peerID, EncounterConnectionType.ASAP_HUB)) {
                         hubConnector.connectPeer(peerID);
                     }
                 }
@@ -331,7 +331,7 @@ public class ASAPHubManagerImpl implements ASAPHubManager, NewHubConnectionListe
         try {
             // can be a race condition - this side did not initiate connection establishment
 //            this.asapEncounterManager.handleEncounter(streamPair, ASAPEncounterConnectionType.ASAP_HUB, false);
-            this.asapEncounterManager.handleEncounter(streamPair, ASAPEncounterConnectionType.ASAP_HUB);
+            this.asapEncounterManager.handleEncounter(streamPair, EncounterConnectionType.ASAP_HUB);
         } catch (IOException e) {
             Log.writeLogErr(this, this.toString(), "cannot handle peer encounter: "
                     + e.getLocalizedMessage());

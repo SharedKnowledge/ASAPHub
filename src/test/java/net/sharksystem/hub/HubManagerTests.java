@@ -61,7 +61,7 @@ public class HubManagerTests {
         Thread.sleep(maxTimeOutMillis*2);
 
         // add to hub manager
-        ASAPEncounterManagerImpl asapEncounterManager = new ASAPEncounterManagerImpl(alicePeer, alicePeer.getPeerID());
+        ASAPEncounterManagerImpl asapEncounterManager = new ASAPEncounterManagerImpl(alicePeer);
         ASAPHubManagerImpl asapASAPHubManager = new ASAPHubManagerImpl(asapEncounterManager);
         asapASAPHubManager.setTimeOutInMillis(maxTimeOutMillis);
         asapASAPHubManager.addHub(aliceHubConnector);
